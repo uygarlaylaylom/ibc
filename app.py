@@ -57,9 +57,24 @@ AVAILABLE_TAGS = [
     "Sent Catalog", "Needs Follow-up", "Innovator", "Competitor"
 ]
 
+# Primary Segments (from IBS 2026 data)
+AVAILABLE_SEGMENTS = [
+    "All",
+    "Building Materials", 
+    "Interior Finishings & Home Living", 
+    "Business Management & Professional Services", 
+    "Construction Tools, Systems, Equipment, & Safety", 
+    "Outdoor Living, Leisure, & Modular Structures", 
+    "Global Products"
+]
+
 # --- Sidebar Filters ---
 st.sidebar.title("🔍 Filters & Search")
-search_query = st.sidebar.text_input("Search (Booth, Name, Segment...)", "")
+search_query = st.sidebar.text_input("Search (Booth, Name...)", "")
+
+st.sidebar.markdown("### Category Filters")
+selected_segment = st.sidebar.selectbox("📂 Segment / Product Group", AVAILABLE_SEGMENTS, index=0)
+selected_tag_filter = st.sidebar.selectbox("🏷️ Company Tag", ["All"] + AVAILABLE_TAGS, index=0)
 
 st.sidebar.markdown("### Status Filters")
 visited_only = st.sidebar.checkbox("✅ Visited Only", False)
@@ -82,6 +97,15 @@ try:
             has_notes=has_notes,
             has_email=has_email
         )
+        
+        # Apply strict Segment filtering
+        if selected_segment != "All":
+            companies = [c for c in companies if c.get('segment') == selected_segment]
+            
+        # Apply strict Tag filtering
+        if selected_tag_filter != "All":
+            companies = [c for c in companies if c.get('tags') and selected_tag_filter in c['tags']]
+            
 except Exception as e:
     st.error("Error connecting to database. Please check your .env credentials.")
     st.stop()
