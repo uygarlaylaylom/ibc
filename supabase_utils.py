@@ -57,8 +57,8 @@ def get_companies(search_query="", visited_only=False, min_priority=1, has_notes
         
     return companies
 
-def update_company(company_id, visited=None, priority=None, tags=None):
-    """Updates a company's visited status, priority, or tags."""
+def update_company(company_id, visited=None, priority=None, tags=None, products=None):
+    """Updates a company's visited status, priority, tags, or products."""
     supabase = get_supabase()
     data = {}
     if visited is not None:
@@ -67,9 +67,14 @@ def update_company(company_id, visited=None, priority=None, tags=None):
         data["priority"] = priority
     if tags is not None:
         data["tags"] = tags
+    if products is not None:
+        data["products"] = products
         
     if data:
-        supabase.table("companies").update(data).eq("id", company_id).execute()
+        try:
+            supabase.table("companies").update(data).eq("id", company_id).execute()
+        except dict as e:
+            print("Error updating:", e)
 
 # --- Notes ---
 

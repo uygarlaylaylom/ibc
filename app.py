@@ -68,13 +68,27 @@ AVAILABLE_SEGMENTS = [
     "Global Products"
 ]
 
+# Common IBS Products (Extracted Default List)
+AVAILABLE_PRODUCTS = [
+    "Windows", "Doors", "Flooring", "Roofing", "Apparel",
+    "Siding", "HVAC", "Plumbing", "Electrical", "Software", 
+    "Home Automation", "Lighting", "Kitchen Appliances",
+    "Cabinets", "Bath Products", "Outdoor Living", "Tools",
+    "Hardware", "Fasteners", "Insulation"
+]
+
 # --- Sidebar Filters ---
+st.sidebar.title("📌 Navigation")
+st.sidebar.page_link("pages/dashboard.py", label="IBC Intelligence Dashboard", icon="🚀")
+st.sidebar.markdown("---")
+
 st.sidebar.title("🔍 Filters & Search")
 search_query = st.sidebar.text_input("Search (Booth, Name...)", "")
 
 st.sidebar.markdown("### Category Filters")
 selected_segment = st.sidebar.selectbox("📂 Segment / Product Group", AVAILABLE_SEGMENTS, index=0)
 selected_tag_filter = st.sidebar.selectbox("🏷️ Company Tag", ["All"] + AVAILABLE_TAGS, index=0)
+selected_product_filter = st.sidebar.selectbox("📦 Product", ["All"] + AVAILABLE_PRODUCTS, index=0)
 
 st.sidebar.markdown("### Status Filters")
 visited_only = st.sidebar.checkbox("✅ Visited Only", False)
@@ -105,6 +119,10 @@ try:
         # Apply strict Tag filtering
         if selected_tag_filter != "All":
             companies = [c for c in companies if c.get('tags') and selected_tag_filter in c['tags']]
+            
+        # Apply strict Product filtering
+        if selected_product_filter != "All":
+            companies = [c for c in companies if c.get('products') and selected_product_filter in c['products']]
             
 except Exception as e:
     st.error("Error connecting to database. Please check your .env credentials.")
@@ -144,12 +162,32 @@ else:
                     st.rerun()
                     
             with col2:
-                # Tags multi-select
+                # Load current values, ensure they exist in allowed options
                 current_tags = comp.get('tags') or []
-                selected_tags = st.multiselect("Company Categories / Tags", options=AVAILABLE_TAGS, default=current_tags, key=f"tags_{comp['id']}")
-                if set(selected_tags) != set(current_tags):
-                    update_company(comp['id'], tags=selected_tags)
-                    st.rerun()
+                current_products = comp.get('products') or []
+                
+                all_tags_options = list(set(AVAILABLE_TAGS + current_tags))
+                new_tags = st.multiselect(
+                    "Tags", 
+                    options=all_tags_options, 
+                    default=current_tags,
+                    key=f"tags_{comp['id']}"
+                )
+                
+                all_products_options = list(set(AVAILABLE_PRODUCTS + current_products))
+                new_products = st.multiselect(
+                    "Products", 
+                    options=all_products_options, 
+                    default=current_products,
+                    key=f"products_{comp['id']}"
+                )
+                
+                # Check for changes and show save button
+                if set(new_tags) != set(current_tags) or set(new_products) != set(current_products):
+                    if st.button("💾 Save Categories", key=f"save_cats_{comp['id']}"):
+                        update_company(comp['id'], tags=new_tags, products=new_products)
+                        st.rerun()
+
                     
             st.markdown("---")
             
