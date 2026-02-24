@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from supabase_utils import get_supabase_client
+from supabase_utils import get_supabase
 from tasks_module.repository import get_all_tasks, update_task_status, bulk_update_tasks, insert_task
 from tasks_module.parser import parse_and_create_task
 
@@ -33,13 +33,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-def get_supabase():
+def get_client_safely():
     if "supabase_client" not in st.session_state:
-        st.session_state.supabase_client = get_supabase_client()
+        st.session_state.supabase_client = get_supabase()
     return st.session_state.supabase_client
 
 # Fetch Data
-all_tasks = get_all_tasks(get_supabase())
+all_tasks = get_all_tasks(get_client_safely())
 
 # ==========================================================
 # 2. SOL KENAR ÇUBUĞU (SIDEBAR / TAXONOMY EXPLORER)
@@ -91,7 +91,7 @@ with st.sidebar:
             if new_task:
                 # Make sure brackets matches the expected schema in repository 
                 # (For simplicity, we pass bracket_category if parser extracted it)
-                inserted = insert_task(get_supabase(), new_task)
+                inserted = insert_task(get_client_safely(), new_task)
                 if inserted:
                     st.success("Not kaydedildi!")
                     st.rerun()
@@ -248,7 +248,7 @@ if view_mode == "Kanban":
                         # We use on_change to trigger immediately
                         def status_changed(t_id, state_key):
                             new_val = st.session_state[state_key]
-                            success = update_task_status(get_supabase(), t_id, new_val)
+                            success = update_task_status(get_client_safely(), t_id, new_val)
                             # Rerun is automatically handled by streamlit after on_change callback completes
 
                         s_key = f"status_{task_id}"
@@ -315,7 +315,7 @@ else:
                 # since the prompt says "anında güncellenmelidir" (instant update), we can just execute the update
                 # directly and rerun. Let's do instant update:
                 if updates:
-                    success = bulk_update_tasks(get_supabase(), updates)
+                    success = bulk_update_tasks(get_client_safely(), updates)
                     if success:
                         st.success("Tablo değişiklikleri kaydedildi!")
                         st.rerun()
