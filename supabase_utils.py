@@ -57,14 +57,16 @@ def get_companies(search_query="", visited_only=False, min_priority=1, has_notes
         
     return companies
 
-def update_company(company_id, visited=None, priority=None):
-    """Updates a company's visited status or priority."""
+def update_company(company_id, visited=None, priority=None, tags=None):
+    """Updates a company's visited status, priority, or tags."""
     supabase = get_supabase()
     data = {}
     if visited is not None:
         data["visited"] = visited
     if priority is not None:
         data["priority"] = priority
+    if tags is not None:
+        data["tags"] = tags
         
     if data:
         supabase.table("companies").update(data).eq("id", company_id).execute()
@@ -88,6 +90,11 @@ def add_note(company_id, content, note_type="manual"):
         "content": content
     }
     supabase.table("notes").insert(data).execute()
+
+def delete_note(note_id):
+    """Deletes a specific note."""
+    supabase = get_supabase()
+    supabase.table("notes").delete().eq("id", note_id).execute()
 
 # --- Attachments ---
 

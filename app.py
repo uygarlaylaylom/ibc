@@ -4,7 +4,7 @@ from PIL import Image
 import io
 import datetime
 from supabase_utils import (
-    get_companies, update_company, get_notes, add_note, 
+    get_companies, update_company, get_notes, add_note, delete_note,
     get_attachments, upload_attachment, get_public_url
 )
 
@@ -16,9 +16,12 @@ st.markdown("""
 <style>
     .reportview-container { background: #f0f2f6; }
     .company-card { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;}
+    .company-card h3 { color: #111; }
+    .company-card p { color: #222; font-size: 1.05em; }
     .booth-badge { background-color: #ff4b4b; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; }
-    .note-box { background-color: #f8f9fa; border-left: 4px solid #4CAF50; padding: 10px; margin-bottom: 10px; border-radius: 4px;}
-    .email-box { background-color: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px; margin-bottom: 10px; border-radius: 4px;}
+    .note-box { background-color: #f8f9fa; border-left: 4px solid #4CAF50; padding: 10px; margin-bottom: 10px; border-radius: 4px; color: #111;}
+    .email-box { background-color: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px; margin-bottom: 10px; border-radius: 4px; color: #111;}
+    .delete-btn-container { text-align: right; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -47,6 +50,12 @@ def compress_image(uploaded_file, max_size_kb=500):
     except Exception as e:
         st.error(f"Error compressing image: {e}")
         return uploaded_file.getvalue()
+
+# Pre-defined Tag Categories for Checkboxes
+AVAILABLE_TAGS = [
+    "Hot Prospect", "Distributor", "Manufacturer", "Service Provider",
+    "Sent Catalog", "Needs Follow-up", "Innovator", "Competitor"
+]
 
 # --- Sidebar Filters ---
 st.sidebar.title("🔍 Filters & Search")
@@ -97,17 +106,25 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            # Action Row: Visited & Priority
+            # Action Row: Visited & Priority & Tags
             col1, col2 = st.columns(2)
             with col1:
                 is_visited = st.checkbox("Mark as Visited", value=comp['visited'], key=f"visit_{comp['id']}")
                 if is_visited != comp['visited']:
                     update_company(comp['id'], visited=is_visited)
                     st.rerun()
-            with col2:
+                    
                 new_priority = st.selectbox("Priority Level", [1, 2, 3, 4, 5], index=comp['priority']-1, key=f"prio_{comp['id']}")
                 if new_priority != comp['priority']:
                     update_company(comp['id'], priority=new_priority)
+                    st.rerun()
+                    
+            with col2:
+                # Tags multi-select
+                current_tags = comp.get('tags') or []
+                selected_tags = st.multiselect("Company Categories / Tags", options=AVAILABLE_TAGS, default=current_tags, key=f"tags_{comp['id']}")
+                if set(selected_tags) != set(current_tags):
+                    update_company(comp['id'], tags=selected_tags)
                     st.rerun()
                     
             st.markdown("---")
@@ -127,12 +144,19 @@ else:
                 for n in notes:
                     if n['type'] == 'manual':
                         date_str = datetime.datetime.fromisoformat(n['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
-                        st.markdown(f"""
-                        <div class="note-box">
-                            <small style="color:gray;">{date_str}</small><br>
-                            {n['content']}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        
+                        col_note, col_del = st.columns([0.85, 0.15])
+                        with col_note:
+                            st.markdown(f"""
+                            <div class="note-box">
+                                <small style="color:#555;">{date_str}</small><br>
+                                {n['content']}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col_del:
+                            if st.button("🗑️ Delete", key=f"del_note_{n['id']}"):
+                                delete_note(n['id'])
+                                st.rerun()
 
             # TAB 2: Attachments
             with tab2:
@@ -167,7 +191,7 @@ else:
                         date_str = datetime.datetime.fromisoformat(n['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
                         st.markdown(f"""
                         <div class="email-box">
-                            <small style="color:gray;">{date_str} - 📧 Forwarded Email</small><br>
+                            <small style="color:#555;">{date_str} - 📧 Forwarded Email</small><br>
                             {n['content']}
                         </div>
                         """, unsafe_allow_html=True)
