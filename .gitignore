@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.venv*/
+local_libs/
+
+# Environment Variables
+.env
+
+# Temporary Excel Files
+~$*

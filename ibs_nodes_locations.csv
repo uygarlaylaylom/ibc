@@ -1,0 +1,993 @@
+location_id,city,region,country
+l_berlin-maryland-usa,Berlin,Maryland,USA
+l_memphis-tennessee-usa,Memphis,Tennessee,USA
+l_pengilly-minnesota-usa,Pengilly,Minnesota,USA
+l_san-francisco-california-usa,San Francisco,California,USA
+l_davidson-north-carolina-usa,Davidson,North Carolina,USA
+l_burlington-ontario-canada,Burlington,Ontario,Canada
+l_eighty-four-pennsylvania-usa,Eighty Four,Pennsylvania,USA
+l_oak-ridge-north-carolina-usa,Oak Ridge,North Carolina,USA
+l_ashland-city-tennessee-usa,Ashland City,Tennessee,USA
+l_toronto-ontario-canada,Toronto,Ontario,Canada
+l_cary-north-carolina-usa,Cary,North Carolina,USA
+l_beloit-wisconsin-usa,Beloit,Wisconsin,USA
+l_kingsport-tennessee-usa,Kingsport,Tennessee,USA
+l_asan-si-chungcheongnam-do-korea,"Asan-si, Chungcheongnam-do",,Korea
+l_fremont-california-usa,Fremont,California,USA
+l_vandalia-ohio-usa,Vandalia,Ohio,USA
+l_tampa-florida-usa,Tampa,Florida,USA
+l_s-o-jos-do-rio-preto-s-o-paulo-brazil,"São José do Rio Preto, São Paulo",,Brazil
+l_neenah-wisconsin-usa,Neenah,Wisconsin,USA
+l_fayetteville-arkansas-usa,Fayetteville,Arkansas,USA
+l_provo-utah-usa,Provo,Utah,USA
+l_martinsville-virginia-usa,Martinsville,Virginia,USA
+l_big-lake-minnesota-usa,Big Lake,Minnesota,USA
+l_bellevue-washington-state-usa,Bellevue,Washington State,USA
+l_irvine-california-usa,Irvine,California,USA
+l_new-york-new-york-usa,New York,New York,USA
+l_somerville-massachusetts-usa,Somerville,Massachusetts,USA
+l_earth-city-missouri-usa,Earth City,Missouri,USA
+l_sanford-maine-usa,Sanford,Maine,USA
+l_palmetto-florida-usa,Palmetto,Florida,USA
+l_knoxville-tennessee-usa,Knoxville,Tennessee,USA
+l_miamisburg-ohio-usa,Miamisburg,Ohio,USA
+l_orlando-florida-usa,Orlando,Florida,USA
+l_portland-oregon-usa,Portland,Oregon,USA
+l_libreville-estuaire-gabon,"Libreville, Estuaire",,Gabon
+l_lake-worth-beach-florida-usa,Lake Worth Beach,Florida,USA
+l_bainbridge-island-washington-state-usa,Bainbridge Island,Washington State,USA
+l_jupiter-florida-usa,Jupiter,Florida,USA
+l_marshfield-massachusetts-usa,Marshfield,Massachusetts,USA
+l_surrey-british-columbia-canada,Surrey,British Columbia,Canada
+l_armada-michigan-usa,Armada,Michigan,USA
+l_istanbul-istanbul-turkey,"Istanbul, Istanbul",,Turkey
+l_moorestown-new-jersey-usa,Moorestown,New Jersey,USA
+l_lancaster-pennsylvania-usa,Lancaster,Pennsylvania,USA
+l_brooklyn-new-york-usa,Brooklyn,New York,USA
+l_zhongshan-guangdong-china,"ZHONGSHAN, Guangdong",,China
+l_dover-delaware-usa,Dover,Delaware,USA
+l_charlotte-north-carolina-usa,Charlotte,North Carolina,USA
+l_shenzhen-guangdong-china,"Shenzhen, Guangdong",,China
+l_brentwood-tennessee-usa,Brentwood,Tennessee,USA
+l_rochester-new-york-usa,Rochester,New York,USA
+l_golf-florida-usa,Golf,Florida,USA
+l_riyadh-al-riyadh-saudi-arabia,"Riyadh, Al Riyadh",,Saudi Arabia
+l_holland-michigan-usa,Holland,Michigan,USA
+l_grand-prairie-texas-usa,Grand Prairie,Texas,USA
+l_miami-florida-usa,Miami,Florida,USA
+l_kayseri-kayseri-turkey,"Kayseri, Kayseri",,Turkey
+l_heyuan-guangdong-china,"Heyuan, Guangdong",,China
+l_st-andre-d-argenteuil-canada,St. Andre D'Argenteuil,,Canada
+l_winston-salem-north-carolina-usa,Winston Salem,North Carolina,USA
+l_shoreview-minnesota-usa,Shoreview,Minnesota,USA
+l_baraboo-wisconsin-usa,Baraboo,Wisconsin,USA
+l_xian-shaanxi-china,"Xian, Shaanxi",,China
+l_san-leandro-california-usa,San Leandro,California,USA
+l_grant-michigan-usa,Grant,Michigan,USA
+l_des-moines-iowa-usa,Des Moines,Iowa,USA
+l_la-porte-indiana-usa,La Porte,Indiana,USA
+l_jackson-michigan-usa,Jackson,Michigan,USA
+l_norcross-georgia-usa,Norcross,Georgia,USA
+l_nashville-tennessee-usa,Nashville,Tennessee,USA
+l_vaughan-ontario-canada,Vaughan,Ontario,Canada
+l_denver-colorado-usa,Denver,Colorado,USA
+l_chuzhou-anhui-china,"Chuzhou, Anhui",,China
+l_hefei-anhui-china,"Hefei, Anhui",,China
+l_huainan-anhui-china,"Huainan, Anhui",,China
+l_howard-pennsylvania-usa,Howard,Pennsylvania,USA
+l_romulus-michigan-usa,Romulus,Michigan,USA
+l_the-woodlands-texas-usa,The Woodlands,Texas,USA
+l_asheville-north-carolina-usa,Asheville,North Carolina,USA
+l_kiel-wisconsin-usa,Kiel,Wisconsin,USA
+l_port-townsend-washington-state-usa,Port Townsend,Washington State,USA
+l_tucson-arizona-usa,Tucson,Arizona,USA
+l_alpharetta-georgia-usa,Alpharetta,Georgia,USA
+l_nashua-new-hampshire-usa,Nashua,New Hampshire,USA
+l_providence-rhode-island-usa,Providence,Rhode Island,USA
+l_tempe-arizona-usa,Tempe,Arizona,USA
+l_santa-ana-california-usa,Santa Ana,California,USA
+l_nan-turkey,,,Turkey
+l_st-johns-florida-usa,St. Johns,Florida,USA
+l_kamloops-british-columbia-canada,Kamloops,British Columbia,Canada
+l_los-angeles-california-usa,Los Angeles,California,USA
+l_north-miami-beach-florida-usa,North Miami Beach,Florida,USA
+l_stuart-florida-usa,Stuart,Florida,USA
+l_adairsville-georgia-usa,Adairsville,Georgia,USA
+l_chanzhou-jiangsu-china,"CHANZHOU, Jiangsu",,China
+l_port-klang-selangor-malaysia,"Port Klang, Selangor",,Malaysia
+l_plano-texas-usa,Plano,Texas,USA
+l_chatsworth-california-usa,Chatsworth,California,USA
+l_penang-pulau-pinang-malaysia,"Penang, Pulau Pinang",,Malaysia
+l_spring-texas-usa,Spring,Texas,USA
+l_georgetown-united-states-of-america-usa,Georgetown,United States Of America,USA
+l_covington-georgia-usa,Covington,Georgia,USA
+l_fredericton-new-brunswick-canada,Fredericton,New Brunswick,Canada
+l_plymouth-massachusetts-usa,Plymouth,Massachusetts,USA
+l_atlanta-georgia-usa,Atlanta,Georgia,USA
+l_cleveland-ohio-usa,Cleveland,Ohio,USA
+l_hangzhou-zhejiang-china,"Hangzhou, Zhejiang",,China
+l_covina-california-usa,Covina,California,USA
+l_nan-united-kingdom,,,United Kingdom
+l_vista-california-usa,Vista,California,USA
+l_painesville-ohio-usa,Painesville,Ohio,USA
+l_avon-lake-ohio-usa,Avon lake,Ohio,USA
+l_delray-beach-florida-usa,Delray Beach,Florida,USA
+l_calgary-alberta-canada,Calgary,Alberta,Canada
+l_wilmington-delaware-usa,Wilmington,Delaware,USA
+l_hialeah-florida-usa,Hialeah,Florida,USA
+l_pittsburg-kansas-usa,Pittsburg,Kansas,USA
+l_bristol-rhode-island-usa,Bristol,Rhode Island,USA
+l_canfield-ohio-usa,Canfield,Ohio,USA
+l_nan-india,,,India
+l_mckinney-texas-usa,McKinney,Texas,USA
+l_draper-utah-usa,Draper,Utah,USA
+l_santa-clarita-california-usa,Santa Clarita,California,USA
+l_linden-new-jersey-usa,Linden,New Jersey,USA
+l_canton-north-carolina-usa,Canton,North Carolina,USA
+l_vine-grove-kentucky-usa,Vine Grove,Kentucky,USA
+l_zhongshan-guangdong-china,"Zhongshan, Guangdong",,China
+l_albemarle-north-carolina-usa,Albemarle,North Carolina,USA
+l_scottsdale-arizona-usa,Scottsdale,Arizona,USA
+l_new-york-new-york-usa,New  York,New York,USA
+l_munich-bayern-germany,"Munich, Bayern",,Germany
+l_langley-british-columbia-canada,Langley,British Columbia,Canada
+l_diamond-bar-california-usa,Diamond Bar,California,USA
+l_apex-north-carolina-usa,Apex,North Carolina,USA
+l_tianjin-tianjin-china,"Tianjin, Tianjin",,China
+l_nan-china,,,China
+l_beijing-beijing-china,"Beijing, Beijing",,China
+l_jacksonville-florida-usa,Jacksonville,Florida,USA
+l_richfield-minnesota-usa,Richfield,Minnesota,USA
+l_boise-idaho-usa,Boise,Idaho,USA
+l_southlake-texas-usa,Southlake,Texas,USA
+l_new-orleans-louisiana-usa,New Orleans,Louisiana,USA
+l_lexington-kentucky-usa,Lexington,Kentucky,USA
+l_billings-montana-usa,Billings,Montana,USA
+l_new-haven-connecticut-usa,New Haven,Connecticut,USA
+l_san-jose-california-usa,San Jose,California,USA
+l_lenexa-kansas-usa,Lenexa,Kansas,USA
+l_frisco-texas-usa,Frisco,Texas,USA
+l_college-point-new-york-usa,College Point,New York,USA
+l_washington-missouri-usa,Washington,Missouri,USA
+l_gainesville-georgia-usa,Gainesville,Georgia,USA
+l_sarasota-florida-usa,Sarasota,Florida,USA
+l_walla-walla-washington-state-usa,Walla Walla,Washington State,USA
+l_mississauga-ontario-canada,Mississauga,Ontario,Canada
+l_cartersville-georgia-usa,Cartersville,Georgia,USA
+l_north-vancouver-british-columbia-canada,North Vancouver,British Columbia,Canada
+l_danville-virginia-usa,Danville,Virginia,USA
+l_mclean-virginia-usa,McLean,Virginia,USA
+l_doral-florida-usa,Doral,Florida,USA
+l_ogden-utah-usa,Ogden,Utah,USA
+l_tustin-california-usa,Tustin,California,USA
+l_englewood-colorado-usa,Englewood,Colorado,USA
+l_santa-fe-springs-california-usa,SANTA FE SPRINGS,California,USA
+l_ontario-california-usa,Ontario,California,USA
+l_anniston-alabama-usa,Anniston,Alabama,USA
+l_taizhou-zhejiang-china,"Taizhou, Zhejiang",,China
+l_wauwatosa-wisconsin-usa,Wauwatosa,Wisconsin,USA
+l_botou-hebei-china,"Botou, Hebei",,China
+l_kokomo-indiana-usa,Kokomo,Indiana,USA
+l_buderim-queensland-australia,"Buderim, Queensland",,Australia
+l_tulsa-oklahoma-usa,Tulsa,Oklahoma,USA
+l_washington-iowa-usa,Washington,Iowa,USA
+l_hackettstown-new-jersey-usa,Hackettstown,New Jersey,USA
+l_lesmo-monza-e-della-brianza-italy,"Lesmo, Monza e della Brianza",,Italy
+l_edmington-alberta-canada,Edmington,Alberta,Canada
+l_oklahoma-city-oklahoma-usa,Oklahoma City,Oklahoma,USA
+l_vancouver-british-columbia-canada,Vancouver,British Columbia,Canada
+l_little-rock-arkansas-usa,Little Rock,Arkansas,USA
+l_sioux-falls-south-dakota-usa,Sioux Falls,South Dakota,USA
+l_boston-massachusetts-usa,Boston,Massachusetts,USA
+l_littleton-colorado-usa,Littleton,Colorado,USA
+l_raleigh-north-carolina-usa,Raleigh,North Carolina,USA
+l_durham-north-carolina-usa,Durham,North Carolina,USA
+l_puyallup-washington-state-usa,Puyallup,Washington State,USA
+l_franklin-lakes-new-jersey-usa,Franklin Lakes,New Jersey,USA
+l_irving-texas-usa,Irving,Texas,USA
+l_louisville-kentucky-usa,Louisville,Kentucky,USA
+l_nan-australia,,,Australia
+l_omaha-nebraska-usa,Omaha,Nebraska,USA
+l_reston-virginia-usa,Reston,Virginia,USA
+l_houston-texas-usa,Houston,Texas,USA
+l_eagle-farm-queensland-australia,"Eagle Farm, Queensland",,Australia
+l_austin-texas-usa,Austin,Texas,USA
+l_suzhou-jiangsu-china,"Suzhou, Jiangsu",,China
+l_fairview-texas-usa,Fairview,Texas,USA
+l_dania-beach-florida-usa,Dania Beach,Florida,USA
+l_st-george-utah-usa,St. George,Utah,USA
+l_brookfield-connecticut-usa,Brookfield,Connecticut,USA
+l_dongguan-guangdong-china,"Dongguan, Guangdong",,China
+l_arthur-illinois-usa,Arthur,Illinois,USA
+l_hayward-california-usa,Hayward,California,USA
+l_commerce-california-usa,Commerce,California,USA
+l_lorton-virginia-usa, Lorton,Virginia,USA
+l_wilmington-massachusetts-usa,Wilmington,Massachusetts,USA
+l_encinitas-california-usa,Encinitas,California,USA
+l_sihanouk-krong-preah-sihanouk-cambodia,"Sihanouk, Krong Preah Sihanouk",,Cambodia
+l_cambridge-ontario-canada,Cambridge,Ontario,Canada
+l_grand-rapids-michigan-usa,GRAND RAPIDS,Michigan,USA
+l_belleville-ontario-canada,BELLEVILLE,Ontario,Canada
+l_golden-british-columbia-canada,Golden,British Columbia,Canada
+l_ogdensburg-new-york-usa,Ogdensburg,New York,USA
+l_bakersfield-california-usa,Bakersfield,California,USA
+l_lilburn-georgia-usa,Lilburn,Georgia,USA
+l_hai-an-nantong-city-jiangsu-china,"Hai'An, Nantong City,, Jiangsu",,China
+l_bonners-ferry-idaho-usa,Bonners Ferry,Idaho,USA
+l_elk-grove-village-illinois-usa,Elk Grove Village,Illinois,USA
+l_indianapolis-indiana-usa,Indianapolis,Indiana,USA
+l_oshkosh-wisconsin-usa,Oshkosh,Wisconsin,USA
+l_fort-worth-texas-usa,Fort Worth,Texas,USA
+l_ocala-florida-usa,Ocala,Florida,USA
+l_plant-city-florida-usa,Plant City,Florida,USA
+l_carson-california-usa,Carson,California,USA
+l_clearwater-florida-usa,Clearwater,Florida,USA
+l_garden-grove-california-usa,Garden Grove,California,USA
+l_petaluma-california-usa,Petaluma,California,USA
+l_springdale-arkansas-usa,Springdale,Arkansas,USA
+l_malvern-pennsylvania-usa,Malvern,Pennsylvania,USA
+l_aventura-florida-usa,Aventura,Florida,USA
+l_edmonton-alberta-canada,Edmonton,Alberta,Canada
+l_troy-michigan-usa,Troy,Michigan,USA
+l_changzhou-jiangsu-china,"Changzhou, Jiangsu",,China
+l_chaozhou-guangdong-china,"Chaozhou, Guangdong",,China
+l_foshan-guangdong-china,"Foshan, Guangdong",,China
+l_coeur-d-alene-idaho-usa,Coeur d Alene,Idaho,USA
+l_kissimmee-florida-usa,Kissimmee,Florida,USA
+l_chongqing-chongqing-china,"Chongqing, Chongqing",,China
+l_newark-delaware-usa,Newark,Delaware,USA
+l_zwonowice-slaskie-poland,"Zwonowice, Slaskie",,Poland
+l_cedar-minnesota-usa,Cedar,Minnesota,USA
+l_liberty-hill-texas-usa,Liberty Hill,Texas,USA
+l_west-chester-ohio-usa,West Chester,Ohio,USA
+l_lakeville-minnesota-usa,Lakeville,Minnesota,USA
+l_lakeland-minnesota-usa,Lakeland,Minnesota,USA
+l_kalamazoo-michigan-usa,Kalamazoo,Michigan,USA
+l_mason-ohio-usa,Mason,Ohio,USA
+l_charleston-south-carolina-usa,Charleston,South Carolina,USA
+l_morton-grove-illinois-usa,Morton Grove,Illinois,USA
+l_pleasant-grove-utah-usa,Pleasant Grove,Utah,USA
+l_medellin-antioquia-colombia,"Medellin, Antioquia",,Colombia
+l_nan-ireland,,,Ireland
+l_garcia-nuevo-le-n-mexico,"Garcia, Nuevo León",,Mexico
+l_lincoln-nebraska-usa,Lincoln,Nebraska,USA
+l_concord-ontario-canada,Concord,Ontario,Canada
+l_markham-ontario-canada,Markham,Ontario,Canada
+l_phoenix-arizona-usa,Phoenix,Arizona,USA
+l_auburn-alabama-usa,Auburn,Alabama,USA
+l_bradenton-florida-usa,Bradenton,Florida,USA
+l_winchester-virginia-usa,Winchester,Virginia,USA
+l_san-diego-california-usa,San Diego,California,USA
+l_hamden-connecticut-usa,Hamden,Connecticut,USA
+l_edina-minnesota-usa,Edina,Minnesota,USA
+l_st-louis-missouri-usa,St. Louis,Missouri,USA
+l_pomona-california-usa,Pomona,California,USA
+l_nan-czech-republic,,,Czech Republic
+l_naperville-illinois-usa,Naperville,Illinois,USA
+l_weaverville-north-carolina-usa,Weaverville ,North Carolina,USA
+l_carrolton-texas-usa,Carrolton,Texas,USA
+l_canton-massachusetts-usa,Canton,Massachusetts,USA
+l_regina-saskatchewan-canada,Regina,Saskatchewan,Canada
+l_calhoun-georgia-usa,Calhoun,Georgia,USA
+l_salt-lake-city-utah-usa,Salt Lake City,Utah,USA
+l_eau-claire-united-states-of-america-usa,Eau Claire,United States Of America,USA
+l_millersville-maryland-usa,Millersville,Maryland,USA
+l_cerritos-california-usa,Cerritos,California,USA
+l_savannah-georgia-usa,Savannah,Georgia,USA
+l_rancho-cordova-california-usa,Rancho Cordova,California,USA
+l_tacoma-washington-state-usa,Tacoma,Washington State,USA
+l_olean-new-york-usa,Olean,New York,USA
+l_gardena-california-usa,Gardena,California,USA
+l_dalian-liaoning-china,"Dalian, Liaoning",,China
+l_wallingford-connecticut-usa,Wallingford,Connecticut,USA
+l_seattle-washington-state-usa,Seattle,Washington State,USA
+l_ningbo-zhejiang-china,"Ningbo, Zhejiang",,China
+l_grand-rapids-michigan-usa,Grand Rapids,Michigan,USA
+l_margate-florida-usa,Margate,Florida,USA
+l_murrieta-california-usa,Murrieta,California,USA
+l_rathnew-wicklow-ireland,"Rathnew, Wicklow",,Ireland
+l_sugar-hill-georgia-usa,Sugar Hill,Georgia,USA
+l_round-rock-texas-usa,Round Rock,Texas,USA
+l_fort-macleod-alberta-canada,Fort Macleod,Alberta,Canada
+l_nan-thailand,,,Thailand
+l_boulder-colorado-usa,Boulder,Colorado,USA
+l_crystal-minnesota-usa,Crystal,Minnesota,USA
+l_lakeway-texas-usa,Lakeway,Texas,USA
+l_meridian-idaho-usa,Meridian,Idaho,USA
+l_schofield-wisconsin-usa,Schofield,Wisconsin,USA
+l_charlottesville-virginia-usa,Charlottesville,Virginia,USA
+l_bremen-indiana-usa,Bremen,Indiana,USA
+l_vancouver-washington-state-usa,Vancouver,Washington State,USA
+l_orlando-florida-usa,ORLANDO,Florida,USA
+l_davie-florida-usa,Davie,Florida,USA
+l_brampton-ontario-canada,Brampton,Ontario,Canada
+l_palo-alto-california-usa,Palo Alto,California,USA
+l_everett-washington-state-usa,Everett,Washington State,USA
+l_baltimore-maryland-usa,Baltimore,Maryland,USA
+l_dongying-shandong-china,"Dongying, Shandong",,China
+l_davus-california-usa,Davus,California,USA
+l_inglewood-california-usa,Inglewood,California,USA
+l_williamsburg-virginia-usa,Williamsburg,Virginia,USA
+l_nan-united-states-of-america-usa,,United States Of America,USA
+l_lake-mary-florida-usa,Lake Mary,Florida,USA
+l_south-el-monte-california-usa,South El Monte,California,USA
+l_fort-pierce-florida-usa,Fort Pierce,Florida,USA
+l_montreal-canada,Montreal,,Canada
+l_de-pere-wisconsin-usa,De Pere,Wisconsin,USA
+l_loretto-minnesota-usa,Loretto,Minnesota,USA
+l_pico-rivera-california-usa,Pico Rivera,California,USA
+l_peachtree-city-georgia-usa,Peachtree City,Georgia,USA
+l_naples-florida-usa,Naples,Florida,USA
+l_cupertino-california-usa,Cupertino,California,USA
+l_westlake-texas-usa,Westlake,Texas,USA
+l_rowland-heights-california-usa,Rowland Heights,California,USA
+l_middletown-new-york-usa,Middletown,New York,USA
+l_holland-new-york-usa,Holland,New York,USA
+l_hopkins-minnesota-usa,Hopkins,Minnesota,USA
+l_eden-wisconsin-usa,Eden,Wisconsin,USA
+l_toledo-ohio-usa,Toledo,Ohio,USA
+l_brantford-ontario-canada,Brantford,Ontario,Canada
+l_smyrna-georgia-usa,Smyrna,Georgia,USA
+l_cape-coral-florida-usa,Cape Coral,Florida,USA
+l_palm-city-florida-usa,Palm City,Florida,USA
+l_woodbridge-canada,Woodbridge,,Canada
+l_st-petersburg-florida-usa,St Petersburg,Florida,USA
+l_city-of-industry-california-usa,City of Industry,California,USA
+l_davenport-florida-usa,Davenport,Florida,USA
+l_daveluyville-canada,Daveluyville,,Canada
+l_cincinnati-ohio-usa,Cincinnati,Ohio,USA
+l_lake-city-florida-usa,Lake City,Florida,USA
+l_greenville-illinois-usa,Greenville,Illinois,USA
+l_perth-amboy-new-jersey-usa,Perth Amboy,New Jersey,USA
+l_victoria-british-columbia-canada,Victoria,British Columbia,Canada
+l_niskayuna-new-york-usa,Niskayuna,New York,USA
+l_dresden-ontario-canada,Dresden,Ontario,Canada
+l_mount-joy-pennsylvania-usa,Mount Joy,Pennsylvania,USA
+l_los-alamitos-california-usa,Los Alamitos,California,USA
+l_leola-pennsylvania-usa,Leola,Pennsylvania,USA
+l_boca-raton-florida-usa,Boca Raton,Florida,USA
+l_saint-paul-minnesota-usa,Saint Paul,Minnesota,USA
+l_rockford-illinois-usa,Rockford,Illinois,USA
+l_shipshewana-indiana-usa,Shipshewana,Indiana,USA
+l_walnut-creek-california-usa,Walnut Creek,California,USA
+l_pacoima-california-usa,Pacoima,California,USA
+l_north-port-florida-usa,North Port,Florida,USA
+l_richmond-hill-ontario-canada,Richmond Hill,Ontario,Canada
+l_van-nuys-california-usa,Van Nuys,California,USA
+l_winston-salem-north-carolina-usa,Winston-Salem,North Carolina,USA
+l_oakmont-pennsylvania-usa,Oakmont,Pennsylvania,USA
+l_marina-del-ray-california-usa,Marina del Ray,California,USA
+l_yulee-florida-usa,Yulee,Florida,USA
+l_cornell-de-llobregat-barcelona-spain,"Cornellà de Llobregat, Barcelona",,Spain
+l_manitowoc-wisconsin-usa,Manitowoc,Wisconsin,USA
+l_green-bay-wisconsin-usa,Green Bay,Wisconsin,USA
+l_comstock-park-michigan-usa,Comstock Park ,Michigan,USA
+l_sterling-virginia-usa,Sterling,Virginia,USA
+l_addison-illinois-usa,Addison,Illinois,USA
+l_dania-florida-usa,Dania,Florida,USA
+l_bouctouche-new-brunswick-canada,Bouctouche,New Brunswick,Canada
+l_agawam-massachusetts-usa,Agawam,Massachusetts,USA
+l_chachoengsao-chachoengsao-thailand,"Chachoengsao, Chachoengsao",,Thailand
+l_oakland-california-usa,Oakland,California,USA
+l_willis-texas-usa,Willis,Texas,USA
+l_new-castle-delaware-usa,New Castle,Delaware,USA
+l_cranberry-twp-pennsylvania-usa,Cranberry Twp,Pennsylvania,USA
+l_deerfield-illinois-usa,Deerfield,Illinois,USA
+l_nan-norway,,,Norway
+l_atlanta-georgia-usa,Atlanta ,Georgia,USA
+l_auburndale-florida-usa,Auburndale,Florida,USA
+l_west-bloomfield-township-michigan-usa,West Bloomfield Township,Michigan,USA
+l_mukilteo-washington-state-usa,Mukilteo,Washington State,USA
+l_loomis-california-usa,Loomis,California,USA
+l_miami-beach-florida-usa,Miami Beach,Florida,USA
+l_hendersonville-north-carolina-usa,Hendersonville,North Carolina,USA
+l_ricahrdson-texas-usa,Ricahrdson,Texas,USA
+l_nan-new-zealand,,,New Zealand
+l_nan-puerto-rico,,,Puerto Rico
+l_hicksville-new-york-usa,Hicksville,New York,USA
+l_melbourne-florida-usa,Melbourne,Florida,USA
+l_manhattan-kansas-usa,Manhattan,Kansas,USA
+l_muhlhausen-bavaria-united-states-of-america-usa,"Muhlhausen, Bavaria",United States Of America,USA
+l_winter-garden-florida-usa,Winter Garden,Florida,USA
+l_brecksville-ohio-usa,Brecksville,Ohio,USA
+l_bridgeport-connecticut-usa,Bridgeport,Connecticut,USA
+l_kelowna-british-columbia-canada,Kelowna,British Columbia,Canada
+l_fond-du-lac-wisconsin-usa,Fond du Lac,Wisconsin,USA
+l_coral-springs-florida-usa,Coral Springs,Florida,USA
+l_dearborn-michigan-usa,Dearborn,Michigan,USA
+l_louisville-ohio-usa,Louisville,Ohio,USA
+l_columbus-ohio-usa,Columbus,Ohio,USA
+l_panama-city-florida-usa,Panama City,Florida,USA
+l_garland-texas-usa,Garland,Texas,USA
+l_sheboygan-wisconsin-usa,Sheboygan,Wisconsin,USA
+l_guangzhou-guangdong-china,"Guangzhou, Guangdong",,China
+l_holbrook-new-york-usa,Holbrook,New York,USA
+l_appleton-wisconsin-usa,Appleton,Wisconsin,USA
+l_las-vegas-nevada-usa,Las Vegas,Nevada,USA
+l_bloomington-illinois-usa,Bloomington,Illinois,USA
+l_temecula-california-usa,Temecula,California,USA
+l_hampton-florida-usa,HAMPTON,Florida,USA
+l_auburn-washington-state-usa,Auburn,Washington State,USA
+l_brunswick-maine-usa,Brunswick,Maine,USA
+l_zhangzhou-fujian-china,"Zhangzhou, Fujian",,China
+l_nanan-fujian-china,"Nanan, Fujian",,China
+l_santa-fe-springs-california-usa,Santa Fe Springs,California,USA
+l_carlsbad-california-usa,Carlsbad,California,USA
+l_ponte-vedra-florida-usa,Ponte Vedra,Florida,USA
+l_brookline-massachusetts-usa,Brookline,Massachusetts,USA
+l_saint-georges-canada,Saint-Georges ,,Canada
+l_portland-tennessee-usa,Portland,Tennessee,USA
+l_kabinburi-prachin-buri-thailand,"Kabinburi, Prachin Buri",,Thailand
+l_abbotsford-british-columbia-canada,Abbotsford,British Columbia,Canada
+l_tweed-ontario-canada,Tweed,Ontario,Canada
+l_heath-ohio-usa,Heath,Ohio,USA
+l_east-troy-wisconsin-usa,East Troy,Wisconsin,USA
+l_shawnee-oklahoma-usa,Shawnee,Oklahoma,USA
+l_johnson-city-tennessee-usa,Johnson City,Tennessee,USA
+l_goshen-indiana-usa,Goshen,Indiana,USA
+l_maitland-florida-usa,Maitland,Florida,USA
+l_zeeland-michigan-usa,Zeeland,Michigan,USA
+l_winnipeg-manitoba-canada,Winnipeg,Manitoba,Canada
+l_mount-pleasant-south-carolina-usa,Mount Pleasant,South Carolina,USA
+l_port-coquitlam-british-columbia-canada,Port Coquitlam,British Columbia,Canada
+l_valley-alabama-usa,Valley,Alabama,USA
+l_kankakee-illinois-usa,Kankakee,Illinois,USA
+l_seoul-seoul-korea,"Seoul, Seoul",,Korea
+l_warren-michigan-usa,Warren,Michigan,USA
+l_monroe-north-carolina-usa,Monroe,North Carolina,USA
+l_nan-france,,,France
+l_addison-texas-usa,Addison,Texas,USA
+l_nan-nigeria,,,Nigeria
+l_cedar-city-utah-usa,Cedar City,Utah,USA
+l_tucker-georgia-usa,Tucker,Georgia,USA
+l_sanford-florida-usa,Sanford,Florida,USA
+l_marietta-georgia-usa,Marietta,Georgia,USA
+l_ganzhou-jiangxi-china,"Ganzhou, Jiangxi",,China
+l_poultney-vermont-usa,Poultney,Vermont,USA
+l_corato-bari-italy,"Corato, Bari",,Italy
+l_prey-nob-district-krong-preah-sihanouk-cambodia,"Prey Nob District, Krong Preah Sihanouk",,Cambodia
+l_terrace-doral-florida-usa,TERRACE DORAL,Florida,USA
+l_foshan-guangdong-china,"FOSHAN, Guangdong",,China
+l_chaouzhou-guangdong-china,"Chaouzhou, Guangdong",,China
+l_foshan-city-guangdong-china,"Foshan City, Guangdong",,China
+l_hezhou-guangxi-china,"Hezhou, Guangxi",,China
+l_guangyuan-sichuan-china,"Guangyuan, Sichuan",,China
+l_tuzia-istanbul-istanbul-turkey,"Tuzia/ISTANBUL, Istanbul",,Turkey
+l_xuancheng-anhui-china,"Xuancheng, Anhui",,China
+l_winter-park-florida-usa,Winter Park,Florida,USA
+l_wauseon-ohio-usa,Wauseon,Ohio,USA
+l_nan-korea,,,Korea
+l_haining-zhejiang-china,"Haining, Zhejiang",,China
+l_jiaxing-zhejiang-china,"Jiaxing, Zhejiang",,China
+l_jersey-city-shanghai-china,"JERSEY CITY, Shanghai",,China
+l_cheshire-connecticut-usa,Cheshire,Connecticut,USA
+l_abingdon-virginia-usa,Abingdon,Virginia,USA
+l_xiamen-fujian-china,"Xiamen, Fujian",,China
+l_santa-monica-california-usa,Santa Monica,California,USA
+l_pompano-florida-usa,Pompano,Florida,USA
+l_lawrenceville-georgia-usa,Lawrenceville,Georgia,USA
+l_vaughn-ontario-canada,Vaughn,Ontario,Canada
+l_destin-florida-usa,Destin,Florida,USA
+l_newport-tennessee-usa,Newport,Tennessee,USA
+l_shijiazhuang-hebei-china,"Shijiazhuang, Hebei",,China
+l_langfang-hebei-china,"LangFang, Hebei",,China
+l_murray-kentucky-usa,Murray,Kentucky,USA
+l_hebi-hunan-china,"Hebi, Hunan",,China
+l_richmond-california-usa,Richmond,California,USA
+l_reisterstown-maryland-usa,Reisterstown,Maryland,USA
+l_sahud-ulan-tanza-cavite-philippines,"Sahud Ulan Tanza, Cavite",,Philippines
+l_ventura-california-usa,Ventura,California,USA
+l_christiana-pennsylvania-usa,Christiana,Pennsylvania,USA
+l_wilston-queensland-australia,"Wilston, Queensland",,Australia
+l_forest-park-ohio-usa,Forest Park,Ohio,USA
+l_west-trenton-new-jersey-usa,West Trenton,New Jersey,USA
+l_santa-claus-indiana-usa,Santa Claus,Indiana,USA
+l_bangkok-bangkok-thailand,"Bangkok, Bangkok",,Thailand
+l_washington-district-of-columbia-usa,Washington,District Of Columbia,USA
+l_upper-marlboro-maryland-usa,Upper Marlboro,Maryland,USA
+l_chicago-illinois-usa,Chicago,Illinois,USA
+l_birmingham-alabama-usa,Birmingham,Alabama,USA
+l_arlington-virginia-usa,Arlington,Virginia,USA
+l_houston-texas-usa,HOUSTON,Texas,USA
+l_augusta-georgia-usa,Augusta,Georgia,USA
+l_jamestown-new-york-usa,Jamestown,New York,USA
+l_sparta-tennessee-usa,Sparta,Tennessee,USA
+l_auckland-auckland-new-zealand,"Auckland, Auckland",,New Zealand
+l_huizhou-guangdong-china,"Huizhou, Guangdong",,China
+l_aldersyde-alberta-canada,Aldersyde,Alberta,Canada
+l_long-beach-california-usa,Long Beach,California,USA
+l_shanghai-shanghai-china,"Shanghai, Shanghai",,China
+l_rosemont-illinois-usa,Rosemont,Illinois,USA
+l_titusville-florida-usa,TITUSVILLE,Florida,USA
+l_dallas-texas-usa,Dallas,Texas,USA
+l_arlington-heights-illinois-usa,ARLINGTON HEIGHTS,Illinois,USA
+l_brea-california-usa,Brea,California,USA
+l_ottawa-ontario-canada,Ottawa,Ontario,Canada
+l_logan-utah-usa,Logan,Utah,USA
+l_waterloo-ontario-canada,Waterloo,Ontario,Canada
+l_alton-illinois-usa,Alton,Illinois,USA
+l_harrisburg-pennsylvania-usa,Harrisburg,Pennsylvania,USA
+l_seabrook-new-hampshire-usa,Seabrook,New Hampshire,USA
+l_conover-north-carolina-usa,Conover,North Carolina,USA
+l_lewes-delaware-usa,Lewes,Delaware,USA
+l_sacramento-california-usa,Sacramento,California,USA
+l_mitchell-south-dakota-usa,Mitchell,South Dakota,USA
+l_kingston-ontario-canada,Kingston,Ontario,Canada
+l_livingston-new-jersey-usa,Livingston,New Jersey,USA
+l_orange-california-usa,Orange,California,USA
+l_arlington-heights-illinois-usa,Arlington Heights,Illinois,USA
+l_huzhou-zhejiang-china,"Huzhou , Zhejiang",,China
+l_mountain-view-california-usa,Mountain View,California,USA
+l_suwanee-georgia-usa,Suwanee,Georgia,USA
+l_shenzhen-city-guangdong-china,"Shenzhen City, Guangdong",,China
+l_moreno-valley-california-usa,Moreno Valley,California,USA
+l_east-peoria-illinois-usa,East Peoria,Illinois,USA
+l_katy-texas-usa,Katy,Texas,USA
+l_glenview-illinois-usa,Glenview,Illinois,USA
+l_kowloon-bay-kl-hong-kong-china,"Kowloon Bay KL, Hong Kong",,China
+l_adelaide-south-australia-australia,"Adelaide, South Australia",,Australia
+l_chicopee-massachusetts-usa,Chicopee,Massachusetts,USA
+l_tokyo-tokyo-japan,"Tokyo, Tokyo",,Japan
+l_jiangmen-guangdong-china,"Jiangmen, Guangdong",,China
+l_taizhou-jiangsu-china,"Taizhou, Jiangsu",,China
+l_zhangjiagang-jiangsu-china,"Zhangjiagang, Jiangsu",,China
+l_suqian-jiangsu-china,"Suqian, Jiangsu",,China
+l_yancheng-jiangsu-china,"Yancheng, Jiangsu",,China
+l_jiujiang-jiangxi-china,"Jiujiang, Jiangxi",,China
+l_jinhua-zhejiang-china,"Jinhua, Zhejiang",,China
+l_elkhart-indiana-usa,Elkhart,Indiana,USA
+l_moody-alabama-usa,Moody,Alabama,USA
+l_sunrise-florida-usa,Sunrise,Florida,USA
+l_archdale-north-carolina-usa,Archdale,North Carolina,USA
+l_shangrao-jiangxi-china,"Shangrao, Jiangxi",,China
+l_kaiping-guangdong-china,"Kaiping, Guangdong",,China
+l_orange-city-florida-usa,Orange City,Florida,USA
+l_prescott-wisconsin-usa,Prescott,Wisconsin,USA
+l_sonthofen-bayern-germany,"Sonthofen, Bayern",,Germany
+l_hoffman-estates-illinois-usa,Hoffman Estates,Illinois,USA
+l_scranton-pennsylvania-usa,Scranton,Pennsylvania,USA
+l_chino-california-usa,Chino,California,USA
+l_pittsburgh-pennsylvania-usa,Pittsburgh,Pennsylvania,USA
+l_mebane-north-carolina-usa,Mebane,North Carolina,USA
+l_belmont-north-carolina-usa,Belmont,North Carolina,USA
+l_wuyi-zhejiang-china,"Wuyi, Zhejiang",,China
+l_chantilly-virginia-usa,Chantilly,Virginia,USA
+l_nan-mexico,,,Mexico
+l_clyde-hill-washington-state-usa,Clyde Hill,Washington State,USA
+l_seo-gu-incheon-korea,"Seo-gu, Incheon",,Korea
+l_deerfield-beach-florida-usa,Deerfield Beach,Florida,USA
+l_lakefield-minnesota-usa,Lakefield,Minnesota,USA
+l_the-woodlands-texas-usa,The Woodlands ,Texas,USA
+l_clarksville-tennessee-usa,Clarksville,Tennessee,USA
+l_namegata-ibaraki-japan,"Namegata, Ibaraki",,Japan
+l_east-dundee-illinois-usa,East Dundee,Illinois,USA
+l_nan-italy,,,Italy
+l_bozeman-montana-usa,Bozeman,Montana,USA
+l_metairie-louisiana-usa,Metairie,Louisiana,USA
+l_latham-new-york-usa,Latham,New York,USA
+l_penticton-british-columbia-canada,Penticton ,British Columbia,Canada
+l_fort-meyers-florida-usa,Fort Meyers,Florida,USA
+l_auburn-hills-michigan-usa,Auburn Hills,Michigan,USA
+l_west-hartford-connecticut-usa,West Hartford,Connecticut,USA
+l_richardson-texas-usa,Richardson,Texas,USA
+l_quebec-canada,Quebec,,Canada
+l_mattoon-illinois-usa,Mattoon,Illinois,USA
+l_greenville-south-carolina-usa,Greenville,South Carolina,USA
+l_merrill-wisconsin-usa,Merrill,Wisconsin,USA
+l_mcallen-texas-usa,Mcallen,Texas,USA
+l_paramount-california-usa,Paramount,California,USA
+l_duluth-minnesota-usa,Duluth,Minnesota,USA
+l_san-antonio-texas-united-states-of-america-usa,san antonio texas,United States Of America,USA
+l_south-sioux-city-nebraska-usa,South Sioux City,Nebraska,USA
+l_alcover-tarragona-spain,"Alcover, Tarragona",,Spain
+l_lake-oswego-oregon-usa,Lake Oswego,Oregon,USA
+l_mooresville-north-carolina-usa,Mooresville,North Carolina,USA
+l_pasadena-california-usa,Pasadena,California,USA
+l_mableton-georgia-usa,Mableton,Georgia,USA
+l_kingston-new-york-usa,Kingston,New York,USA
+l_pompano-beach-florida-usa,Pompano Beach,Florida,USA
+l_mesquite-texas-usa,Mesquite,Texas,USA
+l_antioch-tennessee-usa,Antioch,Tennessee,USA
+l_st-catharines-ontario-canada,St. Catharines,Ontario,Canada
+l_lynden-washington-state-usa,Lynden,Washington State,USA
+l_nurnberg-bayern-germany,"Nurnberg, Bayern",,Germany
+l_wheeling-west-virginia-usa,Wheeling,West Virginia,USA
+l_arlington-washington-state-usa,Arlington,Washington State,USA
+l_toccoa-georgia-usa,Toccoa,Georgia,USA
+l_philadelphia-pennsylvania-usa,Philadelphia,Pennsylvania,USA
+l_hammonds-plains-nova-scotia-canada,Hammonds Plains,Nova Scotia,Canada
+l_nan-israel,,,Israel
+l_santiago-santiago-metropolitan-region-chile,"Santiago, Santiago Metropolitan Region",,Chile
+l_riverside-california-usa,Riverside,California,USA
+l_casselberry-florida-usa,Casselberry,Florida,USA
+l_wuxi-jiangsu-china,"Wuxi, Jiangsu",,China
+l_woodbridge-ontario-canada,Woodbridge,Ontario,Canada
+l_sarszentmihaly-fej-r-hungary,"Sarszentmihaly, Fejér",,Hungary
+l_ho-chi-minh-ho-chi-minh-vietnam,"Ho Chi Minh, Ho Chi Minh",,Vietnam
+l_concord-north-carolina-usa,Concord,North Carolina,USA
+l_westerville-ohio-usa,Westerville,Ohio,USA
+l_thurcroft-rotherham-united-kingdom,"Thurcroft, Rotherham",,United Kingdom
+l_st-petersburg-florida-usa,St. Petersburg,Florida,USA
+l_nan-japan,,,Japan
+l_west-columbia-south-carolina-usa,West Columbia,South Carolina,USA
+l_bettendorf-iowa-usa,Bettendorf,Iowa,USA
+l_mira-loma-california-usa,Mira Loma,California,USA
+l_farmingdale-new-york-usa,Farmingdale,New York,USA
+l_hiawatha-iowa-usa,Hiawatha,Iowa,USA
+l_waukesha-wisconsin-usa,Waukesha,Wisconsin,USA
+l_laval-canada,Laval,,Canada
+l_nan-austria,,,Austria
+l_neuberg-bayern-germany,"Neuberg, Bayern",,Germany
+l_montclair-california-usa,Montclair,California,USA
+l_boones-mill-virginia-usa,Boones Mill,Virginia,USA
+l_torrance-california-usa,Torrance,California,USA
+l_coshocton-ohio-usa,Coshocton,Ohio,USA
+l_santa-rosa-california-usa,Santa Rosa,California,USA
+l_new-canaan-connecticut-usa,New Canaan,Connecticut,USA
+l_frederick-colorado-usa,Frederick,Colorado,USA
+l_chesterfield-missouri-usa,Chesterfield,Missouri,USA
+l_warwick-warwickshire-united-kingdom,"Warwick, Warwickshire",,United Kingdom
+l_manhattan-beach-california-usa,MANHATTAN BEACH,California,USA
+l_cocoa-florida-usa,Cocoa,Florida,USA
+l_lakewood-new-jersey-usa,Lakewood,New Jersey,USA
+l_brockton-massachusetts-usa,Brockton,Massachusetts,USA
+l_island-park-idaho-usa,Island Park,Idaho,USA
+l_belleville-illinois-usa,Belleville,Illinois,USA
+l_norfolk-nebraska-usa,Norfolk,Nebraska,USA
+l_hickory-kentucky-usa,Hickory,Kentucky,USA
+l_orchard-park-new-york-usa,Orchard Park,New York,USA
+l_buenos-aires-capital-federal-argentina,"Buenos Aires, Capital Federal",,Argentina
+l_colleyville-texas-usa,Colleyville,Texas,USA
+l_north-charleston-south-carolina-usa,North Charleston,South Carolina,USA
+l_rancho-santa-margarita-california-usa,Rancho Santa Margarita,California,USA
+l_westborough-massachusetts-usa,Westborough,Massachusetts,USA
+l_chatsworth-united-states-of-america-usa,Chatsworth,United States Of America,USA
+l_honolulu-hawaii-usa,Honolulu,Hawaii,USA
+l_boise-california-usa,Boise,California,USA
+l_levis-ontario-canada,Levis,Ontario,Canada
+l_osaka-city-osaka-japan,"Osaka city, Osaka",,Japan
+l_nanchang-jiangxi-china,"Nanchang, Jiangxi",,China
+l_nanjing-jiangsu-china,"Nanjing, Jiangsu",,China
+l_nantong-jiangsu-china,"Nantong, Jiangsu",,China
+l_barrie-ontario-canada,Barrie,Ontario,Canada
+l_mission-hills-california-usa,Mission Hills,California,USA
+l_linthicum-heights-maryland-usa,Linthicum Heights,Maryland,USA
+l_dayton-ohio-usa,Dayton,Ohio,USA
+l_hudson-ohio-usa,Hudson,Ohio,USA
+l_new-albany-ohio-usa,New Albany,Ohio,USA
+l_pensacola-florida-usa,Pensacola,Florida,USA
+l_dong-xoai-dong-nai-vietnam,"Dong Xoai, Dong Nai",,Vietnam
+l_alpahretta-georgia-usa,Alpahretta,Georgia,USA
+l_olive-branch-mississippi-usa,Olive Branch,Mississippi,USA
+l_westfield-indiana-usa,Westfield,Indiana,USA
+l_johns-creek-georgia-usa,Johns Creek,Georgia,USA
+l_yuyao-zhejiang-china,"YUYAO, Zhejiang",,China
+l_rockford-tennessee-usa,Rockford,Tennessee,USA
+l_fairfield-new-jersey-usa,Fairfield,New Jersey,USA
+l_greer-south-carolina-usa,Greer,South Carolina,USA
+l_vanceburg-kentucky-usa,VANCEBURG,Kentucky,USA
+l_moncton-new-brunswick-canada,Moncton,New Brunswick,Canada
+l_brossard-canada,Brossard,,Canada
+l_ridgeway-virginia-usa,Ridgeway,Virginia,USA
+l_castro-valley-california-usa,Castro Valley,California,USA
+l_nikhompattana-district-rayong-thailand,"Nikhompattana District, Rayong",,Thailand
+l_mullins-south-carolina-usa,Mullins,South Carolina,USA
+l_clearfield-utah-usa,Clearfield,Utah,USA
+l_syracuse-indiana-usa,Syracuse,Indiana,USA
+l_jenison-michigan-usa,Jenison,Michigan,USA
+l_green-lake-wisconsin-usa,Green Lake,Wisconsin,USA
+l_fort-collins-colorado-usa,Fort Collins,Colorado,USA
+l_rohnert-park-california-usa,Rohnert Park,California,USA
+l_dalseo-gu-daegu-korea,"Dalseo-gu, Daegu",,Korea
+l_american-fork-utah-usa,American Fork,Utah,USA
+l_exton-pennsylvania-usa,Exton,Pennsylvania,USA
+l_doraville-georgia-usa,Doraville,Georgia,USA
+l_lecco-lecco-italy,"Lecco, Lecco",,Italy
+l_madison-wisconsin-usa,Madison,Wisconsin,USA
+l_nan-bahamas,,,Bahamas
+l_red-wing-minnesota-usa,Red Wing,Minnesota,USA
+l_new-braunfels-texas-usa,New Braunfels,Texas,USA
+l_oradea-bihor-romania,"Oradea, Bihor",,Romania
+l_ellenville-new-york-usa,Ellenville,New York,USA
+l_sutherlin-oregon-usa,Sutherlin,Oregon,USA
+l_st-monique-canada,St-Monique,,Canada
+l_doylestown-pennsylvania-usa,Doylestown,Pennsylvania,USA
+l_lincoln-new-mexico-usa,Lincoln,New Mexico,USA
+l_bogota-new-jersey-usa,Bogota,New Jersey,USA
+l_mobile-alabama-usa,Mobile,Alabama,USA
+l_ft-myers-florida-usa,Ft. Myers,Florida,USA
+l_kutztown-pennsylvania-usa,Kutztown,Pennsylvania,USA
+l_bourgbarre-ille-et-vilaine-france,"BOURGBARRE, Ille-et-Vilaine",,France
+l_newark-new-jersey-usa,Newark,New Jersey,USA
+l_north-las-vegas-nevada-usa,North Las Vegas,Nevada,USA
+l_chattanooga-tennessee-usa,Chattanooga,Tennessee,USA
+l_englewood-new-jersey-usa,Englewood,New Jersey,USA
+l_alhambra-california-usa,Alhambra,California,USA
+l_rochester-hills-michigan-usa,Rochester Hills,Michigan,USA
+l_south-jordan-utah-usa,South Jordan,Utah,USA
+l_collierville-tennessee-usa,Collierville,Tennessee,USA
+l_stonewall-manitoba-canada,Stonewall,Manitoba,Canada
+l_golden-valley-minnesota-usa,Golden Valley,Minnesota,USA
+l_arroyo-grande-california-usa,Arroyo Grande,California,USA
+l_panabo-city-davao-del-norte-philippines,"Panabo city, Davao del Norte",,Philippines
+l_tay-ninh-tay-ninh-vietnam,"TAY NINH, Tay Ninh",,Vietnam
+l_sugar-land-texas-usa,Sugar Land,Texas,USA
+l_harbor-city-california-usa,Harbor City,California,USA
+l_08184-palau-solit-i-plegamans-barcelona-spain,"08184 Palau-solità i Plegamans, Barcelona",,Spain
+l_grants-pass-oregon-usa,Grants Pass,Oregon,USA
+l_lewisville-texas-usa,Lewisville,Texas,USA
+l_palatka-florida-usa,Palatka,Florida,USA
+l_clearwater-new-york-usa,Clearwater,New York,USA
+l_maumee-ohio-usa,Maumee,Ohio,USA
+l_forest-grove-oregon-usa,FOREST GROVE,Oregon,USA
+l_shakopee-minnesota-usa,Shakopee,Minnesota,USA
+l_surrey-canada,Surrey,,Canada
+l_groveland-florida-usa,Groveland,Florida,USA
+l_bensalem-pennsylvania-usa,Bensalem,Pennsylvania,USA
+l_hot-springs-arkansas-usa,Hot Springs,Arkansas,USA
+l_willmar-minnesota-usa,Willmar,Minnesota,USA
+l_white-city-oregon-usa,White City,Oregon,USA
+l_haines-city-florida-usa,Haines City,Florida,USA
+l_wichita-kansas-usa,Wichita,Kansas,USA
+l_kocaeli-kocaeli-turkey,"Kocaeli, Kocaeli",,Turkey
+l_maryville-tennessee-usa,Maryville,Tennessee,USA
+l_richmond-virginia-usa,Richmond,Virginia,USA
+l_lawrence-kansas-usa,Lawrence,Kansas,USA
+l_wauconda-illinois-usa,Wauconda,Illinois,USA
+l_rancho-cucamonga-california-usa,Rancho Cucamonga,California,USA
+l_langfang-hebei-china,"Langfang, Hebei",,China
+l_burlington-washington-state-usa,Burlington,Washington State,USA
+l_shawinigan-canada,Shawinigan,,Canada
+l_qingdao-shandong-china,"Qingdao, Shandong",,China
+l_qingyuan-guangdong-china,"Qingyuan, Guangdong",,China
+l_freeburg-missouri-usa,Freeburg,Missouri,USA
+l_camp-hill-pennsylvania-usa,Camp Hill,Pennsylvania,USA
+l_quanzhou-fujian-china,"Quanzhou, Fujian",,China
+l_vernon-california-usa,Vernon,California,USA
+l_quebec-city-canada,Quebec City,,Canada
+l_mineral-wells-texas-usa,Mineral Wells,Texas,USA
+l_quzhou-zhejiang-china,"Quzhou, Zhejiang",,China
+l_greenwich-connecticut-usa,Greenwich,Connecticut,USA
+l_bradford-ontario-canada,Bradford,Ontario,Canada
+l_ward-hill-massachusetts-usa,Ward Hill,Massachusetts,USA
+l_morrisville-north-carolina-usa,Morrisville,North Carolina,USA
+l_hillsboro-texas-usa,Hillsboro ,Texas,USA
+l_winfield-west-virginia-usa,Winfield,West Virginia,USA
+l_west-plains-missouri-usa,West Plains,Missouri,USA
+l_kent-washington-state-usa,Kent,Washington State,USA
+l_kansas-city-missouri-usa,Kansas City,Missouri,USA
+l_st-jerome-canada,St Jerome,,Canada
+l_ramsey-new-jersey-usa,Ramsey,New Jersey,USA
+l_ellicott-city-maryland-usa,Ellicott City,Maryland,USA
+l_waunakee-wisconsin-usa,Waunakee,Wisconsin,USA
+l_bonham-texas-usa,Bonham,Texas,USA
+l_carrollton-texas-usa,Carrollton,Texas,USA
+l_tallahassee-florida-usa,Tallahassee,Florida,USA
+l_west-palm-beach-florida-usa,West Palm Beach,Florida,USA
+l_everson-washington-state-usa,Everson,Washington State,USA
+l_wilburgstetten-bayern-germany,"Wilburgstetten, Bayern",,Germany
+l_gig-harbor-washington-state-usa,Gig Harbor,Washington State,USA
+l_ko-chan-district-chonburi-thailand,"Ko Chan District, Chonburi",,Thailand
+l_etobicoke-ontario-canada,ETOBICOKE,Ontario,Canada
+l_fort-smith-arkansas-usa,Fort Smith,Arkansas,USA
+l_glendale-hights-illinois-usa,Glendale Hights,Illinois,USA
+l_burr-oak-michigan-usa,Burr Oak,Michigan,USA
+l_tigard-oregon-usa,Tigard ,Oregon,USA
+l_hawthorne-california-usa,Hawthorne,California,USA
+l_nan-connecticut-usa,,Connecticut,USA
+l_blissfield-michigan-usa,Blissfield,Michigan,USA
+l_springville-utah-usa,Springville,Utah,USA
+l_milton-ontario-canada,Milton,Ontario,Canada
+l_canoga-park-california-usa,Canoga Park,California,USA
+l_salete-santa-catarina-brazil,"Salete, Santa Catarina",,Brazil
+l_hauppauge-new-york-usa,Hauppauge,New York,USA
+l_imperial-saskatchewan-canada,Imperial,Saskatchewan,Canada
+l_huntersville-north-carolina-usa,Huntersville,North Carolina,USA
+l_spicewood-texas-usa,Spicewood,Texas,USA
+l_cumming-georgia-usa,Cumming,Georgia,USA
+l_heath-texas-usa,Heath,Texas,USA
+l_wilmington-north-carolina-usa,Wilmington,North Carolina,USA
+l_spartanburg-south-carolina-usa,Spartanburg,South Carolina,USA
+l_hillsboro-oregon-usa,Hillsboro,Oregon,USA
+l_san-antonio-texas-usa,San Antonio,Texas,USA
+l_lakeland-florida-usa,Lakeland,Florida,USA
+l_thornton-colorado-usa,Thornton,Colorado,USA
+l_archbold-ohio-usa,Archbold,Ohio,USA
+l_venda-do-pinheiro-lisboa-portugal,"VENDA DO PINHEIRO, Lisboa",,Portugal
+l_hyannis-massachusetts-usa,Hyannis,Massachusetts,USA
+l_kennesaw-georgia-usa,Kennesaw,Georgia,USA
+l_tualatin-oregon-usa,Tualatin,Oregon,USA
+l_carmel-indiana-usa,Carmel,Indiana,USA
+l_plattsburgh-new-york-usa,Plattsburgh,New York,USA
+l_franklin-tennessee-usa,Franklin,Tennessee,USA
+l_colli-al-metauro-pesaro-e-urbino-italy,"Colli al Metauro, Pesaro e Urbino",,Italy
+l_broomfield-colorado-usa,Broomfield,Colorado,USA
+l_georgetown-south-carolina-usa,Georgetown,South Carolina,USA
+l_lemont-illinois-usa,Lemont,Illinois,USA
+l_st-paul-minnesota-usa,St. Paul,Minnesota,USA
+l_chesterfield-michigan-usa,Chesterfield,Michigan,USA
+l_ft-worth-texas-usa,Ft Worth,Texas,USA
+l_dezhou-shandong-china,"Dezhou, Shandong",,China
+l_weifang-shandong-china,"Weifang, Shandong",,China
+l_linyi-shandong-china,"Linyi, Shandong",,China
+l_laiwu-shandong-china,"Laiwu, Shandong",,China
+l_fengxian-shanghai-china,"Fengxian, Shanghai",,China
+l_hayward-california-usa,HAYWARD,California,USA
+l_eagle-mt-utah-usa,Eagle Mt,Utah,USA
+l_nagahama-city-shiga-japan,"Nagahama City, Shiga",,Japan
+l_paju-gyeonggi-do-korea,"Paju, Gyeonggi-do",,Korea
+l_warwick-rhode-island-usa,Warwick,Rhode Island,USA
+l_macon-georgia-usa,Macon,Georgia,USA
+l_hickory-north-carolina-usa,Hickory,North Carolina,USA
+l_georgia-usa,    ,Georgia,USA
+l_red-bluff-california-usa,Red BLuff,California,USA
+l_lyndhurst-new-jersey-usa,LYNDHURST,New Jersey,USA
+l_eau-claire-wisconsin-usa,Eau Claire,Wisconsin,USA
+l_whitewater-wisconsin-usa,Whitewater,Wisconsin,USA
+l_tequesta-florida-usa,Tequesta,Florida,USA
+l_pleasanton-california-usa,Pleasanton,California,USA
+l_reading-pennsylvania-usa,Reading,Pennsylvania,USA
+l_mount-royal-new-jersey-usa,Mount Royal,New Jersey,USA
+l_vineyard-utah-usa,Vineyard,Utah,USA
+l_pembroke-new-hampshire-usa,Pembroke,New Hampshire,USA
+l_leesburg-florida-usa,Leesburg,Florida,USA
+l_ville-st-laurent-canada,Ville St-Laurent,,Canada
+l_rosenheim-bayern-germany,"Rosenheim, Bayern",,Germany
+l_louiseville-canada,Louiseville,,Canada
+l_goleta-california-usa,Goleta,California,USA
+l_fountain-inn-south-carolina-usa,Fountain Inn,South Carolina,USA
+l_huzhou-zhejiang-china,"Huzhou, Zhejiang",,China
+l_palo-alto-united-states-of-america-usa,Palo Alto ,United States Of America,USA
+l_santa-rosa-beach-florida-usa,Santa Rosa Beach,Florida,USA
+l_niverville-manitoba-canada,Niverville,Manitoba,Canada
+l_stamford-connecticut-usa,Stamford,Connecticut,USA
+l_smackover-arkansas-usa,Smackover,Arkansas,USA
+l_roanoke-virginia-usa,Roanoke,Virginia,USA
+l_oakland-california-usa,oakland,California,USA
+l_edison-new-jersey-usa,Edison,New Jersey,USA
+l_arlington-texas-usa,Arlington,Texas,USA
+l_san-clemente-california-usa,San Clemente,California,USA
+l_chamblee-georgia-usa,Chamblee,Georgia,USA
+l_kohler-wisconsin-usa,Kohler,Wisconsin,USA
+l_lebanon-tennessee-usa,Lebanon,Tennessee,USA
+l_west-hatfield-massachusetts-usa,West Hatfield,Massachusetts,USA
+l_milwaukee-wisconsin-usa,Milwaukee,Wisconsin,USA
+l_monroe-connecticut-usa,Monroe,Connecticut,USA
+l_cookeville-tennessee-usa,Cookeville,Tennessee,USA
+l_venice-california-usa,Venice,California,USA
+l_albany-oregon-usa,Albany,Oregon,USA
+l_dahlonega-georgia-usa,Dahlonega,Georgia,USA
+l_redmond-washington-state-usa,Redmond,Washington State,USA
+l_webster-new-york-usa,Webster,New York,USA
+l_sherwood-oregon-usa,Sherwood,Oregon,USA
+l_centennial-colorado-usa,Centennial,Colorado,USA
+l_braco-do-norte-santa-catarina-brazil,"Braco do Norte, Santa Catarina",,Brazil
+l_el-segundo-california-usa,El Segundo,California,USA
+l_leawood-kansas-usa,Leawood,Kansas,USA
+l_warrenton-missouri-usa,Warrenton,Missouri,USA
+l_monroe-washington-state-usa,Monroe,Washington State,USA
+l_pincher-creek-alberta-canada,Pincher Creek,Alberta,Canada
+l_carrollton-georgia-usa,Carrollton,Georgia,USA
+l_pleasant-hill-missouri-usa,Pleasant Hill,Missouri,USA
+l_new-holland-pennsylvania-usa,New Holland,Pennsylvania,USA
+l_chaska-minnesota-usa,Chaska,Minnesota,USA
+l_thomasville-georgia-usa,Thomasville,Georgia,USA
+l_cranston-rhode-island-usa,Cranston,Rhode Island,USA
+l_decorah-iowa-usa,Decorah,Iowa,USA
+l_ban-bueng-chonburi-thailand,"Ban Bueng, Chonburi",,Thailand
+l_zaozhuang-shandong-china,"Zaozhuang, Shandong",,China
+l_yuhuan-zhejiang-china,"Yuhuan, Zhejiang",,China
+l_salmon-arm-british-columbia-canada,Salmon Arm,British Columbia,Canada
+l_stafford-texas-usa,Stafford,Texas,USA
+l_saint-augustin-de-desmaures-canada,Saint-Augustin-de-Desmaures,,Canada
+l_oxford-north-carolina-usa,Oxford,North Carolina,USA
+l_paterna-valencia-spain,"Paterna, Valencia",,Spain
+l_timonium-maryland-usa,Timonium,Maryland,USA
+l_bois-des-filion-canada,BOIS DES FILION,,Canada
+l_clinton-twp-michigan-usa,Clinton Twp,Michigan,USA
+l_virginia-beach-virginia-usa,Virginia Beach,Virginia,USA
+l_rouses-point-new-york-usa,Rouses Point,New York,USA
+l_canton-ohio-usa,Canton,Ohio,USA
+l_batavia-new-york-usa,Batavia,New York,USA
+l_columbus-georgia-usa,Columbus,Georgia,USA
+l_fredericksburg-virginia-usa,Fredericksburg,Virginia,USA
+l_tangshan-hebei-china,"Tangshan, Hebei",,China
+l_tianjin-tianjin-china,"TIANJIN, Tianjin",,China
+l_danbury-connecticut-usa,Danbury,Connecticut,USA
+l_battle-creek-michigan-usa,Battle Creek,Michigan,USA
+l_north-fort-myers-florida-usa,North Fort Myers,Florida,USA
+l_terrebonne-canada,Terrebonne,,Canada
+l_largo-florida-usa,Largo,Florida,USA
+l_nan-portugal,,,Portugal
+l_deal-new-jersey-usa,Deal,New Jersey,USA
+l_white-bear-lake-minnesota-usa,White Bear Lake,Minnesota,USA
+l_burlingame-california-usa,Burlingame,California,USA
+l_vernon-british-columbia-canada,Vernon,British Columbia,Canada
+l_sriracha-chonburi-thailand,"Sriracha, Chonburi",,Thailand
+l_bethel-connecticut-usa,Bethel,Connecticut,USA
+l_beachwood-ohio-usa,Beachwood,Ohio,USA
+l_the-villages-florida-usa,The Villages,Florida,USA
+l_dublin-california-usa,Dublin,California,USA
+l_mukwonago-wisconsin-usa,Mukwonago,Wisconsin,USA
+l_bracebridge-ontario-canada,Bracebridge,Ontario,Canada
+l_chalfont-pennsylvania-usa,Chalfont,Pennsylvania,USA
+l_palmerston-ontario-canada,Palmerston,Ontario,Canada
+l_minneapolis-minnesota-usa,Minneapolis,Minnesota,USA
+l_sandy-utah-usa,Sandy,Utah,USA
+l_parsippany-new-jersey-usa,Parsippany,New Jersey,USA
+l_buffalo-new-york-usa,Buffalo,New York,USA
+l_thunder-bay-ontario-canada,Thunder Bay,Ontario,Canada
+l_stockton-california-usa,Stockton,California,USA
+l_eagan-minnesota-usa,Eagan,Minnesota,USA
+l_ankara-ankara-turkey,"ANKARA, Ankara",,Turkey
+l_lombard-illinois-usa,Lombard,Illinois,USA
+l_bowling-green-kentucky-usa,Bowling Green,Kentucky,USA
+l_jeonju-si-jeonbuk-jeollabuk-do-korea,"Jeonju-si, Jeonbuk, Jeollabuk-do",,Korea
+l_midland-michigan-usa,Midland,Michigan,USA
+l_fuzhou-fujian-china,"Fuzhou, Fujian",,China
+l_delta-british-columbia-canada,Delta,British Columbia,Canada
+l_fontana-california-usa,Fontana,California,USA
+l_corona-california-usa,Corona,California,USA
+l_boone-north-carolina-usa,Boone,North Carolina,USA
+l_ny-new-york-usa,NY,New York,USA
+l_jiangmen-guangdong-china,"JIANGMEN, Guangdong",,China
+l_dalton-georgia-usa,Dalton,Georgia,USA
+l_opelika-alabama-usa,Opelika,Alabama,USA
+l_friendswood-texas-usa,Friendswood,Texas,USA
+l_league-city-texas-usa,League City,Texas,USA
+l_export-pennsylvania-usa,Export,Pennsylvania,USA
+l_mahone-bay-nova-scotia-canada,Mahone Bay,Nova Scotia,Canada
+l_waite-park-minnesota-usa,Waite Park,Minnesota,USA
+l_aliquippa-pennsylvania-usa,Aliquippa,Pennsylvania,USA
+l_kasota-minnesota-usa,Kasota,Minnesota,USA
+l_fort-myers-florida-usa,Fort Myers,Florida,USA
+l_nan-hong-kong,,,Hong Kong
+l_trang-bang-tay-ninh-vietnam,"Trang Bang, Tay Ninh",,Vietnam
+l_nan-vietnam,,,Vietnam
+l_concord-ontario-canada,CONCORD,Ontario,Canada
+l_maple-ridge-british-columbia-canada,Maple Ridge,British Columbia,Canada
+l_skokie-illinois-usa,Skokie,Illinois,USA
+l_longwood-florida-usa,"Longwood,",Florida,USA
+l_victoriaville-canada,Victoriaville,,Canada
+l_plantsville-connecticut-usa,Plantsville,Connecticut,USA
+l_franklin-kentucky-usa,Franklin,Kentucky,USA
+l_brunswick-georgia-usa,Brunswick,Georgia,USA
+l_scotts-valley-california-usa,Scotts Valley,California,USA
+l_englewood-colorado-usa,ENGLEWOOD,Colorado,USA
+l_lake-zurich-illinois-usa,Lake Zurich,Illinois,USA
+l_galston-new-south-wales-australia,"Galston, New South Wales",,Australia
+l_bartow-florida-usa,Bartow,Florida,USA
+l_batavia-illinois-usa,Batavia,Illinois,USA
+l_wenzhou-zhejiang-china,"Wenzhou, Zhejiang",,China
+l_yueqing-zhejiang-china,"Yueqing, Zhejiang",,China
+l_rancho-dominguez-california-usa,Rancho Dominguez,California,USA
+l_vancouver-united-states-of-america-usa,Vancouver,United States Of America,USA
+l_temple-texas-usa,Temple,Texas,USA
+l_north-syracuse-new-york-usa,North Syracuse,New York,USA
+l_tillson-new-york-usa,Tillson,New York,USA
+l_monett-missouri-usa,Monett,Missouri,USA
+l_canmore-alberta-canada,Canmore,Alberta,Canada
+l_chilliwack-british-columbia-canada,Chilliwack,British Columbia,Canada
+l_gresham-oregon-usa,Gresham,Oregon,USA
+l_livermore-california-usa,Livermore,California,USA
+l_fleming-island-florida-usa,Fleming Island,Florida,USA
+l_lutz-florida-usa,Lutz,Florida,USA
+l_st-paul-minnesota-usa,St Paul,Minnesota,USA
+l_wuhan-hubei-china,"Wuhan, Hubei",,China
+l_hengshui-hebei-china,"Hengshui, Hebei",,China
+l_tolleson-arizona-usa,Tolleson,Arizona,USA
+l_yantai-shandong-china,"Yantai, Shandong",,China
+l_southington-connecticut-usa,Southington,Connecticut,USA
+l_yongkang-zhejiang-china,"Yongkang, Zhejiang",,China
+l_yuyao-zhejiang-china,"Yuyao, Zhejiang",,China
+l_hongkong-hong-kong-china,"Hongkong, Hong Kong",,China
+l_stephansposching-bayern-germany,"Stephansposching, Bayern",,Germany
+l_hampton-new-hampshire-usa,Hampton,New Hampshire,USA
+l_zhaoqing-guangdong-china,"Zhaoqing, Guangdong",,China
+l_houzhou-zhejiang-china,"Houzhou, Zhejiang",,China
+l_jiangshan-zhejiang-china,"Jiangshan, Zhejiang",,China
+l_zhengzhou-henan-china,"Zhengzhou, Henan",,China
+l_arlington-massachusetts-usa,Arlington,Massachusetts,USA
+l_newport-beach-california-usa,Newport Beach,California,USA
+l_randolph-new-jersey-usa,Randolph,New Jersey,USA
+l_little-elm-texas-usa,Little Elm,Texas,USA
