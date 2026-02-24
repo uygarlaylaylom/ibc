@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from supabase_utils import get_supabase
+from supabase_utils import get_supabase, get_companies, update_company
 from tasks_module.repository import get_all_tasks, update_task_status, bulk_update_tasks, insert_task
 from tasks_module.parser import parse_and_create_task
 
@@ -41,11 +41,18 @@ def get_client_safely():
 # Fetch Data
 all_tasks = get_all_tasks(get_client_safely())
 
+if "all_companies_data" not in st.session_state:
+    st.session_state.all_companies_data = get_companies()
+
+all_companies_data = st.session_state.all_companies_data
+all_company_names = sorted(list(set(c.get('company_name') for c in all_companies_data if c.get('company_name'))))
+company_name_to_id = {c.get('company_name'): c.get('id') for c in all_companies_data if c.get('company_name') and c.get('id')}
+
 # ==========================================================
 # 2. SOL KENAR ÇUBUĞU (SIDEBAR / TAXONOMY EXPLORER)
 # ==========================================================
 with st.sidebar:
-    st.markdown("### 🏢 IBC İstihbarat")
+    st.markdown("### 🏢 IBS İstihbarat")
     search_query = st.text_input("🔍 Kategorilerde veya firmalarda ara...")
     st.divider()
     
@@ -58,12 +65,23 @@ with st.sidebar:
     def select_cat(cat_name):
         st.session_state.selected_category = cat_name
 
-    # Dummy category tree for UI demonstration
+    # Real IBS Category Tree
     categories_dict = {
-        "Görüntü Teknolojileri": ["Kameralar", "Lensler", "Monitörler", "Video Mikserleri"],
-        "Ses Teknolojileri": ["Mikrofonlar", "Ses Mikserleri", "Hoparlörler"],
-        "Aydınlatma": ["Stüdyo Işıkları", "Taşınabilir Işıklar"],
-        "Yayın Sistemleri": ["Vericiler", "Kodlayıcılar"]
+        "1️⃣ STRUCTURAL SYSTEMS": ["Framing Systems", "Steel Framing", "Insulating Concrete Forms", "Concrete Systems", "Structural Connectors", "Sheathing", "Subfloor", "Anchors", "Fasteners"],
+        "2️⃣ BUILDING ENVELOPE": ["Siding", "Cladding", "Exterior Trim", "Weather Barriers", "Air Barriers", "Waterproofing", "Sealants"],
+        "3️⃣ ROOFING": ["Asphalt Roofing", "Metal Roofing", "Flat Roofing", "Roofing Accessories", "Roof Drainage"],
+        "4️⃣ WINDOWS, DOORS & OPENINGS": ["Windows", "Exterior Doors", "Interior Doors", "Garage Doors", "Skylights", "Louvers", "Entry Systems"],
+        "5️⃣ INSULATION & ENERGY": ["Insulation", "Spray Foam", "Radiant Systems", "Energy Efficiency Systems", "Weatherization"],
+        "6️⃣ HVAC & AIR QUALITY": ["HVAC Systems", "HVAC Controls", "Ventilation", "Indoor Air Quality", "Heat Pumps"],
+        "7️⃣ PLUMBING": ["Plumbing Fixtures", "Pipe Systems", "Water Heaters", "Drainage Systems"],
+        "8️⃣ ELECTRICAL": ["Wiring Devices", "Lighting", "Lighting Controls", "Electrical Distribution"],
+        "9️⃣ SMART HOME & SECURITY": ["Home Automation", "Access Control", "Security Systems", "Connected Devices"],
+        "🔟 KITCHEN & BATH": ["Kitchen Cabinets", "Bathroom Fixtures", "Countertops", "Storage Systems"],
+        "11️⃣ INTERIOR FINISHES": ["Flooring", "Paint", "Coatings", "Wall Systems", "Ceilings", "Trim", "Molding"],
+        "12️⃣ OUTDOOR LIVING": ["Composite Decking", "Wood Decking", "Railings", "Pergolas", "Gazebos", "Outdoor Kitchens"],
+        "13️⃣ SITE & LANDSCAPE": ["Pavers", "Retaining Walls", "Irrigation", "Greenhouses"],
+        "14️⃣ MATERIALS & COMPONENTS": ["Aluminum Products", "Steel Products", "Extrusions", "Stone", "Masonry", "Glass Systems"],
+        "15️⃣ SOFTWARE & BUSINESS SERVICES": ["Construction Software", "Estimating Tools", "Permit Platforms", "Advisory Services", "Financing Platforms", "Web Development"]
     }
     
     if st.button("📁 Tüm Kategoriler", on_click=select_cat, args=("Tüm Kategoriler",), use_container_width=True):
@@ -82,18 +100,21 @@ with st.sidebar:
     
     # Yeni Not Ekle (Smart Parsing Input)
     st.markdown("#### 📝 Yeni Firma / Not Ekle")
-    new_company = st.text_input("Firma Adı")
+    new_company = st.selectbox("Firma Seçin", [""] + all_company_names)
     new_note = st.text_area("Notunuzu girin (Örn: #acil toplantı ayarla @Sony [Kameralar])", height=100)
     
     if st.button("Kaydet", type="primary", use_container_width=True):
         if new_company and new_note:
             new_task = parse_and_create_task(new_company, new_note)
             if new_task:
-                # Make sure brackets matches the expected schema in repository 
-                # (For simplicity, we pass bracket_category if parser extracted it)
                 inserted = insert_task(get_client_safely(), new_task)
                 if inserted:
                     st.success("Not kaydedildi!")
+                    # Sync High priority tasks to the company master record
+                    if inserted.get("priority") == "High" and new_company in company_name_to_id:
+                        comp_id = company_name_to_id[new_company]
+                        update_company(comp_id, priority=5)
+                        st.info("Firma genel önceliği 5 (Ateşli) olarak senkronize edildi!")
                     st.rerun()
                 else:
                     st.error("Veritabanına kaydedilirken hata oluştu.")
