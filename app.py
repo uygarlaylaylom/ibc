@@ -5,8 +5,10 @@ import io
 import datetime
 from supabase_utils import (
     get_companies, update_company, get_notes, add_note, delete_note,
-    get_attachments, upload_attachment, get_public_url
+    get_attachments, upload_attachment, get_public_url,
+    get_contacts, add_contact, delete_contact
 )
+from ocr_local import extract_text_from_image_bytes
 
 # --- Configuration ---
 st.set_page_config(page_title="IBS 2026 Booth Tracker", page_icon="🏢", layout="wide")
@@ -143,10 +145,23 @@ else:
             <div class="company-card">
                 <h3>{comp['company_name']} <span class="booth-badge">{comp['booth_number']}</span></h3>
                 <p><strong>Segment:</strong> {comp['segment']}</p>
-                <p><strong>Website:</strong> <a href="{comp['website']}" target="_blank">{comp['website']}</a></p>
                 <p><i>{comp.get('description', 'No description available')}</i></p>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Editable Website inline
+            col_web1, col_web2 = st.columns([0.8, 0.2])
+            with col_web1:
+                new_web = st.text_input("Website", value=comp.get('website', ''), key=f"web_{comp['id']}")
+            with col_web2:
+                if st.button("Save URL", key=f"save_web_{comp['id']}"):
+                    if new_web != comp.get('website'):
+                        update_company(comp['id'], website=new_web)
+                        st.success("Saved!")
+                        st.rerun()
+            
+            if comp.get('website'):
+                st.markdown(f"🔗 <a href='{comp['website']}' target='_blank'>Ziyaret Et</a>", unsafe_allow_html=True)
             
             # Action Row: Visited & Priority & Tags
             col1, col2 = st.columns(2)
@@ -192,7 +207,8 @@ else:
             st.markdown("---")
             
             # Content Tabs
-            tab1, tab2, tab3 = st.tabs(["📝 Notes", "📂 Attachments", "📧 History"])
+            tab1, tab2, tab3, tab4 = st.tabs(["📝 Notes", "📂 Attachments", "📧 History", "👤 Contacts & OCR"])
+            
             
             # TAB 1: Notes
             with tab1:
@@ -259,6 +275,56 @@ else:
                         """, unsafe_allow_html=True)
                 if email_count == 0:
                     st.info("No forwarded emails received yet.")
+            
+            # TAB 4: Contacts & OCR
+            with tab4:
+                 st.write("**Kişiler & Kartvizit Tarama**")
+                 ocr_col, manual_col = st.columns([1, 1])
+                 
+                 with ocr_col:
+                     st.info("📷 **Kartvizit OCR İşlemi (Yerel Sürüm)**\nResmi yükleyin, metni okuyun ve yandaki forma aktarın.")
+                     ocr_img = st.file_uploader("Kartvizit Yükle (OCR)", type=['png', 'jpg', 'jpeg'], key=f"ocr_up_{comp['id']}")
+                     
+                     raw_ocr_text = ""
+                     if ocr_img is not None:
+                         if st.button("OCR'ı Başlat", key=f"run_ocr_{comp['id']}"):
+                             with st.spinner("Tesseract metni çıkarıyor..."):
+                                 raw_ocr_text = extract_text_from_image_bytes(ocr_img.getvalue())
+                                 st.session_state[f"ocr_result_{comp['id']}"] = raw_ocr_text
+                                 
+                     if f"ocr_result_{comp['id']}" in st.session_state:
+                         st.text_area("OCR Ham Metni (Kopyalamak için):", st.session_state[f"ocr_result_{comp['id']}"], height=200, key=f"raw_text_{comp['id']}")
+                         
+                 with manual_col:
+                     with st.container(border=True):
+                         st.write("➕ **Yeni Kişi Ekle**")
+                         c_name = st.text_input("Ad Soyad", key=f"c_name_{comp['id']}")
+                         c_title = st.text_input("Ünvan", key=f"c_title_{comp['id']}")
+                         c_email = st.text_input("E-posta", key=f"c_email_{comp['id']}")
+                         c_phone = st.text_input("Telefon", key=f"c_phone_{comp['id']}")
+                         if st.button("Kişiyi Kaydet", type="primary", key=f"save_contact_{comp['id']}"):
+                             if c_name:
+                                 add_contact(comp['id'], name=c_name, title=c_title, email=c_email, phone=c_phone)
+                                 st.success("Kişi kaydedildi!")
+                                 st.rerun()
+                             else:
+                                 st.warning("Ad Soyad zorunludur.")
+                 
+                 st.write("---")
+                 contacts_list = get_contacts(comp['id'])
+                 if contacts_list:
+                     for c in contacts_list:
+                         ccol1, ccol2, ccol3 = st.columns([3, 3, 1])
+                         with ccol1:
+                             st.markdown(f"**{c.get('name', '')}** <small>({c.get('title', '')})</small>", unsafe_allow_html=True)
+                         with ccol2:
+                             st.markdown(f"📧 {c.get('email', '')}<br>📞 {c.get('phone', '')}", unsafe_allow_html=True)
+                         with ccol3:
+                             if st.button("🗑️", key=f"del_c_{c['id']}"):
+                                 delete_contact(c['id'])
+                                 st.rerun()
+                 else:
+                     st.info("Henüz kayıtlı kişi yok.")
 
     if len(companies) > 50:
         st.warning("Showing top 50 results. Use the search bar to find more specific companies.")

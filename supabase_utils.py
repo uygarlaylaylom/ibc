@@ -139,3 +139,45 @@ def get_public_url(file_path):
     """Gets the public URL for an attachment."""
     supabase = get_supabase()
     return supabase.storage.from_("attachments").get_public_url(file_path)
+
+# --- Contacts ---
+
+def get_contacts(company_id):
+    """Fetches contacts for a specific company."""
+    supabase = get_supabase()
+    response = supabase.table("contacts").select("*").eq("company_id", company_id).order("created_at", desc=False).execute()
+    return response.data
+
+def add_contact(company_id, name, title=None, email=None, phone=None, notes=None):
+    """Adds a new contact to a company."""
+    if not name.strip():
+        return
+    supabase = get_supabase()
+    data = {
+        "company_id": company_id,
+        "name": name,
+        "title": title,
+        "email": email,
+        "phone": phone,
+        "notes": notes
+    }
+    supabase.table("contacts").insert(data).execute()
+
+def update_contact(contact_id, name=None, title=None, email=None, phone=None, notes=None):
+    """Updates an existing contact."""
+    supabase = get_supabase()
+    data = {}
+    if name is not None: data["name"] = name
+    if title is not None: data["title"] = title
+    if email is not None: data["email"] = email
+    if phone is not None: data["phone"] = phone
+    if notes is not None: data["notes"] = notes
+    
+    if data:
+        supabase.table("contacts").update(data).eq("id", contact_id).execute()
+
+def delete_contact(contact_id):
+    """Deletes a contact."""
+    supabase = get_supabase()
+    supabase.table("contacts").delete().eq("id", contact_id).execute()
+
