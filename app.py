@@ -9,6 +9,7 @@ from supabase_utils import (
     get_contacts, add_contact, delete_contact
 )
 from ocr_local import extract_text_from_image_bytes
+from seed_database import seed_companies
 
 # --- Configuration ---
 st.set_page_config(page_title="IBS 2026 Booth Tracker", page_icon="🏢", layout="wide")
@@ -282,9 +283,16 @@ else:
                  ocr_col, manual_col = st.columns([1, 1])
                  
                  with ocr_col:
-                     st.info("📷 **Kartvizit OCR İşlemi (Yerel Sürüm)**\nResmi yükleyin, metni okuyun ve yandaki forma aktarın.")
-                     ocr_img = st.file_uploader("Kartvizit Yükle (OCR)", type=['png', 'jpg', 'jpeg'], key=f"ocr_up_{comp['id']}")
+                     st.info("📷 **Kartvizit OCR İşlemi (Yerel Sürüm)**\nResmi yükleyin veya kameradan fotoğraf çekin.")
                      
+                     ocr_mode = st.radio("Fotoğraf Kaynağı", ["Dosya Yükle", "Kamera Başlat"], horizontal=True, key=f"ocr_mode_{comp['id']}")
+                     
+                     ocr_img = None
+                     if ocr_mode == "Dosya Yükle":
+                         ocr_img = st.file_uploader("Kartvizit Yükle (OCR)", type=['png', 'jpg', 'jpeg'], key=f"ocr_up_{comp['id']}")
+                     else:
+                         ocr_img = st.camera_input("Fotoğraf Çek", key=f"ocr_cam_{comp['id']}")
+                         
                      raw_ocr_text = ""
                      if ocr_img is not None:
                          if st.button("OCR'ı Başlat", key=f"run_ocr_{comp['id']}"):
@@ -325,6 +333,16 @@ else:
                                  st.rerun()
                  else:
                      st.info("Henüz kayıtlı kişi yok.")
+
+# --- Admin Section for Database Reset ---
+st.sidebar.markdown("---")
+st.sidebar.title("⚙️ Admin Tools")
+if st.sidebar.button("🔄 Reset & Seed Database (Danger)"):
+    with st.spinner("Flushing old data and importing clean Excel..."):
+        seed_companies("ibs_2026_all_exhibitors_clean.xlsx")
+        st.success("Database successfully reset to clean version! Refresh the page.")
+        # We don't auto rerun instantly to let them read the success message, 
+        # but they can reload the app.
 
     if len(companies) > 50:
         st.warning("Showing top 50 results. Use the search bar to find more specific companies.")

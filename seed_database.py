@@ -65,6 +65,15 @@ def seed_companies(file_path="ibs_2026_all_exhibitors_clean.xlsx"):
         print(f"Error reading file {file_path}: {e}")
         return
 
+    # Flush existing data to avoid keeping dirty entries
+    print("Flushing existing companies from database...")
+    try:
+        # Supabase API requires a filter for deletes, ne('id', 0) will match all UUIDs
+        supabase.table("companies").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        print("Old database cleared.")
+    except Exception as e:
+        print(f"Error clearing database: {e}")
+
     records = []
     
     # Required columns in Supabase: booth_number, company_name, segment, description, website, primary_domain
