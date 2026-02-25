@@ -50,30 +50,39 @@ def clean_data(val):
          return None
     return str(val).strip() if val else None
 
-def seed_companies(csv_path="offline_dossier/ibs_2026_final_enriched.csv"):
+def seed_companies(file_path="ibs_2026_all_exhibitors_clean.xlsx"):
     if not supabase:
         print("Cannot run seeding without Supabase credentials. Set them in a .env file.")
         return
         
-    print(f"Loading data from {csv_path}...")
+    print(f"Loading data from {file_path}...")
     try:
-        df = pd.read_csv(csv_path)
+        if file_path.endswith('.csv'):
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
     except Exception as e:
-        print(f"Error reading CSV: {e}")
+        print(f"Error reading file {file_path}: {e}")
         return
 
     records = []
     
     # Required columns in Supabase: booth_number, company_name, segment, description, website, primary_domain
     for index, row in df.iterrows():
-        website = clean_data(row.get('Inferred_Website')) or clean_data(row.get('Website'))
+        # Use fallbacks to handle small header variations in the clean excel
+        website = clean_data(row.get('Website')) or clean_data(row.get('Inferred_Website'))
         primary_domain = extract_primary_domain(website)
         
+        company = clean_data(row.get('Company')) or clean_data(row.get('Company Name')) or clean_data(row.get('Exhibitor Name')) or clean_data(row.get('Name')) or f"Unknown Company {index}"
+        booth = clean_data(row.get('Booth')) or clean_data(row.get('Booth Number'))
+        segment = clean_data(row.get('Segment')) or clean_data(row.get('Category')) or clean_data(row.get('Product Category'))
+        desc = clean_data(row.get('Description')) or clean_data(row.get('About')) or clean_data(row.get('Profile'))
+        
         record = {
-            "booth_number": clean_data(row.get('Booth')),
-            "company_name": clean_data(row.get('Company')) or f"Unknown Company {index}",
-            "segment": clean_data(row.get('Segment')),
-            "description": clean_data(row.get('Description')),
+            "booth_number": booth,
+            "company_name": company,
+            "segment": segment,
+            "description": desc,
             "website": website,
             "primary_domain": primary_domain,
             "visited": False,
