@@ -3,13 +3,10 @@ import pandas as pd
 from PIL import Image
 import io
 import datetime
-from supabase_utils import (
-    get_companies, update_company, get_notes, add_note, delete_note,
-    get_attachments, upload_attachment, get_public_url,
-    get_contacts, add_contact, delete_contact
-)
+from supabase_utils import get_companies, update_company, get_notes, add_note, delete_note, get_attachments, upload_attachment, get_public_url, get_contacts, add_contact, delete_contact
 from ocr_local import extract_text_from_image_bytes
 from seed_database import seed_companies
+from google_drive_utils import find_or_create_folder, upload_file_to_drive
 
 # --- Configuration ---
 st.set_page_config(page_title="IBS 2026 Booth Tracker", page_icon="🏢", layout="wide")
@@ -83,6 +80,7 @@ AVAILABLE_PRODUCTS = [
 # --- Sidebar Filters ---
 st.sidebar.title("📌 Navigation")
 st.sidebar.page_link("pages/dashboard.py", label="IBC Intelligence Dashboard", icon="🚀")
+st.sidebar.page_link("pages/gallery.py", label="Medya Kütüphanesi (Galeri)", icon="📸")
 st.sidebar.markdown("---")
 
 st.sidebar.title("🔍 Filters & Search")
@@ -251,28 +249,66 @@ else:
                                 delete_note(n['id'])
                                 st.rerun()
 
-            # TAB 2: Attachments
+            # TAB 2: Attachments / Media
             with tab2:
-                uploaded_file = st.file_uploader("Upload Business Card / Catalog (Image)", type=['png', 'jpg', 'jpeg'], key=f"file_{comp['id']}")
+                st.info("📦 **Dosyalar Google Drive'a Yüklenecektir** (IBS_2026_Gallery)")
+                
+                # Check for existing Google Drive folder for this company or just use a main folder
+                # We'll put everything in one main folder or subfolders, let's use: IBS_2026_Gallery / [Booth]_[Name]
+                
+                uploaded_file = st.file_uploader("Katalog veya Fotoğraf Yükle (PDF, PNG, JPG vb.)", type=['png', 'jpg', 'jpeg', 'pdf'], key=f"file_{comp['id']}")
                 if uploaded_file is not None:
-                    if st.button("Compress & Upload", key=f"up_btn_{comp['id']}"):
-                        with st.spinner("Processing..."):
-                            compressed_bytes = compress_image(uploaded_file)
-                            filename = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
-                            upload_attachment(comp['id'], compressed_bytes, filename, file_type="image")
-                            st.success("Uploaded successfully!")
-                            st.rerun()
+                    if st.button("Google Drive'a Yükle", key=f"up_btn_{comp['id']}", type="primary"):
+                        with st.spinner("Google Drive'a gönderiliyor..."):
+                            # Create main folder if missing
+                            main_folder_id = find_or_create_folder("IBS_2026_Gallery")
+                            if not main_folder_id:
+                                st.error("Google Drive kütüphanesine bağlanılamadı. credentials.json kontrol edin.")
+                            else:
+                                # Provide clean name
+                                clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
+                                subfolder_name = f"{comp['booth_number']}_{clean_cname}"
+                                subfolder_id = find_or_create_folder(subfolder_name)
+                                
+                                # Move subfolder into main folder by default if we want nested, but flat with prefix is easier for now
+                                # So just use the subfolder_name as direct folder
+                                
+                                filename = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
+                                
+                                file_bytes = uploaded_file.getvalue()
+                                mime_type = uploaded_file.type
+                                
+                                gdrive_link = upload_file_to_drive(file_bytes, filename, mime_type, subfolder_id)
+                                
+                                if gdrive_link:
+                                    # Save link to Supabase
+                                    # Build tags string
+                                    all_tags = (comp.get('tags') or []) + (comp.get('products') or [])
+                                    all_tags_str = ",".join(all_tags) if all_tags else "untagged"
+                                    
+                                    # Use source="gdrive"
+                                    upload_attachment(comp['id'], file_name=gdrive_link, file_type=f"gdrive_file|{all_tags_str}", source="gdrive")
+                                    st.success("Google Drive'a başarıyla kaydedildi!")
+                                    st.rerun()
+                                else:
+                                    st.error("Google Drive yükleme hatası.")
                             
                 attachments = get_attachments(comp['id'])
                 if attachments:
-                    st.write("**Saved Files:**")
+                    st.write("**Google Drive Dosyaları (Tıklayıp Görüntüleyin):**")
                     cols = st.columns(3)
                     for i, att in enumerate(attachments):
                         url = get_public_url(att['file_path'])
                         with cols[i % 3]:
-                            st.image(url, caption=att['file_path'].split('/')[-1], use_column_width=True)
+                            if "image" in att['file_type'] and "gdrive" not in att['file_type']:
+                                # Old Supabase Images
+                                st.image(url, caption="Supabase Resim", use_column_width=True)
+                            else:
+                                # Google Drive Link
+                                label = "🔗 Görüntüle / İndir"
+                                st.markdown(f"[{label}]({url})")
                 else:
-                    st.info("No attachments yet.")
+                    st.info("Henüz eklenmiş dosya yok.")
 
             # TAB 3: History / Emails
             with tab3:

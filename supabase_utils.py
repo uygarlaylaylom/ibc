@@ -109,23 +109,29 @@ def get_attachments(company_id):
     response = supabase.table("attachments").select("*").eq("company_id", company_id).order("created_at", desc=True).execute()
     return response.data
 
-def upload_attachment(company_id, file_bytes, file_name, file_type="image"):
-    """Uploads a file to Supabase Storage and records it in attachments table."""
+def upload_attachment(company_id, file_bytes=None, file_name="", file_type="image", source="supabase"):
+    """
+    Uploads a file to Supabase Storage (if source=='supabase') AND records it in attachments table.
+    If source=='gdrive', file_name is treated as the Google Drive link and bytes are ignored.
+    """
     supabase = get_supabase()
     
-    # Path: company_id/file_name
-    storage_path = f"{company_id}/{file_name}"
-    
-    # Upload to bucket
-    # Note: Ensure 'attachments' bucket exists and is public
-    try:
-        supabase.storage.from_("attachments").upload(
-            path=storage_path, 
-            file=file_bytes, 
-            file_options={"content-type": "application/octet-stream"}
-        )
-    except Exception as e:
-        print(f"File upload error (may already exist): {e}")
+    if source == "supabase":
+        # Path: company_id/file_name
+        storage_path = f"{company_id}/{file_name}"
+        
+        # Upload to bucket Ensure 'attachments' bucket exists and is public
+        try:
+            supabase.storage.from_("attachments").upload(
+                path=storage_path, 
+                file=file_bytes, 
+                file_options={"content-type": "application/octet-stream"}
+            )
+        except Exception as e:
+            print(f"File upload error (may already exist): {e}")
+    else:
+        # GDrive: the file_name parameter holds the URL
+        storage_path = file_name
 
     # Save to table
     data = {
@@ -136,7 +142,9 @@ def upload_attachment(company_id, file_bytes, file_name, file_type="image"):
     supabase.table("attachments").insert(data).execute()
 
 def get_public_url(file_path):
-    """Gets the public URL for an attachment."""
+    """Gets the public URL for an attachment (handles both Supabase and GDrive)."""
+    if file_path.startswith("http"):
+        return file_path
     supabase = get_supabase()
     return supabase.storage.from_("attachments").get_public_url(file_path)
 
