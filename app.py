@@ -144,25 +144,39 @@ else:
         with st.expander(f"{comp['booth_number']} - {comp['company_name']} {'✅' if comp['visited'] else ''}"):
             st.markdown(f"""
             <div class="company-card">
-                <h3>{comp['company_name']} <span class="booth-badge">{comp['booth_number']}</span></h3>
-                <p><strong>Segment:</strong> {comp['segment']}</p>
-                <p><i>{comp.get('description', 'No description available')}</i></p>
+                <h3><span class="booth-badge">{comp['booth_number']}</span></h3>
             </div>
             """, unsafe_allow_html=True)
+            
+            # --- Editable Core Details ---
+            col_name, col_seg = st.columns([0.7, 0.3])
+            with col_name:
+                new_name = st.text_input("Şirket Adı / Company Name", value=comp.get('company_name', ''), key=f"name_{comp['id']}")
+            with col_seg:
+                new_seg = st.text_input("Segment", value=comp.get('segment', ''), key=f"seg_{comp['id']}")
+                
+            new_desc = st.text_area("Açıklama / Description", value=comp.get('description', ''), key=f"desc_{comp['id']}")
             
             # Editable Website inline
             col_web1, col_web2 = st.columns([0.8, 0.2])
             with col_web1:
                 new_web = st.text_input("Website", value=comp.get('website', ''), key=f"web_{comp['id']}")
             with col_web2:
-                if st.button("Save URL", key=f"save_web_{comp['id']}"):
-                    if new_web != comp.get('website'):
-                        update_company(comp['id'], website=new_web)
-                        st.success("Saved!")
+                # We save all 4 core fields at once to avoid multiple clicks
+                if st.button("💾 Bilgileri Kaydet (Save)", key=f"save_core_{comp['id']}", type="primary", use_container_width=True):
+                    updates = {}
+                    if new_name != comp.get('company_name'): updates['company_name'] = new_name
+                    if new_seg != comp.get('segment'): updates['segment'] = new_seg
+                    if new_desc != comp.get('description'): updates['description'] = new_desc
+                    if new_web != comp.get('website'): updates['website'] = new_web
+                    
+                    if updates:
+                        update_company(comp['id'], **updates)
+                        st.success("Tüm bilgiler kaydedildi! (Sayfa yenileniyor...)")
                         st.rerun()
             
             if comp.get('website'):
-                st.markdown(f"🔗 <a href='{comp['website']}' target='_blank'>Ziyaret Et</a>", unsafe_allow_html=True)
+                st.markdown(f"🔗 <a href='{comp['website']}' target='_blank'>Ziyaret Et / Visit</a>", unsafe_allow_html=True)
             
             # Action Row: Visited & Priority & Tags
             col1, col2 = st.columns(2)
