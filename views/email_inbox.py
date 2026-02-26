@@ -42,26 +42,38 @@ def _get_gemini():
         return None
 
 
+def _strip_metadata(content):
+    """Stored markdown header/table'ı silerek ham email metnini döner."""
+    # '---' separator'dan sonraki kısmı al (gerçek email body)
+    parts = content.split('---\n')
+    if len(parts) >= 2:
+        # Son parça genellikle body + Gemini analizi
+        body = parts[1]  # tablo'dan sonraki kısım
+        # Eğer daha önce Gemini analizi eklendiyse onu çıkar
+        if '\ud83e\udd16 **Gemini Analizi' in body:
+            body = body.split('\ud83e\udd16 **Gemini Analizi')[0]
+        return body.strip()[:2000]
+    return content[:2000]
+
+
 def _gemini_analyze(model, email_content, company_names):
-    """Gemini'ye emaili analiz ettirir. Dict döner."""
-    company_list_str = ", ".join(company_names[:50])
-    prompt = f"""Aşağıdaki bir fuar/ticari etkinlik emailidir. Lütfen kısaca Türkçe analiz et:
-
-EMAIL:
-{email_content[:2500]}
-
-Şu formatta yanıtla (JSON olmadan, düz metin):
-1. ÖZET: (1-2 cümle, emailin ana konusu)
-2. FİRMA TAHMİNİ: (Gönderen muhtemelen şu firmalardan biridir, listeden en yakın olanı seç veya "Listede yok" de: {company_list_str})
-3. ÜRÜN/KATEGORİ: (Email hangi ürün veya kategoriden bahsediyor?)
-4. AKSİYON: (Yapılması gereken en önemli eylem nedir? Örn: "Fiyat listesi iste", "Demo ayarla", "Görmezden gel")
-5. ÖNCELİK: (Yüksek / Orta / Düşük ve neden)"""
-
+    """Gemini'ye emaili analiz ettirir. Düz metin döner."""
+    clean_body = _strip_metadata(email_content)
+    company_list_str = ", ".join(company_names[:40])
+    prompt = (
+        "Fuar email analizi. Kesinlikle sadece aşağıdaki format, başka hiçbir şey yazma:\n\n"
+        f"EMAIL:\n{clean_body}\n\n"
+        "Format (her satır ayrı):\n"
+        f"FİRMA: <gönderen şirket adı, bu listeden seç ya da 'Listede yok' de: {company_list_str}>\n"
+        "ÜRÜN: <hangi ürün/kategori>\n"
+        "AKSİYON: <somut tek eylem: Demo iste / Fiyat al / Katalog iste / Takip et / Sil>\n"
+        "ÖNCELİK: <Yüksek veya Orta veya Düşük>"
+    )
     try:
         resp = model.generate_content(prompt)
         return resp.text
     except Exception as e:
-        return f"⚠️ Gemini hatası: {e}"
+        return f"⚠️ Hata: {e}"
 
 
 def show_email_inbox():
@@ -116,26 +128,30 @@ def show_email_inbox():
         # ── TOPLU ANALİZ BUTONU ─────────────────────────────────────
         if gemini_model and visible:
             if st.button(f"🤖 Tümünü Analiz Et ({len(visible)} email)", type="primary", use_container_width=True):
-                with st.spinner(f"{len(visible)} email Gemini ile analiz ediliyor..."):
+                with st.spinner(f"{min(len(visible), 15)} email Gemini ile analiz ediliyor..."):
+                    import re
                     bulk_results = []
-                    for em in visible[:15]:  # Maks 15 email (rate limit için)
+                    for em in visible[:15]:
                         content = em.get('content', '')
                         subject = _extract_subject(content)
                         result = _gemini_analyze(gemini_model, content, company_names_list)
                         st.session_state[f"gemini_result_{em['id']}"] = result
-                        # Özet için sadece AKSİYON satırını al
-                        action = "?"
-                        for line in result.split('\n'):
-                            if 'AKSİYON:' in line:
-                                action = line.split('AKSİYON:')[-1].strip()
-                                break
-                        priority = "?"
-                        for line in result.split('\n'):
-                            if 'ÖNCELİK:' in line:
-                                priority = line.split('ÖNCELİK:')[-1].strip()[:40]
-                                break
-                        bulk_results.append((subject[:50], action, priority))
-                    
+
+                        # Robust parse: hem 'AKSİYON:' hem '4. AKSİYON:' hem '**AKSİYON**:' gibi varyasyonları yakala
+                        def extract_field(text, key):
+                            pattern = re.compile(
+                                r'(?:^|\n)(?:[0-9]+\.\s*|\*{1,2})?'
+                                + re.escape(key)
+                                + r'\*{0,2}[:\s]+(.+)',
+                                re.IGNORECASE
+                            )
+                            m = pattern.search(text)
+                            return m.group(1).strip() if m else "—"
+
+                        action = extract_field(result, 'AKSİYON')
+                        priority = extract_field(result, 'ÖNCELİK').split()[0] if extract_field(result, 'ÖNCELİK') != '—' else '—'
+                        bulk_results.append((subject[:55], action[:60], priority))
+
                     st.session_state["bulk_analysis"] = bulk_results
                     st.rerun()
         
