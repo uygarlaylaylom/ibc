@@ -125,11 +125,6 @@ if app_mode == "Firma Listesi":
     st.sidebar.title("🔍 Filters & Search")
     search_query = st.sidebar.text_input("Search (Booth, Name...)", "")
 
-    st.sidebar.markdown("### Category Filters")
-    selected_segment = st.sidebar.selectbox("📂 Segment / Product Group", AVAILABLE_SEGMENTS, index=0)
-    selected_tag_filter = st.sidebar.selectbox("🏷️ Company Tag", ["All"] + AVAILABLE_TAGS, index=0)
-    selected_product_filter = st.sidebar.selectbox("📦 Product", ["All"] + AVAILABLE_PRODUCTS, index=0)
-
     st.sidebar.markdown("### Status Filters")
     visited_only = st.sidebar.checkbox("✅ Visited Only", False)
     min_priority = st.sidebar.slider("🔥 Minimum Priority (1-5)", min_value=1, max_value=5, value=1)
@@ -138,12 +133,9 @@ if app_mode == "Firma Listesi":
     has_notes = st.sidebar.checkbox("📝 Has Manual Notes", False)
     has_email = st.sidebar.checkbox("📧 Received Email", False)
 
-    st.sidebar.markdown("---")
-    st.sidebar.info("Upload marketing emails via the Webhook or add them directly here.")
-
-    # --- Fetch Data ---
+    # --- Fetch Data (Pre-Filter) ---
     try:
-        with st.spinner("Loading companies..."):
+        with st.spinner("Katalog yükleniyor..."):
             companies = get_companies(
                 search_query=search_query,
                 visited_only=visited_only,
@@ -151,24 +143,33 @@ if app_mode == "Firma Listesi":
                 has_notes=has_notes,
                 has_email=has_email
             )
-        
-            # Apply strict Segment filtering
-            if selected_segment != "All":
-                companies = [c for c in companies if c.get('segment') == selected_segment]
-            
-            # Apply strict Tag filtering
-            if selected_tag_filter != "All":
-                companies = [c for c in companies if c.get('tags') and selected_tag_filter in c['tags']]
-            
-            # Apply strict Product filtering
-            if selected_product_filter != "All":
-                companies = [c for c in companies if c.get('products') and selected_product_filter in c['products']]
+            # PHASE 5: Build Global Tag Registry dynamically from active DB items
+            dynamic_tags = sorted(list(set(tag for c in companies for tag in (c.get('tags') or []))))
             
     except Exception as e:
         import traceback
         st.error(f"Veritabanı bağlantı hatası: {e}")
         st.code(traceback.format_exc())
         st.stop()
+
+    st.sidebar.markdown("### Category Filters")
+    selected_segment = st.sidebar.selectbox("📂 Segment / Product Group", AVAILABLE_SEGMENTS, index=0)
+    # Use dynamic tags ensuring nothing is hidden
+    selected_tag_filter = st.sidebar.selectbox("🏷️ Company Tag", ["All"] + dynamic_tags, index=0)
+    selected_product_filter = st.sidebar.selectbox("📦 Product", ["All"] + AVAILABLE_PRODUCTS, index=0)
+
+    st.sidebar.markdown("---")
+    st.sidebar.info("Upload marketing emails via the Webhook or add them directly here.")
+
+    # --- Apply Post-Filters (Python-side) ---
+    if selected_segment != "All":
+        companies = [c for c in companies if c.get('segment') == selected_segment]
+    
+    if selected_tag_filter != "All":
+        companies = [c for c in companies if c.get('tags') and selected_tag_filter in c['tags']]
+    
+    if selected_product_filter != "All":
+        companies = [c for c in companies if c.get('products') and selected_product_filter in c['products']]
 
     # --- Main Dashboard ---
     st.title("🏢 IBS 2026 Booth Tracker")
@@ -356,29 +357,42 @@ Notlar: {combined_text}"""
                     current_tags = comp.get('tags') or []
                     current_products = comp.get('products') or []
                     
-                    if hasattr(st, "pills"):
-                        if current_tags:
-                            st.pills("Genel Etiketler", current_tags, disabled=True)
-                        if current_products:
-                            st.pills("Ürün Grupları", current_products, disabled=True)
+                    # PHASE 5: Notion / Linear Style HTML Badges
+                    tags_html = ""
+                    for tag in current_tags:
+                        tags_html += f"<span style='background:#6366f1;color:white;padding:4px 12px;border-radius:16px;font-size:13px;margin:3px;display:inline-block;font-weight:600;box-shadow: 0 2px 4px rgba(99,102,241,0.2);'>#{tag}</span>"
+                    for prod in current_products:
+                        tags_html += f"<span style='background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:4px 12px;border-radius:16px;font-size:13px;margin:3px;display:inline-block;margin-top:5px;box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>📦 {prod}</span>"
+                    
+                    if tags_html:
+                        st.markdown(f"<div style='margin-bottom:15px;line-height:2.0;'>{tags_html}</div>", unsafe_allow_html=True)
                     else:
-                        st.markdown("**Genel:** " + ", ".join(current_tags) if current_tags else "Genel: Yok")
-                        st.markdown("**Ürün:** " + ", ".join(current_products) if current_products else "Ürün: Yok")
+                        st.info("Henüz etiket veya ürün kategorisi atanmamış.")
 
                     with st.expander("✏️ Kategorileri Düzenle"):
-                        all_tags_options = list(set(AVAILABLE_TAGS + current_tags))
+                        st.markdown("---")
                         
-                        new_tags = st.multiselect("Firma Durumu (Tags)", options=all_tags_options, default=current_tags, key=f"tags_edit_{comp['id']}")
-                        new_custom_tag = st.text_input("➕ Listede olmayan yeni bir etiket ekle:", placeholder="Örn: Bayilik Veriyor", key=f"add_tag_{comp['id']}")
-                        if new_custom_tag and new_custom_tag not in new_tags:
-                            new_tags.append(new_custom_tag)
+                        # Use all global dynamic tags for options so nothing is hidden from the user, and use raw current_tags as default
+                        all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
+                        new_tags = st.multiselect("Genel Etiketler (Tags)", options=all_tag_opts, default=current_tags, key=f"tags_edit_{comp['id']}")
+                        
+                        # Allow custom tag input
+                        custom_tag = st.text_input("Yeni Özel Etiket Ekle (Enter'a basın):", placeholder="Örn: Bayilik Veriyor", key=f"custom_tag_{comp['id']}")
+                        if custom_tag:
+                            new_custom_tag = custom_tag.strip().title()
+                            if new_custom_tag not in new_tags:
+                                new_tags.append(new_custom_tag)
 
                         new_products = st.multiselect("Odak Ürün Kategorileri", options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), default=current_products, key=f"prod_edit_{comp['id']}")
                         
                         if set(new_products) != set(current_products) or set(new_tags) != set(current_tags):
                             if st.button("💾 Kaydet", key=f"save_cats_{comp['id']}", type="primary"):
                                 update_company(comp['id'], tags=new_tags, products=new_products)
-                                st.success("Etiketler Güncellendi!")
+                                # Clear widget states to force redraw from DB
+                                for reset_key in [f"tags_edit_{comp['id']}", f"prod_edit_{comp['id']}", f"custom_tag_{comp['id']}"]:
+                                    if reset_key in st.session_state:
+                                        del st.session_state[reset_key]
+                                st.toast("Kategoriler Güncellendi!", icon="✅")
                                 st.rerun()
 
             

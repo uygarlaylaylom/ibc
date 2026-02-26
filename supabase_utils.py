@@ -93,6 +93,10 @@ def add_note(company_id, content, note_type="manual", company_name=None):
         "content": content
     }
     
+    # Extract all #hashtags from content using regex
+    import re
+    extracted_tags = re.findall(r'#(\w+)', content)
+    
     # If it's a manual entry, check if it contains task parsing
     if final_type == 'note' and company_name:
         from tasks_module.parser import parse_and_create_task
@@ -106,7 +110,26 @@ def add_note(company_id, content, note_type="manual", company_name=None):
             if parsed_task.due_date:
                 data["due_date"] = parsed_task.due_date.isoformat()
             
+            # Merge parser tags with regex tags just in case
+            extracted_tags = list(set(extracted_tags + (parsed_task.tags or [])))
+            
     supabase.table("activities").insert(data).execute()
+    
+    # --- PHASE 5: Note-to-Firm Sync ---
+    # Merge any extracted tags into the parent company profile permanently
+    if extracted_tags:
+        # Standardize tags (capitalize first letter, lowercase rest)
+        clean_tags = [t.strip().title() for t in extracted_tags]
+        try:
+            # Fetch current company tags
+            comp_res = supabase.table("companies").select("tags").eq("id", company_id).execute()
+            if comp_res.data:
+                curr_tags = comp_res.data[0].get("tags") or []
+                merged = list(set(curr_tags + clean_tags))
+                if set(merged) != set(curr_tags):
+                    supabase.table("companies").update({"tags": merged}).eq("id", company_id).execute()
+        except Exception as e:
+            print("Error syncing tags to company:", e)
 
 def delete_note(note_id):
     """Deletes a specific activity."""
