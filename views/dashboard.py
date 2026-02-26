@@ -233,7 +233,7 @@ def show_dashboard():
     # ==========================================================
     # 5. KANBAN GÖRÜNÜMÜ (FRAGMENT)
     # ==========================================================
-    @st.experimental_fragment
+    @st.fragment
     def render_kanban_board(tasks_data):
         grouped_tasks = {"Todo": [], "In Progress": [], "Done": []}
         for t in tasks_data:
