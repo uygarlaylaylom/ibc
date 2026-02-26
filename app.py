@@ -735,9 +735,6 @@ if app_mode == "Firma Listesi":
 elif app_mode == "Medya Kütüphanesi":
     from views.gallery import show_gallery
     show_gallery()
-elif app_mode == "Analiz & Görevler":
-    from views.dashboard import show_dashboard
-    show_dashboard()
-elif app_mode == "📬 Email Kutusu":
-    from views.email_inbox import show_email_inbox
-    show_email_inbox()
+elif app_mode == "🧠 İstihbarat Merkezi":
+    from views.intelligence_hub import show_intelligence_hub
+    show_intelligence_hub()

@@ -83,7 +83,7 @@ def _show_ai_assistant():
                         for c in companies[:80]
                     ])
 
-                    manual_notes = [n for n in notes if n.get('type') == 'manual']
+                    manual_notes = [n for n in notes if n.get('type') == 'note']
                     email_notes  = [n for n in notes if n.get('type') == 'email']
 
                     notes_summary = "\n".join([
