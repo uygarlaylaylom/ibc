@@ -475,13 +475,76 @@ if app_mode == "Firma Listesi":
                          
                          raw_ocr_text = ""
                          if ocr_img is not None:
-                             if st.button("OCR'ı Başlat", key=f"run_ocr_{comp['id']}"):
-                                 with st.spinner("Tesseract metni çıkarıyor..."):
-                                     raw_ocr_text = extract_text_from_image_bytes(ocr_img.getvalue())
-                                     st.session_state[f"ocr_result_{comp['id']}"] = raw_ocr_text
-                                 
+                             if st.button("🤖 Gemini ile Kartviziti Tara", key=f"run_ocr_{comp['id']}", type="primary"):
+                                 with st.spinner("Gemini kartviziti analiz ediyor..."):
+                                     try:
+                                         import google.generativeai as genai
+                                         import base64
+                                         api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                         genai.configure(api_key=api_key)
+                                         model = genai.GenerativeModel("gemini-2.0-flash")
+                                         
+                                         img_bytes = ocr_img.getvalue()
+                                         import PIL.Image
+                                         pil_img = PIL.Image.open(io.BytesIO(img_bytes))
+                                         
+                                         prompt = (
+                                             "Bu bir kartvizit fotoğrafıdır. Tüm metni oku ve yapılandırılmış bilgileri çıkar.\n"
+                                             "Şu formatta yanıtla (her satır ayrı):\n"
+                                             "AD_SOYAD: <kişinin tam adı>\n"
+                                             "UNVAN: <pozisyon/ünvan>\n"
+                                             "SIRKET: <şirket adı>\n"
+                                             "EMAIL: <e-posta adresi>\n"
+                                             "TELEFON: <telefon numarası>\n"
+                                             "WEB: <website>\n"
+                                             "ADRES: <adres varsa>\n"
+                                             "HAM_METIN: <kartvizitteki tüm metin>"
+                                         )
+                                         response = model.generate_content([prompt, pil_img])
+                                         raw_ocr_text = response.text
+                                         st.session_state[f"ocr_result_{comp['id']}"] = raw_ocr_text
+                                         
+                                         # Yapılandırılmış alanları parse et ve form'a otomatik doldur
+                                         import re
+                                         def ge(text, key):
+                                             m = re.search(r'(?:^|\n)' + re.escape(key) + r'[:\s]+(.+)', text, re.IGNORECASE)
+                                             return m.group(1).strip() if m else ""
+                                         
+                                         st.session_state[f"ocr_name_{comp['id']}"]  = ge(raw_ocr_text, "AD_SOYAD")
+                                         st.session_state[f"ocr_title_{comp['id']}"] = ge(raw_ocr_text, "UNVAN")
+                                         st.session_state[f"ocr_email_{comp['id']}"] = ge(raw_ocr_text, "EMAIL")
+                                         st.session_state[f"ocr_phone_{comp['id']}"] = ge(raw_ocr_text, "TELEFON")
+                                         
+                                         # ── Google Drive'a yükle ──
+                                         try:
+                                             comp_name_safe = comp.get('company_name', 'Firma').replace('/', '-')[:40]
+                                             folder_name = f"{comp_name_safe} - Kartvizitler"
+                                             folder_id = find_or_create_folder(folder_name)
+                                             
+                                             ext = ocr_img.name.split('.')[-1] if hasattr(ocr_img, 'name') else 'jpg'
+                                             fname = f"kartvizit_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
+                                             
+                                             gdrive_web_link, gdrive_file_id, _ = upload_file_to_drive(
+                                                 file_bytes=img_bytes,
+                                                 filename=fname,
+                                                 mime_type=f"image/{ext}",
+                                                 folder_id=folder_id
+                                             )
+                                             if gdrive_file_id:
+                                                 db_url = f"{gdrive_web_link}#id={gdrive_file_id}#tags=kartvizit"
+                                                 upload_attachment(comp['id'], db_url, "image")
+                                                 st.success(f"✅ Kartvizit okundu ve Drive'a yüklendi! Sağdaki formu kontrol edin.")
+                                             else:
+                                                 st.success("✅ Kartvizit okundu! Sağdaki formu kontrol edin.")
+                                         except Exception as drive_err:
+                                             st.success("✅ Kartvizit okundu! (Drive yükleme hatası: " + str(drive_err) + ")")
+                                     except Exception as e:
+                                         st.error(f"Gemini OCR hatası: {e}")
+                         
                          if f"ocr_result_{comp['id']}" in st.session_state:
-                             st.text_area("OCR Ham Metni (Kopyalamak için):", st.session_state[f"ocr_result_{comp['id']}"], height=200, key=f"raw_text_{comp['id']}")
+                             with st.expander("📄 Ham OCR Metni"):
+                                 st.text(st.session_state[f"ocr_result_{comp['id']}"])
+
                          
                      with manual_col:
                          with st.container(border=True):
