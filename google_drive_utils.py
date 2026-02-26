@@ -2,7 +2,7 @@ import os
 import json
 import io
 import streamlit as st
-from google.oauth2.service_account import Credentials
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
@@ -10,28 +10,26 @@ from googleapiclient.http import MediaIoBaseUpload
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 # The credentials file that the user will drop into the project root
-CREDENTIALS_FILE = 'credentials.json'
+TOKEN_FILE = 'token.json'
 
 def get_drive_service():
-    """Authenticates and returns the Google Drive API service."""
+    """Authenticates and returns the Google Drive API service using User OAuth token."""
     try:
-        if "gcp_service_account" in st.secrets:
-            creds_info = st.secrets["gcp_service_account"]
-            if isinstance(creds_info, str):
-                creds_dict = json.loads(creds_info)
+        if "GDRIVE_TOKEN_JSON" in st.secrets:
+            token_info = st.secrets["GDRIVE_TOKEN_JSON"]
+            if isinstance(token_info, str):
+                token_dict = json.loads(token_info)
             else:
-                creds_dict = dict(creds_info)
-            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+                token_dict = dict(token_info)
+            creds = Credentials.from_authorized_user_info(token_dict, SCOPES)
             return build('drive', 'v3', credentials=creds)
     except Exception as e:
-        st.error(f"Google Drive Kimlik Doğrulama Hatası (st.secrets JSON formatı bozuk olabilir): {e}")
+        st.error(f"Google Drive Token Hatası (st.secrets JSON formatı bozuk olabilir): {e}")
         
-    # Fallback to local file for testing
-    if not os.path.exists(CREDENTIALS_FILE):
-        print("No Google Service Account credentials found in st.secrets or local credentials.json")
+    if not os.path.exists(TOKEN_FILE):
         return None
         
-    creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+    creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
     service = build('drive', 'v3', credentials=creds)
     return service
 

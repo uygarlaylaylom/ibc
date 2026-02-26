@@ -15,3 +15,4 @@ local_libs/
 # Temporary Excel Files
 ~$*
 \ncredentials.json
+\nclient_secret.json\ntoken.json
