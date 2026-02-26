@@ -18,28 +18,6 @@ from google_drive_utils import find_or_create_folder, upload_file_to_drive
 # --- Configuration ---
 st.set_page_config(page_title="IBS 2026 İstihbarat", page_icon="🏢", layout="wide")
 
-# --- Authentication ---
-def check_password():
-    """Returns `True` if the user had the correct password."""
-    def password_entered():
-        if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
-            st.session_state["password_correct"] = True
-        else:
-            st.session_state["password_correct"] = False
-
-    if "password_correct" not in st.session_state:
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-        return False
-    elif not st.session_state["password_correct"]:
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-        st.error("😕 Hatalı şifre.")
-        return False
-    else:
-        return True
-
-if not check_password():
-    st.stop()
-
 
 # --- Navigation (SPA) ---
 st.sidebar.title("📌 IBS 2026 Navigasyon")
