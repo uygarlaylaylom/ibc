@@ -14,30 +14,26 @@ from tasks_module.parser import parse_and_create_task
 
 st.set_page_config(page_title="IBC İstihbarat", layout="wide", initial_sidebar_state="expanded")
 
-# --- Authentication ---
-from google_auth_manager import check_custom_google_auth
-
-try:
-    check_custom_google_auth()
-except Exception as e:
-    # Graceful fallback if any Google setup fails
-    import traceback
-    st.error(f"Google Girişi Yapılandırma Hatası: {e}")
-    st.code(traceback.format_exc())
-    
+def check_password():
+    """Returns `True` if the user had the correct password."""
     def password_entered():
         if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
             st.session_state["password_correct"] = True
         else:
             st.session_state["password_correct"] = False
-    
+
     if "password_correct" not in st.session_state:
-        st.text_input("Lütfen Giriş Şifresini Yazın (Fallback)", type="password", on_change=password_entered, key="pwd_input")
-        st.stop()
+        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
+        return False
     elif not st.session_state["password_correct"]:
-        st.text_input("Lütfen Giriş Şifresini Yazın (Fallback)", type="password", on_change=password_entered, key="pwd_input")
+        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
         st.error("😕 Hatalı şifre.")
-        st.stop()  # Do not continue if not authenticated
+        return False
+    else:
+        return True
+
+if not check_password():
+    st.stop()
 
 # --- END Authentication ---
 
