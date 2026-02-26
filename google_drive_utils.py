@@ -24,7 +24,10 @@ def get_drive_service():
             creds = Credentials.from_authorized_user_info(token_dict, SCOPES)
             return build('drive', 'v3', credentials=creds)
     except Exception as e:
-        st.error(f"Google Drive Token Hatası (st.secrets JSON formatı bozuk olabilir): {e}")
+        import traceback
+        st.error(f"Google Drive st.secrets Yükleme Hatası (JSON parçalanamadı): {e}")
+        st.code(traceback.format_exc())
+        return None
         
     if not os.path.exists(TOKEN_FILE):
         return None
