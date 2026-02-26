@@ -21,7 +21,7 @@ st.set_page_config(page_title="IBS 2026 İstihbarat", page_icon="🏢", layout="
 
 # --- Navigation (SPA) ---
 st.sidebar.title("📌 IBS 2026 Navigasyon")
-app_mode = st.sidebar.radio("Modül Seçin:", ["Firma Listesi", "Medya Kütüphanesi", "Analiz & Görevler"])
+app_mode = st.sidebar.radio("Modül Seçin:", ["Firma Listesi", "Medya Kütüphanesi", "Analiz & Görevler", "📬 Email Kutusu"])
 st.sidebar.markdown("---")
 
 if app_mode == "Firma Listesi":
@@ -531,3 +531,6 @@ elif app_mode == "Medya Kütüphanesi":
 elif app_mode == "Analiz & Görevler":
     from views.dashboard import show_dashboard
     show_dashboard()
+elif app_mode == "📬 Email Kutusu":
+    from views.email_inbox import show_email_inbox
+    show_email_inbox()
