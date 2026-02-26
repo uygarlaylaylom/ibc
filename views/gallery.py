@@ -85,20 +85,20 @@ def show_gallery():
                 
                 if is_gdrive:
                     clean_url = file_url.split('#')[0]
-                    thumb_url = None
                     file_id = None
                     parts = file_url.split('#')
-                    for p in parts:
-                        if p.startswith('thumb='):
-                            thumb_url = p.replace('thumb=', '')
-                        elif p.startswith('id='):
-                            file_id = p.replace('id=', '')
+                    for p in parts[1:]:
+                        if p.startswith('id='):
+                            file_id = p[3:]
                     
-                    if thumb_url:
-                        st.image(thumb_url, use_column_width=True)
-                        st.markdown(f"📦 [Drive'da Aç]({clean_url})")
-                    else:
-                        st.markdown(f"🔗 [Görüntüle]({clean_url})")
+                    if file_id:
+                        preview_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
+                        embed_url = f"https://drive.google.com/file/d/{file_id}/preview"
+                        if file_type == "image":
+                            st.markdown(f'<a href="{clean_url}" target="_blank"><img src="{preview_url}" style="width:100%;border-radius:6px;" onerror="this.style.display=\'none\'"/></a>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<iframe src="{embed_url}" width="100%" height="150" frameborder="0" allow="autoplay"></iframe>', unsafe_allow_html=True)
+                    st.markdown(f"📦 [Drive'da Aç]({clean_url})")
                         
                     if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
                         from google_drive_utils import delete_drive_file
@@ -108,7 +108,7 @@ def show_gallery():
                         delete_attachment(m['id'])
                         st.rerun()
                 elif "image" in file_type and file_url.startswith("http"):
-                    st.image(file_url, caption="Supabase", use_column_width=True)
+                    st.image(file_url, use_column_width=True)
                     if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
                         from supabase_utils import delete_attachment
                         delete_attachment(m['id'])
@@ -121,3 +121,4 @@ def show_gallery():
                         from supabase_utils import delete_attachment
                         delete_attachment(m['id'])
                         st.rerun()
+

@@ -115,9 +115,6 @@ if app_mode == "Firma Listesi":
     ]
 
     # --- Sidebar Filters ---
-    st.sidebar.title("📌 Navigation")
-    st.sidebar.page_link("pages/dashboard.py", label="IBC Intelligence Dashboard", icon="🚀")
-    st.sidebar.page_link("pages/gallery.py", label="Medya Kütüphanesi (Galeri)", icon="📸")
     st.sidebar.markdown("---")
 
     st.sidebar.title("🔍 Filters & Search")
@@ -357,11 +354,10 @@ if app_mode == "Firma Listesi":
                                             
                                             db_file_type = "image" if "image" in mime_type else "document"
                                             
-                                            # Package the URL neatly
-                                            thumb_frag = f"#thumb={gdrive_thumb}" if gdrive_thumb else ""
+                                            # Package URL: only store file_id and tags (no thumb - Drive thumbnails require auth)
                                             id_frag = f"#id={gdrive_file_id}" if gdrive_file_id else ""
                                             tag_frag = f"#tags={all_tags_str}"
-                                            gdrive_link_package = f"{gdrive_web_link}{id_frag}{thumb_frag}{tag_frag}"
+                                            gdrive_link_package = f"{gdrive_web_link}{id_frag}{tag_frag}"
                                             
                                             upload_attachment(comp['id'], file_name=gdrive_link_package, file_type=db_file_type, source="gdrive")
                                             success_count += 1
@@ -382,29 +378,38 @@ if app_mode == "Firma Listesi":
                         
                             with cols[i % 3]:
                                 with st.container(border=True):
-                                    # Extract fragments if gdrive
-                                    clean_url = url
-                                    thumb_url = None
+                                    # Always parse metadata from the stored URL fragments
+                                    raw_path = att['file_path']
+                                    clean_url = raw_path.split('#')[0] if '#' in raw_path else raw_path
                                     file_id = None
+                                    display_tags = ""
                                     if is_gdrive:
-                                        clean_url = url.split('#')[0]
-                                        if '#thumb=' in url:
-                                            # Parse out thumb
-                                            parts = url.split('#')
-                                            for p in parts:
-                                                if p.startswith('thumb='):
-                                                    thumb_url = p.replace('thumb=', '')
-                                                elif p.startswith('id='):
-                                                    file_id = p.replace('id=', '')
-                                        
-                                    if is_gdrive and thumb_url:
-                                        st.image(thumb_url, use_column_width=True)
+                                        parts = raw_path.split('#')
+                                        for p in parts[1:]:
+                                            if p.startswith('id='):
+                                                file_id = p[3:]
+                                            elif p.startswith('tags='):
+                                                t_str = p[5:]
+                                                if t_str and t_str != 'untagged':
+                                                    display_tags = t_str[:40]
+                                    
+                                    if is_gdrive and file_id:
+                                        # Use Drive's embeddable preview URL (no auth required)
+                                        preview_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
+                                        embed_url = f"https://drive.google.com/file/d/{file_id}/preview"
+                                        if att['file_type'] == 'image':
+                                            st.markdown(f'<a href="{clean_url}" target="_blank"><img src="{preview_url}" style="width:100%;border-radius:6px;" onerror="this.style.display=\'none\'"/></a>', unsafe_allow_html=True)
+                                        else:
+                                            st.markdown(f'<iframe src="{embed_url}" width="100%" height="180" frameborder="0" allow="autoplay"></iframe>', unsafe_allow_html=True)
                                         st.markdown(f"📦 [Drive'da Aç]({clean_url})")
-                                    elif att['file_type'] == "image" and not is_gdrive:
-                                        st.image(url, caption="Supabase", use_column_width=True)
+                                    elif att['file_type'] == 'image' and not is_gdrive:
+                                        st.image(url, use_column_width=True)
                                     else:
                                         st.markdown(f"🔗 [Görüntüle]({clean_url})")
-                                        
+                                    
+                                    if display_tags:
+                                        st.caption(f"🏷️ {display_tags}")
+                                    
                                     if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
                                         if is_gdrive and file_id:
                                             from google_drive_utils import delete_drive_file
