@@ -6,14 +6,13 @@ from dotenv import load_dotenv
 # Load environment variables (only affects local development)
 load_dotenv()
 
-# Prefer st.secrets on Streamlit Cloud, fall back to .env
-SUPABASE_URL = st.secrets.get("SUPABASE_URL", os.environ.get("SUPABASE_URL"))
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", os.environ.get("SUPABASE_KEY"))
-
 def get_supabase() -> Client:
-    if not SUPABASE_URL or not SUPABASE_KEY:
+    # Read at call-time, not import time, so st.secrets is ready
+    url = st.secrets.get("SUPABASE_URL", os.environ.get("SUPABASE_URL"))
+    key = st.secrets.get("SUPABASE_KEY", os.environ.get("SUPABASE_KEY"))
+    if not url or not key:
         raise ValueError("Supabase credentials not found. Set SUPABASE_URL and SUPABASE_KEY in Streamlit Secrets or .env")
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+    return create_client(url, key)
 
 # --- Companies ---
 
