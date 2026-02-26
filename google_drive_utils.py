@@ -51,7 +51,7 @@ def find_or_create_folder(folder_name, parent_id=None):
             query += f" and '{parent_id}' in parents"
             
         # supportsAllDrives allows working within shared drives if applicable
-        response = service.files().list(q=query, spaces='drive', fields='files(id, name)', supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
+        response = service.files().list(q=query, corpora='allDrives', fields='files(id, name)', supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         files = response.get('files', [])
         
         if files:

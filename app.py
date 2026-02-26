@@ -295,10 +295,7 @@ else:
                                 # Provide clean name
                                 clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
                                 subfolder_name = f"{comp['booth_number']}_{clean_cname}"
-                                subfolder_id = find_or_create_folder(subfolder_name)
-                                
-                                # Move subfolder into main folder by default if we want nested, but flat with prefix is easier for now
-                                # So just use the subfolder_name as direct folder
+                                subfolder_id = find_or_create_folder(subfolder_name, parent_id=main_folder_id)
                                 
                                 filename = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
                                 
