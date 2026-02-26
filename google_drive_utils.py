@@ -24,7 +24,7 @@ def get_drive_service():
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
             return build('drive', 'v3', credentials=creds)
     except Exception as e:
-        print(f"Error loading secrets: {e}")
+        st.error(f"Google Drive Kimlik Doğrulama Hatası (st.secrets JSON formatı bozuk olabilir): {e}")
         
     # Fallback to local file for testing
     if not os.path.exists(CREDENTIALS_FILE):
