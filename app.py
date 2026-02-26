@@ -226,34 +226,71 @@ if app_mode == "Firma Listesi":
                         st.rerun()
                     
                 with col2:
-                    # Load current values, ensure they exist in allowed options
+                    # Load current values
                     current_tags = comp.get('tags') or []
                     current_products = comp.get('products') or []
-                
+
+                    # Combine both into one unified list (products = selected subcategories, tags = custom labels)
                     all_tags_options = list(set(AVAILABLE_TAGS + current_tags))
                     new_tags = st.multiselect(
-                        "Tags", 
-                        options=all_tags_options, 
+                        "🏷️ Etiketler (Tags)",
+                        options=all_tags_options,
                         default=current_tags,
                         key=f"tags_{comp['id']}"
                     )
-                
-                    all_products_options = list(set(AVAILABLE_PRODUCTS + current_products))
-                    new_products = st.multiselect(
-                        "Products", 
-                        options=all_products_options, 
-                        default=current_products,
-                        key=f"products_{comp['id']}"
-                    )
-                
-                    # Check for changes and show save button
-                    if set(new_tags) != set(current_tags) or set(new_products) != set(current_products):
-                        if st.button("💾 Save Categories", key=f"save_cats_{comp['id']}"):
-                            update_company(comp['id'], tags=new_tags, products=new_products)
-                            st.rerun()
 
-                    
                 st.markdown("---")
+
+                # ── IBS Ürün Kategorisi Seçici (Category Tree) ──────────────────
+                with st.expander("📦 Ürün Kategorileri & Segmentler — Düzenle", expanded=False):
+                    IBS_CATEGORIES = {
+                        "1️⃣ Structural Systems": ["Framing Systems", "Steel Framing", "Insulating Concrete Forms", "Concrete Systems", "Structural Connectors", "Sheathing", "Subfloor", "Anchors", "Fasteners"],
+                        "2️⃣ Building Envelope": ["Siding", "Cladding", "Exterior Trim", "Weather Barriers", "Air Barriers", "Waterproofing", "Sealants"],
+                        "3️⃣ Roofing": ["Asphalt Roofing", "Metal Roofing", "Flat Roofing", "Roofing Accessories", "Roof Drainage"],
+                        "4️⃣ Windows, Doors & Openings": ["Windows", "Exterior Doors", "Interior Doors", "Garage Doors", "Skylights", "Louvers", "Entry Systems"],
+                        "5️⃣ Insulation & Energy": ["Insulation", "Spray Foam", "Radiant Systems", "Energy Efficiency Systems", "Weatherization"],
+                        "6️⃣ HVAC & Air Quality": ["HVAC Systems", "HVAC Controls", "Ventilation", "Indoor Air Quality", "Heat Pumps"],
+                        "7️⃣ Plumbing": ["Plumbing Fixtures", "Pipe Systems", "Water Heaters", "Drainage Systems"],
+                        "8️⃣ Electrical": ["Wiring Devices", "Lighting", "Lighting Controls", "Electrical Distribution"],
+                        "9️⃣ Smart Home & Security": ["Home Automation", "Access Control", "Security Systems", "Connected Devices"],
+                        "🔟 Kitchen & Bath": ["Kitchen Cabinets", "Bathroom Fixtures", "Countertops", "Storage Systems"],
+                        "11️⃣ Interior Finishes": ["Flooring", "Paint", "Coatings", "Wall Systems", "Ceilings", "Trim", "Molding"],
+                        "12️⃣ Outdoor Living": ["Composite Decking", "Wood Decking", "Railings", "Pergolas", "Gazebos", "Outdoor Kitchens"],
+                        "13️⃣ Site & Landscape": ["Pavers", "Retaining Walls", "Irrigation", "Greenhouses"],
+                        "14️⃣ Materials & Components": ["Aluminum Products", "Steel Products", "Extrusions", "Stone", "Masonry", "Glass Systems"],
+                        "15️⃣ Software & Business Services": ["Construction Software", "Estimating Tools", "Permit Platforms", "Advisory Services", "Financing Platforms", "Web Development"],
+                    }
+                    
+                    new_products = list(current_products)
+                    
+                    for main_cat, sub_cats in IBS_CATEGORIES.items():
+                        # Check if any subcategory is already selected for this company
+                        selected_in_cat = [s for s in sub_cats if s in new_products]
+                        is_expanded = len(selected_in_cat) > 0
+                        
+                        with st.expander(f"{main_cat}  {'  ✅ ' + str(len(selected_in_cat)) if selected_in_cat else ''}", expanded=is_expanded):
+                            selected = st.multiselect(
+                                "Seçin:",
+                                options=sub_cats,
+                                default=selected_in_cat,
+                                key=f"prod_{comp['id']}_{main_cat}",
+                                label_visibility="collapsed"
+                            )
+                            # Merge: remove old entries from this category, add new ones
+                            new_products = [p for p in new_products if p not in sub_cats] + selected
+                    
+                    cat_changed = set(new_products) != set(current_products)
+                    tag_changed = set(new_tags) != set(current_tags)
+                    
+                    if cat_changed or tag_changed:
+                        if st.button("💾 Kategorileri & Etiketleri Kaydet", key=f"save_cats_{comp['id']}", type="primary", use_container_width=True):
+                            update_company(comp['id'], tags=new_tags, products=new_products)
+                            st.success("Kaydedildi!")
+                            st.rerun()
+                    else:
+                        st.info(f"Seçili ürün: {len(new_products)} | Etiket: {len(new_tags)}")
+
+
             
                 # Content Tabs
                 tab1, tab2, tab3, tab4 = st.tabs(["📝 Notes", "📂 Attachments", "📧 History", "👤 Contacts & OCR"])
