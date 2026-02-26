@@ -314,8 +314,10 @@ else:
                                     all_tags = (comp.get('tags') or []) + (comp.get('products') or [])
                                     all_tags_str = ",".join(all_tags) if all_tags else "untagged"
                                     
-                                    # Use source="gdrive"
-                                    upload_attachment(comp['id'], file_name=gdrive_link, file_type=f"gdrive_file|{all_tags_str}", source="gdrive")
+                                    # Use source="gdrive" and satisfy CHECK constraint (image, document)
+                                    db_file_type = "image" if "image" in mime_type else "document"
+                                    gdrive_link_with_tags = f"{gdrive_link}#tags={all_tags_str}"
+                                    upload_attachment(comp['id'], file_name=gdrive_link_with_tags, file_type=db_file_type, source="gdrive")
                                     st.success("Google Drive'a başarıyla kaydedildi!")
                                     st.rerun()
                                 else:
@@ -327,8 +329,11 @@ else:
                     cols = st.columns(3)
                     for i, att in enumerate(attachments):
                         url = get_public_url(att['file_path'])
+                        # if the source is gdrive it will have a drive.google in the URL
+                        is_gdrive = "drive.google.com" in att['file_path']
+                        
                         with cols[i % 3]:
-                            if "image" in att['file_type'] and "gdrive" not in att['file_type']:
+                            if att['file_type'] == "image" and not is_gdrive:
                                 # Old Supabase Images
                                 st.image(url, caption="Supabase Resim", use_column_width=True)
                             else:

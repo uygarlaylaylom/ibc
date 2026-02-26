@@ -61,12 +61,12 @@ st.sidebar.title("🔍 Kütüphane Filtreleri")
 all_booths = sorted(list(set([m['companies']['booth_number'] for m in media_items if m.get('companies')])))
 all_segments = sorted(list(set([m['companies']['segment'] for m in media_items if m.get('companies') and m['companies'].get('segment')])))
 
-# We embedded tags into file_type for gdrive files: "gdrive_file|tag1,tag2"
+# We embedded tags into the file_path url fragment for gdrive files: "#tags=tag1,tag2"
 all_tags = set()
 for m in media_items:
-    file_type = m.get('type', '')
-    if '|' in file_type:
-        tags_str = file_type.split('|')[1]
+    file_path = m.get('file_path', '')
+    if '#tags=' in file_path:
+        tags_str = file_path.split('#tags=')[1]
         for t in tags_str.split(','):
             if t.strip() and t.strip() != "untagged":
                 all_tags.add(t.strip())
@@ -83,7 +83,7 @@ if filter_booth != "Tümü":
 if filter_segment != "Tümü":
     filtered_media = [m for m in filtered_media if m.get('companies') and m['companies']['segment'] == filter_segment]
 if filter_tag != "Tümü":
-    filtered_media = [m for m in filtered_media if filter_tag in m.get('type', '')]
+    filtered_media = [m for m in filtered_media if f"#tags=" in m.get('file_path', '') and filter_tag in m.get('file_path', '')]
 
 st.success(f"{len(filtered_media)} medya dosyası listeleniyor.")
 
@@ -98,21 +98,24 @@ for idx, m in enumerate(filtered_media):
                 st.caption(f"📍 Stand: {company_info.get('booth_number', 'Bilinmiyor')}")
             
             # If it's a gdrive link, it's just a clickable URL
-            file_type = m.get('type', '')
+            file_type = m.get('file_type', '')
             file_url = m.get('file_path', '')
+            is_gdrive = "drive.google.com" in file_url
             
             # Formatting tags for display
             display_tags = ""
-            if '|' in file_type:
-                t_str = file_type.split('|')[1]
+            if '#tags=' in file_url:
+                t_str = file_url.split('#tags=')[1]
                 if t_str != "untagged":
                     display_tags = "🏷️ " + t_str[:30] + ("..." if len(t_str)>30 else "")
             
             if display_tags:
                 st.caption(display_tags)
                 
-            if "gdrive" in file_type:
-                st.markdown(f"📦 [Drive'da Görüntüle]({file_url})")
+            if is_gdrive:
+                # Clean URL for markdown displaying (remove tags fragment)
+                clean_url = file_url.split('#tags')[0]
+                st.markdown(f"📦 [Drive'da Görüntüle]({clean_url})")
             elif "image" in file_type and file_url.startswith("http"):
                 # Usually old supabase gets public URL from bucket, but if it's stored raw:
                 pass 
