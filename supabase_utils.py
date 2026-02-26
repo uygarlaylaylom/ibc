@@ -58,24 +58,16 @@ def get_companies(search_query="", visited_only=False, min_priority=1, has_notes
         
     return companies
 
-def update_company(company_id, visited=None, priority=None, tags=None, products=None):
-    """Updates a company's visited status, priority, tags, or products."""
+def update_company(company_id, **kwargs):
+    """Updates a company's fields dynamically using kwargs."""
     supabase = get_supabase()
-    data = {}
-    if visited is not None:
-        data["visited"] = visited
-    if priority is not None:
-        data["priority"] = priority
-    if tags is not None:
-        data["tags"] = tags
-    if products is not None:
-        data["products"] = products
+    if not kwargs:
+        return
         
-    if data:
-        try:
-            supabase.table("companies").update(data).eq("id", company_id).execute()
-        except dict as e:
-            print("Error updating:", e)
+    try:
+        supabase.table("companies").update(kwargs).eq("id", company_id).execute()
+    except Exception as e:
+        print("Error updating company:", e)
 
 # --- Notes ---
 
@@ -148,6 +140,12 @@ def get_public_url(file_path):
         return file_path
     supabase = get_supabase()
     return supabase.storage.from_("attachments").get_public_url(file_path)
+
+def delete_attachment(attachment_id):
+    """Deletes an attachment from Supabase."""
+    supabase = get_supabase()
+    supabase.table("attachments").delete().eq("id", attachment_id).execute()
+
 
 # --- Contacts ---
 

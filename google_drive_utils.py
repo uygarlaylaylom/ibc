@@ -91,9 +91,9 @@ def find_or_create_folder(folder_name, parent_id=None):
         return None
 
 def upload_file_to_drive(file_bytes, file_name, mime_type, folder_id):
-    """Uploads a file to a specific Google Drive folder and returns the webViewLink."""
+    """Uploads a file to a specific Google Drive folder and returns the webViewLink, id, and thumbnailLink."""
     service = get_drive_service()
-    if not service: return None
+    if not service: return None, None, None
     
     file_metadata = {
         'name': file_name
@@ -103,13 +103,25 @@ def upload_file_to_drive(file_bytes, file_name, mime_type, folder_id):
         
     media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type, resumable=True)
     try:
-        # For My Drive, remove supportsAllDrives
-        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink, webContentLink').execute()
+        # Request thumbnailLink and file id
+        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink, thumbnailLink').execute()
     except Exception as e:
         import traceback
         st.error(f"Google Drive Yükleme Hatası: {e}")
         print(traceback.format_exc())
-        return None
+        return None, None, None
         
-    # webContentLink forces a download, webViewLink previews in browser.
-    return file.get('webViewLink')
+    return file.get('webViewLink'), file.get('id'), file.get('thumbnailLink')
+
+def delete_drive_file(file_id):
+    """Deletes a file permanently from Google Drive."""
+    service = get_drive_service()
+    if not service: return False
+    
+    try:
+        service.files().delete(fileId=file_id).execute()
+        return True
+    except Exception as e:
+        import traceback
+        print(f"Google Drive Silme Hatası: {e}")
+        return False
