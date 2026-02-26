@@ -37,7 +37,7 @@ def _get_gemini():
         if not api_key:
             return None
         genai.configure(api_key=api_key)
-        return genai.GenerativeModel("gemini-1.5-flash")
+        return genai.GenerativeModel("gemini-2.0-flash")
     except Exception:
         return None
 
@@ -112,6 +112,45 @@ def show_email_inbox():
                    and _urgency_passes(e.get('content',''), urgency_filter)]
 
         st.markdown(f"**{len(visible)} / {len(emails)} email gösteriliyor**")
+
+        # ── TOPLU ANALİZ BUTONU ─────────────────────────────────────
+        if gemini_model and visible:
+            if st.button(f"🤖 Tümünü Analiz Et ({len(visible)} email)", type="primary", use_container_width=True):
+                with st.spinner(f"{len(visible)} email Gemini ile analiz ediliyor..."):
+                    bulk_results = []
+                    for em in visible[:15]:  # Maks 15 email (rate limit için)
+                        content = em.get('content', '')
+                        subject = _extract_subject(content)
+                        result = _gemini_analyze(gemini_model, content, company_names_list)
+                        st.session_state[f"gemini_result_{em['id']}"] = result
+                        # Özet için sadece AKSİYON satırını al
+                        action = "?"
+                        for line in result.split('\n'):
+                            if 'AKSİYON:' in line:
+                                action = line.split('AKSİYON:')[-1].strip()
+                                break
+                        priority = "?"
+                        for line in result.split('\n'):
+                            if 'ÖNCELİK:' in line:
+                                priority = line.split('ÖNCELİK:')[-1].strip()[:40]
+                                break
+                        bulk_results.append((subject[:50], action, priority))
+                    
+                    st.session_state["bulk_analysis"] = bulk_results
+                    st.rerun()
+        
+        # Toplu analiz sonuçları
+        if st.session_state.get("bulk_analysis"):
+            with st.expander("📋 Toplu Analiz Sonuçları — Aksiyon Listesi", expanded=True):
+                st.markdown("| Email | Aksiyon | Öncelik |")
+                st.markdown("|-------|---------|---------|")
+                for subj, action, prio in st.session_state["bulk_analysis"]:
+                    badge = "🔴" if "Yüksek" in prio else "🟡" if "Orta" in prio else "🟢"
+                    st.markdown(f"| {subj} | {action} | {badge} {prio} |")
+                if st.button("🗑️ Sonuçları Temizle"):
+                    del st.session_state["bulk_analysis"]
+                    st.rerun()
+
         st.markdown("---")
 
         for em in visible:
