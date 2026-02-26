@@ -354,37 +354,76 @@ if app_mode == "Firma Listesi":
                             
                                 col_n1, col_n2 = st.columns(2)
                                 with col_n1:
-                                    if st.button("✨ Formatla", use_container_width=True, key=f"format_btn_{comp['id']}"):
+                                    if st.button("✨ Analiz Et ve Formatla", use_container_width=True, key=f"format_btn_{comp['id']}"):
                                         if raw_note:
-                                            with st.spinner("Formatlanıyor..."):
+                                            with st.spinner("AI ürünleri tarıyor ve notu formatlıyor..."):
                                                 try:
                                                     from openai import OpenAI
                                                     import os
+                                                    import json
                                                     api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
                                                     if api_key:
                                                         client = OpenAI(api_key=api_key)
-                                                        prompt = (
-                                                            f"Aşağıdaki notu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim, kategori varsa köşeli parantez içinde) düzenle.\n"
-                                                            f"SADECE FORMATLANMIŞ METNİ DÖNDÜR, BAŞKA BİR ŞEY YAZMA.\n\nNot: {raw_note}"
-                                                        )
+                                                        prompt = f"""Sen profesyonel bir B2B Fuar asistanısın. Aşağıdaki ham ürün notunu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim) temiz ve maddeler halinde düzenle.
+Aynı zamanda notta bahsedilen inşaat/yapı ürünlerini analiz et ve aşağıdaki KATEGORİLER listesinden TAM OLARAK eşleşenleri seç. (Eğer tam uyan yoksa boş liste bırak).
+
+KATEGORİLER:
+{FLAT_CATEGORIES_DETAILED}
+
+LÜTFEN SADECE AŞAĞIDAKİ JSON FORMATINDA YANIT VER:
+{{
+  "formatted_note": "Düzenlenmiş, net ve sektörel not metni",
+  "detected_categories": ["KATEGORİLER listesinden birebir aynı formatta kopyalanmış isimler"]
+}}
+
+Not: {raw_note}"""
+
                                                         resp = client.chat.completions.create(
                                                             model="gpt-4o-mini",
-                                                            messages=[{"role": "user", "content": prompt}],
-                                                            temperature=0.0
+                                                            response_format={ "type": "json_object" },
+                                                            messages=[
+                                                                {"role": "system", "content": "You are a helpful assistant that strictly outputs JSON."},
+                                                                {"role": "user", "content": prompt}
+                                                            ],
+                                                            temperature=0.1
                                                         )
-                                                        st.session_state[f"fmt_note_{comp['id']}"] = resp.choices[0].message.content.strip()
+                                                        
+                                                        result = json.loads(resp.choices[0].message.content)
+                                                        st.session_state[f"fmt_note_{comp['id']}"] = result.get('formatted_note', '').strip()
+                                                        
+                                                        # Validate detected categories strictly against known list
+                                                        valid_cats = [c for c in result.get('detected_categories', []) if c in FLAT_CATEGORIES_DETAILED]
+                                                        st.session_state[f"det_cats_{comp['id']}"] = valid_cats
                                                 except Exception as e:
                                                     st.error(f"Hata: {e}")
                             
                                 with col_n2:
                                     if st.session_state.get(f"fmt_note_{comp['id']}"):
                                         final_note = st.text_area("Kaydedilecek Not:", value=st.session_state[f"fmt_note_{comp['id']}"], key=f"final_n_{comp['id']}")
-                                        if st.button("💾 Kaydet", type="primary", use_container_width=True, key=f"save_ai_note_{comp['id']}"):
+                                        detected = st.session_state.get(f"det_cats_{comp['id']}", [])
+                                        
+                                        if detected:
+                                            st.info(f"AI Eşleştirmesi ({len(detected)} ürün grubu): " + ", ".join(detected))
+                                            btn_text = "💾 Kaydet & Formata Ekle"
+                                        else:
+                                            btn_text = "💾 Sadece Notu Kaydet"
+                                            
+                                        if st.button(btn_text, type="primary", use_container_width=True, key=f"save_ai_note_{comp['id']}"):
                                             add_note(comp['id'], final_note, note_type="manual", company_name=comp['company_name'])
-                                            st.toast("Not & (varsa) Görev eklendi!", icon="✅")
+                                            
+                                            # Merge categories into company profile
+                                            if detected:
+                                                curr = comp.get('products') or []
+                                                merged = list(set(curr + detected))
+                                                if set(merged) != set(curr):
+                                                    update_company(comp['id'], products=merged)
+                                                    st.toast("Ürün kataloğu da otomatik genişletildi! 📦", icon="✅")
+                                                    
+                                            st.toast("İşlem Başarılı!", icon="✅")
                                         
                                             st.session_state[f"show_ai_note_{comp['id']}"] = False
                                             st.session_state[f"fmt_note_{comp['id']}"] = ""
+                                            st.session_state[f"det_cats_{comp['id']}"] = []
                                             st.rerun()
 
                         # 2. Toplantı Brifingi İşlemi
