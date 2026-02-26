@@ -369,6 +369,12 @@ Notlar: {combined_text}"""
 
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
+                    # OPTIMISTIC UI FIX: Ensure session state selections are always in the options list so Streamlit never throws API Exceptions
+                    if f"inst_tags_{comp['id']}" in st.session_state:
+                        for temp_tg in st.session_state[f"inst_tags_{comp['id']}"]:
+                            if temp_tg not in all_tag_opts:
+                                all_tag_opts.append(temp_tg)
+                    
                     st.multiselect(
                         "📌 Şirket Etiketleri (Silmek için ❌ basın)", 
                         options=all_tag_opts, 
@@ -393,8 +399,9 @@ Notlar: {combined_text}"""
                         if clean_tag not in current_tags:
                             merged_tags = current_tags + [clean_tag]
                             update_company(comp['id'], tags=merged_tags)
-                            if f"inst_tags_{comp['id']}" in st.session_state:
-                                del st.session_state[f"inst_tags_{comp['id']}"]
+                            
+                            # Optimistically inject into multiselect's tracked state for INSTANT rendering
+                            st.session_state[f"inst_tags_{comp['id']}"] = merged_tags
                             if f"custom_tag_{comp['id']}" in st.session_state:
                                 del st.session_state[f"custom_tag_{comp['id']}"]
                             st.rerun()
@@ -575,10 +582,24 @@ Not: {raw_note}"""
                                 sorted_emails = sorted(emails, key=lambda x: x['created_at'], reverse=True)
                                 for em in sorted_emails:
                                     date_str = datetime.datetime.fromisoformat(em['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
+                                    
+                                    # Native Mailto Logic for Replying
+                                    import urllib.parse
+                                    email_target = comp.get('email')
+                                    if not email_target:
+                                        # Fallback to general domain info if raw email is empty
+                                        email_target = f"info@{comp.get('primary_domain', '')}" if comp.get('primary_domain') else ""
+                                        
+                                    subj = urllib.parse.quote(f"Re: Fuar Görüşmemiz ({comp['company_name']})")
+                                    short_preview = em['content'][:500] if len(em['content']) > 500 else em['content']
+                                    body = urllib.parse.quote(f"\\n\\n---\\nGeçmiş Email Kaydı:\\n{short_preview}")
+                                    mailto_link = f"mailto:{email_target}?subject={subj}&body={body}"
+                                    
                                     st.markdown(f"""
-                                    <div class="note-box" style="border-left: 4px solid #3B82F6; background-color: #F8FAFC; margin-bottom: 10px;">
-                                        <small style="color:#64748b;">📧 <b>Gelen Kutu</b> | {date_str}</small><br>
-                                        <div style="font-size: 0.9em; white-space: pre-wrap; margin-top: 6px; color: #334155;">{em['content']}</div>
+                                    <div class="note-box" style="border-left: 4px solid #3B82F6; background-color: #F8FAFC; margin-bottom: 10px; position: relative;">
+                                        <small style="color:#64748b;">📧 <b>Gelen Kutu</b> | {date_str}</small>
+                                        <a href="{mailto_link}" target="_blank" style="position: absolute; right: 10px; top: 10px; background-color: #3B82F6; color: white; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">↪ Yanıtla (Email Aç)</a><br>
+                                        <div style="font-size: 0.9em; white-space: pre-wrap; margin-top: 10px; color: #334155;">{em['content']}</div>
                                     </div>
                                     """, unsafe_allow_html=True)
                         else:
