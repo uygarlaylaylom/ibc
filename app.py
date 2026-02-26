@@ -83,14 +83,41 @@ if app_mode == "Firma Listesi":
         "Global Products"
     ]
 
-    # Common IBS Products (Extracted Default List)
-    AVAILABLE_PRODUCTS = [
-        "Windows", "Doors", "Flooring", "Roofing", "Apparel",
-        "Siding", "HVAC", "Plumbing", "Electrical", "Software", 
-        "Home Automation", "Lighting", "Kitchen Appliances",
-        "Cabinets", "Bath Products", "Outdoor Living", "Tools",
-        "Hardware", "Fasteners", "Insulation"
+    # Detailed IBS Products / Sub-Categories (Flat Tree)
+    FLAT_CATEGORIES_DETAILED = [
+        "1️⃣ Structural - Framing Systems", "1️⃣ Structural - Steel Framing", "1️⃣ Structural - Insulating Concrete Forms", 
+        "1️⃣ Structural - Concrete Systems", "1️⃣ Structural - Structural Connectors", "1️⃣ Structural - Sheathing", 
+        "1️⃣ Structural - Subfloor", "1️⃣ Structural - Anchors", "1️⃣ Structural - Fasteners",
+        "2️⃣ Envelope - Siding", "2️⃣ Envelope - Cladding", "2️⃣ Envelope - Exterior Trim", "2️⃣ Envelope - Weather Barriers", 
+        "2️⃣ Envelope - Air Barriers", "2️⃣ Envelope - Waterproofing", "2️⃣ Envelope - Sealants",
+        "3️⃣ Roofing - Asphalt Roofing", "3️⃣ Roofing - Metal Roofing", "3️⃣ Roofing - Flat Roofing", 
+        "3️⃣ Roofing - Roofing Accessories", "3️⃣ Roofing - Roof Drainage",
+        "4️⃣ Windows & Doors - Windows", "4️⃣ Windows & Doors - Exterior Doors", "4️⃣ Windows & Doors - Interior Doors", 
+        "4️⃣ Windows & Doors - Garage Doors", "4️⃣ Windows & Doors - Skylights", "4️⃣ Windows & Doors - Louvers", 
+        "4️⃣ Windows & Doors - Entry Systems",
+        "5️⃣ Insulation - Insulation", "5️⃣ Insulation - Spray Foam", "5️⃣ Insulation - Radiant Systems", 
+        "5️⃣ Insulation - Energy Efficiency Systems", "5️⃣ Insulation - Weatherization",
+        "6️⃣ HVAC - HVAC Systems", "6️⃣ HVAC - HVAC Controls", "6️⃣ HVAC - Ventilation", "6️⃣ HVAC - Indoor Air Quality", 
+        "6️⃣ HVAC - Heat Pumps",
+        "7️⃣ Plumbing - Plumbing Fixtures", "7️⃣ Plumbing - Pipe Systems", "7️⃣ Plumbing - Water Heaters", 
+        "7️⃣ Plumbing - Drainage Systems",
+        "8️⃣ Electrical - Wiring Devices", "8️⃣ Electrical - Lighting", "8️⃣ Electrical - Lighting Controls", 
+        "8️⃣ Electrical - Electrical Distribution",
+        "9️⃣ Smart Home - Home Automation", "9️⃣ Smart Home - Access Control", "9️⃣ Smart Home - Security Systems", 
+        "9️⃣ Smart Home - Connected Devices",
+        "🔟 Kitchen & Bath - Kitchen Cabinets", "🔟 Kitchen & Bath - Bathroom Fixtures", "🔟 Kitchen & Bath - Countertops", 
+        "🔟 Kitchen & Bath - Storage Systems",
+        "11️⃣ Interior - Flooring", "11️⃣ Interior - Paint", "11️⃣ Interior - Coatings", "11️⃣ Interior - Wall Systems", 
+        "11️⃣ Interior - Ceilings", "11️⃣ Interior - Trim", "11️⃣ Interior - Molding",
+        "12️⃣ Outdoor - Composite Decking", "12️⃣ Outdoor - Wood Decking", "12️⃣ Outdoor - Railings", "12️⃣ Outdoor - Pergolas", 
+        "12️⃣ Outdoor - Gazebos", "12️⃣ Outdoor - Outdoor Kitchens",
+        "13️⃣ Landscape - Pavers", "13️⃣ Landscape - Retaining Walls", "13️⃣ Landscape - Irrigation", "13️⃣ Landscape - Greenhouses",
+        "14️⃣ Materials - Aluminum Products", "14️⃣ Materials - Steel Products", "14️⃣ Materials - Extrusions", 
+        "14️⃣ Materials - Stone", "14️⃣ Materials - Masonry", "14️⃣ Materials - Glass Systems",
+        "15️⃣ Software - Construction Software", "15️⃣ Software - Estimating Tools", "15️⃣ Software - Permit Platforms", 
+        "15️⃣ Software - Advisory Services", "15️⃣ Software - Financing Platforms", "15️⃣ Software - Web Development"
     ]
+    AVAILABLE_PRODUCTS = FLAT_CATEGORIES_DETAILED
 
     # --- Sidebar Filters ---
     st.sidebar.markdown("---")
@@ -280,17 +307,14 @@ if app_mode == "Firma Listesi":
                         st.markdown("**Ürün:** " + ", ".join(current_products) if current_products else "Ürün: Yok")
 
                     with st.expander("✏️ Kategorileri Düzenle"):
-                        # Flattened 15 categories for excellent UX
-                        FLAT_CATEGORIES = [
-                            "Structural Systems", "Building Envelope", "Roofing", "Windows & Doors", 
-                            "Insulation & Energy", "HVAC", "Plumbing", "Electrical", "Smart Home", 
-                            "Kitchen & Bath", "Interior Finishes", "Outdoor Living", "Site & Landscape", 
-                            "Materials", "Software & Services"
-                        ]
                         all_tags_options = list(set(AVAILABLE_TAGS + current_tags))
                         
                         new_tags = st.multiselect("Firma Durumu (Tags)", options=all_tags_options, default=current_tags, key=f"tags_edit_{comp['id']}")
-                        new_products = st.multiselect("Odak Ürün Kategorileri", options=list(set(FLAT_CATEGORIES + current_products)), default=current_products, key=f"prod_edit_{comp['id']}")
+                        new_custom_tag = st.text_input("➕ Listede olmayan yeni bir etiket ekle:", placeholder="Örn: Bayilik Veriyor", key=f"add_tag_{comp['id']}")
+                        if new_custom_tag and new_custom_tag not in new_tags:
+                            new_tags.append(new_custom_tag)
+
+                        new_products = st.multiselect("Odak Ürün Kategorileri", options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), default=current_products, key=f"prod_edit_{comp['id']}")
                         
                         if set(new_products) != set(current_products) or set(new_tags) != set(current_tags):
                             if st.button("💾 Kaydet", key=f"save_cats_{comp['id']}", type="primary"):
