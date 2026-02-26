@@ -26,7 +26,7 @@ def get_client_config():
             "token_uri": "https://oauth2.googleapis.com/token",
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": client_secret,
-            "redirect_uris": [redirect_uri],
+            "redirect_uris": [redirect_uri + "/oauth2callback", redirect_uri],
             "javascript_origins": [redirect_uri]
         }
     }
