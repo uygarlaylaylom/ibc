@@ -369,11 +369,13 @@ Notlar: {combined_text}"""
 
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
-                    # OPTIMISTIC UI FIX: Ensure session state selections are always in the options list so Streamlit never throws API Exceptions
-                    if f"inst_tags_{comp['id']}" in st.session_state:
-                        for temp_tg in st.session_state[f"inst_tags_{comp['id']}"]:
-                            if temp_tg not in all_tag_opts:
-                                all_tag_opts.append(temp_tg)
+                    # OPTIMISTIC UI FIX: Merge db tags with temporary session tags to beat DB lag natively
+                    if f"temp_tg_{comp['id']}" in st.session_state:
+                        temp_tg = st.session_state[f"temp_tg_{comp['id']}"]
+                        if temp_tg not in current_tags:
+                            current_tags.append(temp_tg)
+
+                    all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
                     st.multiselect(
                         "📌 Şirket Etiketleri (Silmek için ❌ basın)", 
@@ -400,8 +402,10 @@ Notlar: {combined_text}"""
                             merged_tags = current_tags + [clean_tag]
                             update_company(comp['id'], tags=merged_tags)
                             
-                            # Optimistically inject into multiselect's tracked state for INSTANT rendering
-                            st.session_state[f"inst_tags_{comp['id']}"] = merged_tags
+                            # Optimistically store new tag, clear widget memory to force re-evaluating default
+                            st.session_state[f"temp_tg_{comp['id']}"] = clean_tag
+                            if f"inst_tags_{comp['id']}" in st.session_state:
+                                del st.session_state[f"inst_tags_{comp['id']}"]
                             if f"custom_tag_{comp['id']}" in st.session_state:
                                 del st.session_state[f"custom_tag_{comp['id']}"]
                             st.rerun()
