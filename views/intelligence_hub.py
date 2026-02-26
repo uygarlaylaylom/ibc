@@ -30,17 +30,16 @@ def _show_ai_assistant():
     st.caption("Tüm notlarınız, emailleriniz ve görevleriniz hakkında soru sorun.")
 
     try:
-        import google.generativeai as genai
+        from openai import OpenAI
         from supabase_utils import get_supabase, get_companies
         import datetime
 
-        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+        api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
         if not api_key:
-            st.warning("GEMINI_API_KEY bulunamadı.")
+            st.warning("OPENAI_API_KEY bulunamadı.")
             return
 
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        client = OpenAI(api_key=api_key)
         supabase = get_supabase()
 
         # Hazır sorular
@@ -70,7 +69,7 @@ def _show_ai_assistant():
         if st.button("🔍 Sor", type="primary", use_container_width=True, key="ai_ask"):
             if user_q:
                 st.session_state["ai_last_q"] = user_q
-                with st.spinner("Gemini verilerinizi analiz ediyor..."):
+                with st.spinner("ChatGPT verilerinizi analiz ediyor..."):
                     # Veri topla
                     companies = get_companies()
                     notes_resp = supabase.table("activities").select("*").limit(200).execute()
@@ -107,21 +106,25 @@ def _show_ai_assistant():
                     )
 
                     try:
-                        response = model.generate_content(prompt)
-                        st.session_state["ai_last_answer"] = response.text
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[{"role": "user", "content": prompt}],
+                            temperature=0.3
+                        )
+                        st.session_state["ai_last_answer"] = response.choices[0].message.content.strip()
                     except Exception as e:
-                        st.error(f"Gemini hatası: {e}")
+                        st.error(f"OpenAI hatası: {e}")
 
         # Cevap göster
         if st.session_state.get("ai_last_answer"):
             with st.container(border=True):
-                st.markdown("**🤖 Gemini Yanıtı:**")
+                st.markdown("**🤖 ChatGPT Yanıtı:**")
                 st.markdown(st.session_state["ai_last_answer"])
             if st.button("🗑️ Temizle"):
                 del st.session_state["ai_last_answer"]
                 st.rerun()
 
     except ImportError:
-        st.error("google-generativeai paketi yüklü değil.")
+        st.error("openai paketi yüklü değil.")
     except Exception as e:
         st.error(f"Hata: {e}")

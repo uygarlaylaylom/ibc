@@ -16,3 +16,4 @@ local_libs/
 ~$*
 \ncredentials.json
 \nclient_secret.json\ntoken.json
+\n.streamlit/

@@ -309,18 +309,21 @@ if app_mode == "Firma Listesi":
                                         if raw_note:
                                             with st.spinner("Formatlanıyor..."):
                                                 try:
-                                                    import google.generativeai as genai
+                                                    from openai import OpenAI
                                                     import os
-                                                    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                                    api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
                                                     if api_key:
-                                                        genai.configure(api_key=api_key)
-                                                        model = genai.GenerativeModel("gemini-2.0-flash")
+                                                        client = OpenAI(api_key=api_key)
                                                         prompt = (
                                                             f"Aşağıdaki notu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim, kategori varsa köşeli parantez içinde) düzenle.\n"
                                                             f"SADECE FORMATLANMIŞ METNİ DÖNDÜR, BAŞKA BİR ŞEY YAZMA.\n\nNot: {raw_note}"
                                                         )
-                                                        resp = model.generate_content(prompt)
-                                                        st.session_state[f"fmt_note_{comp['id']}"] = resp.text.strip()
+                                                        resp = client.chat.completions.create(
+                                                            model="gpt-4o-mini",
+                                                            messages=[{"role": "user", "content": prompt}],
+                                                            temperature=0.0
+                                                        )
+                                                        st.session_state[f"fmt_note_{comp['id']}"] = resp.choices[0].message.content.strip()
                                                 except Exception as e:
                                                     st.error(f"Hata: {e}")
                             
@@ -341,12 +344,11 @@ if app_mode == "Firma Listesi":
                                 st.markdown("🗂️ **Toplantı Brifingi**")
                                 with st.spinner("Notlar ve emailler analiz ediliyor..."):
                                     try:
-                                        import google.generativeai as genai
+                                        from openai import OpenAI
                                         import os
-                                        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                        api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
                                         if api_key:
-                                            genai.configure(api_key=api_key)
-                                            model = genai.GenerativeModel("gemini-2.0-flash")
+                                            client = OpenAI(api_key=api_key)
                                         
                                             all_text = "\n".join([n['content'] for n in notes])
                                             prompt = (
@@ -354,8 +356,12 @@ if app_mode == "Firma Listesi":
                                                 f"Aşağıdaki geçmiş notlar ve emaillere bakarak bana 3 maddelik çok kısa bir özet (brifing) çıkar.\n"
                                                 f"Nelere dikkat etmeliyim, açıkta kalan konular neler?\n\nVeri: {all_text}"
                                             )
-                                            resp = model.generate_content(prompt)
-                                            st.markdown(resp.text)
+                                            resp = client.chat.completions.create(
+                                                model="gpt-4o-mini",
+                                                messages=[{"role": "user", "content": prompt}],
+                                                temperature=0.4
+                                            )
+                                            st.markdown(resp.choices[0].message.content.strip())
                                             if st.button("Kapat", key=f"close_brief_{comp['id']}"):
                                                 st.session_state[f"run_ai_brief_{comp['id']}"] = False
                                                 st.rerun()
@@ -368,12 +374,11 @@ if app_mode == "Firma Listesi":
                                 st.markdown("⚡ **Önerilen Takip Aksiyonları**")
                                 with st.spinner("Görevler güncelleniyor..."):
                                     try:
-                                        import google.generativeai as genai
+                                        from openai import OpenAI
                                         import os
-                                        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                        api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
                                         if api_key:
-                                            genai.configure(api_key=api_key)
-                                            model = genai.GenerativeModel("gemini-2.0-flash")
+                                            client = OpenAI(api_key=api_key)
                                         
                                             all_text = "\n".join([n['content'] for n in notes])
                                             prompt = (
@@ -381,8 +386,12 @@ if app_mode == "Firma Listesi":
                                                 f"Eğer notta görev yoksa 'Görev bulunamadı' yaz. "
                                                 f"Madde imi olarak '-' kullan.\n\nNotlar: {all_text}"
                                             )
-                                            resp = model.generate_content(prompt)
-                                            st.markdown(resp.text)
+                                            resp = client.chat.completions.create(
+                                                model="gpt-4o-mini",
+                                                messages=[{"role": "user", "content": prompt}],
+                                                temperature=0.3
+                                            )
+                                            st.markdown(resp.choices[0].message.content.strip())
                                             if st.button("Kapat", key=f"close_tasks_{comp['id']}"):
                                                 st.session_state[f"run_ai_tasks_{comp['id']}"] = False
                                                 st.rerun()
@@ -622,15 +631,13 @@ if app_mode == "Firma Listesi":
                              if st.button("🤖 Gemini ile Kartviziti Tara", key=f"run_ocr_{comp['id']}", type="primary"):
                                  with st.spinner("Gemini kartviziti analiz ediyor..."):
                                      try:
-                                         import google.generativeai as genai
+                                         from openai import OpenAI
                                          import base64
-                                         api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-                                         genai.configure(api_key=api_key)
-                                         model = genai.GenerativeModel("gemini-2.0-flash")
+                                         api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+                                         client = OpenAI(api_key=api_key)
                                          
                                          img_bytes = ocr_img.getvalue()
-                                         import PIL.Image
-                                         pil_img = PIL.Image.open(io.BytesIO(img_bytes))
+                                         encoded_img = base64.b64encode(img_bytes).decode("utf-8")
                                          
                                          prompt = (
                                              "Bu bir kartvizit fotoğrafıdır. Tüm metni oku ve yapılandırılmış bilgileri çıkar.\n"
@@ -644,8 +651,18 @@ if app_mode == "Firma Listesi":
                                              "ADRES: <adres varsa>\n"
                                              "HAM_METIN: <kartvizitteki tüm metin>"
                                          )
-                                         response = model.generate_content([prompt, pil_img])
-                                         raw_ocr_text = response.text
+                                         response = client.chat.completions.create(
+                                             model="gpt-4o",
+                                             messages=[{
+                                                 "role": "user",
+                                                 "content": [
+                                                     {"type": "text", "text": prompt},
+                                                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_img}"}}
+                                                 ]
+                                             }],
+                                             max_tokens=600
+                                         )
+                                         raw_ocr_text = response.choices[0].message.content.strip()
                                          st.session_state[f"ocr_result_{comp['id']}"] = raw_ocr_text
                                          
                                          # Yapılandırılmış alanları parse et ve form'a otomatik doldur

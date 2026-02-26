@@ -106,13 +106,12 @@ def show_dashboard():
                 if new_note and new_company:
                     with st.spinner("Formatlanıyor..."):
                         try:
-                            import google.generativeai as genai
+                            from openai import OpenAI
                             import os
                             
-                            api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                            api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
                             if api_key:
-                                genai.configure(api_key=api_key)
-                                model = genai.GenerativeModel("gemini-2.0-flash")
+                                client = OpenAI(api_key=api_key)
                                 
                                 prompt = (
                                     f"Sen bir asistan olarak şu düz metin notu IBS fuar sistemine uygun formata çevireceksin.\n"
@@ -124,11 +123,15 @@ def show_dashboard():
                                     f"Firma: {new_company}\n"
                                     f"Orijinal Not: {new_note}"
                                 )
-                                response = model.generate_content(prompt)
-                                st.session_state['draft_note'] = response.text.strip()
+                                response = client.chat.completions.create(
+                                    model="gpt-4o-mini",
+                                    messages=[{"role": "user", "content": prompt}],
+                                    temperature=0.0
+                                )
+                                st.session_state['draft_note'] = response.choices[0].message.content.strip()
                                 st.rerun()
                             else:
-                                st.error("GEMINI_API_KEY eksik.")
+                                st.error("OPENAI_API_KEY eksik.")
                         except Exception as e:
                             st.error(f"Hata: {e}")
                 else:

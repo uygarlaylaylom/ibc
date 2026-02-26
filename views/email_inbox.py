@@ -29,15 +29,15 @@ STOPWORDS = set([
 ])
 
 
-def _get_gemini():
-    """Gemini API istemcisini döner. Hata olursa None."""
+def _get_openai_client():
+    """OpenAI API istemcisini döner. Hata olursa None."""
     try:
-        import google.generativeai as genai
-        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+        from openai import OpenAI
+        api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
         if not api_key:
             return None
-        genai.configure(api_key=api_key)
-        return genai.GenerativeModel("gemini-2.0-flash")
+        client = OpenAI(api_key=api_key)
+        return client
     except Exception:
         return None
 
@@ -56,8 +56,8 @@ def _strip_metadata(content):
     return content[:2000]
 
 
-def _gemini_analyze(model, email_content, company_names):
-    """Gemini'ye emaili analiz ettirir. Düz metin döner."""
+def _openai_analyze(client, email_content, company_names):
+    """OpenAI'ye emaili analiz ettirir. Düz metin döner."""
     clean_body = _strip_metadata(email_content)
     company_list_str = ", ".join(company_names[:40])
     prompt = (
@@ -70,8 +70,12 @@ def _gemini_analyze(model, email_content, company_names):
         "ÖNCELİK: <Yüksek veya Orta veya Düşük>"
     )
     try:
-        resp = model.generate_content(prompt)
-        return resp.text
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+        return resp.choices[0].message.content.strip()
     except Exception as e:
         return f"⚠️ Hata: {e}"
 
@@ -82,10 +86,10 @@ def show_email_inbox():
 
     supabase = get_supabase()
 
-    # Gemini modeli — eğer API key yoksa None
-    gemini_model = _get_gemini()
-    if not gemini_model:
-        st.sidebar.warning("🤖 Gemini API aktif değil. `GEMINI_API_KEY` Streamlit Secrets'a ekleyin.")
+    # OpenAI istemcisi
+    openai_client = _get_openai_client()
+    if not openai_client:
+        st.sidebar.warning("🤖 OpenAI API aktif değil. `OPENAI_API_KEY` Streamlit Secrets'a ekleyin.")
 
     tab1, tab2 = st.tabs(["📩 Eşleşmemiş Emailler", "💡 Anahtar Kelime Önerileri"])
 
@@ -126,15 +130,15 @@ def show_email_inbox():
         st.markdown(f"**{len(visible)} / {len(emails)} email gösteriliyor**")
 
         # ── TOPLU ANALİZ BUTONU ─────────────────────────────────────
-        if gemini_model and visible:
+        if openai_client and visible:
             if st.button(f"🤖 Tümünü Analiz Et ({len(visible)} email)", type="primary", use_container_width=True):
-                with st.spinner(f"{min(len(visible), 15)} email Gemini ile analiz ediliyor..."):
+                with st.spinner(f"{min(len(visible), 15)} email ChatGPT ile analiz ediliyor..."):
                     bulk_results = []
                     for em in visible[:15]:
                         content = em.get('content', '')
                         subject = _extract_subject(content)
-                        result = _gemini_analyze(gemini_model, content, company_names_list)
-                        st.session_state[f"gemini_result_{em['id']}"] = result
+                        result = _openai_analyze(openai_client, content, company_names_list)
+                        st.session_state[f"openai_result_{em['id']}"] = result
 
                         # Robust parse: hem 'AKSİYON:' hem '4. AKSİYON:' hem '**AKSİYON**:' gibi varyasyonları yakala
                         def extract_field(text, key):
@@ -149,7 +153,7 @@ def show_email_inbox():
 
                         action   = extract_field(result, 'AKSİYON')
                         priority = extract_field(result, 'ÖNCELİK').split()[0] if extract_field(result, 'ÖNCELİK') != '—' else '—'
-                        firma_gem = extract_field(result, 'FİRMA')  # Gemini'nin firma tahmini
+                        firma_gem = extract_field(result, 'FİRMA')  # OpenAI'nin firma tahmini
                         # Firma tahminini company_options'ta ara (fuzzy-ish)
                         firma_id  = None
                         firma_gem_lower = firma_gem.lower()
