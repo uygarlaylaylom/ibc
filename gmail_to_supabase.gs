@@ -10,8 +10,9 @@
 var SUPABASE_URL      = "https://voiexsboyzgglnmtinhf.supabase.co";
 var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvaWV4c2JveXpnZ2xubXRpbmhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTIxODQsImV4cCI6MjA4NzQ2ODE4NH0.Q5-EXFDNVKAW_sCBp0KQRrv7xzziQqFuZ2MXqwbusdM";
 
-// ▸ Şirket eşleştirmesi YOK — önce topla, sonra eşleştir.
-// ▸ Tüm fuar mailleri → notes tablosu, type="email", company_id=NULL
+// Gemini AI — ücretsiz API key: aistudio.google.com/app/apikey
+var GEMINI_API_KEY = "AIzaSyBumuHjQ2yMTUQyf1UPDNrMBEsfhy6pcRk";
+var GEMINI_ENABLED = true;  // false yaparsanız Gemini atlanır
 
 // Gmail arama — IBC + KBIS + diğer fuarlar
 var GMAIL_SEARCH_QUERY = [
@@ -61,9 +62,13 @@ function syncEmailsToSupabase() {
       // Gönderen domain
       var senderDomain = extractDomain(sender);
 
-      // Eşleştirme bırakıyoruz → company_id: NULL
-      // İçerik yapılandırılmış şekilde kaydet
-      var content = buildContent(subject, sender, senderDomain, dateObj, eventTag, urgency, body);
+      // Gemini ile analiz et (aktifse)
+      var geminiSummary = "";
+      if (GEMINI_ENABLED) {
+        geminiSummary = callGemini(subject, body);
+      }
+
+      var content = buildContent(subject, sender, senderDomain, dateObj, eventTag, urgency, body, geminiSummary);
 
       var success = insertNote(content, msgId, eventTag, urgency, senderDomain);
       if (success) {
@@ -146,12 +151,13 @@ function extractDomain(sender) {
 
 /**
  * Supabase'e yüklenecek içeriği formatlı markdown olarak oluşturur.
+ * geminiSummary: Gemini'den gelen analiz metni (boş olabilir)
  */
-function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body) {
+function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body, geminiSummary) {
   var dateStr = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "dd.MM.yyyy HH:mm");
-  var urgencyBadge = urgency >= 7 ? "🔴 YÜKSEKBurası" : urgency >= 4 ? "🟡 ORTA" : "🟢 Düşük";
+  var urgencyBadge = urgency >= 7 ? "🔴 YÜKSEK" : urgency >= 4 ? "🟡 ORTA" : "🟢 Düşük";
 
-  return "📧 **" + subject + "**\n\n"
+  var base = "📧 **" + subject + "**\n\n"
        + "| Alan | Bilgi |\n"
        + "|------|-------|\n"
        + "| ✉️ Gönderen | " + sender + " |\n"
@@ -161,7 +167,77 @@ function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body)
        + "| 📅 Tarih | " + dateStr + " |\n\n"
        + "---\n"
        + body;
+
+  if (geminiSummary) {
+    base += "\n\n---\n🤖 **Gemini Analizi (Otomatik)**\n" + geminiSummary;
+  }
+  return base;
 }
+
+/**
+ * Gemini REST API — IBS kategori ağacıyla zenginleştirilmiş analiz
+ * Her email otomatik olarak doğru segmente atanır
+ */
+function callGemini(subject, body) {
+  try {
+    var ibsTree = [
+      "1-Structural: Framing, Steel Framing, Concrete, Sheathing, Anchors, Fasteners",
+      "2-Building Envelope: Siding, Cladding, Waterproofing, Sealants, Weather Barriers",
+      "3-Roofing: Asphalt, Metal, Flat Roofing, Roof Drainage",
+      "4-Windows & Doors: Windows, Exterior Doors, Garage Doors, Skylights",
+      "5-Insulation & Energy: Insulation, Spray Foam, Heat Pumps, Weatherization",
+      "6-HVAC: HVAC Systems, Ventilation, Air Quality, Controls",
+      "7-Plumbing: Fixtures, Pipe Systems, Water Heaters, Drainage",
+      "8-Electrical: Wiring, Lighting, Controls, Distribution",
+      "9-Smart Home: Home Automation, Security Systems, Access Control",
+      "10-Kitchen & Bath: Cabinets, Bathroom Fixtures, Countertops, Storage",
+      "11-Interior Finishes: Flooring, Paint, Wall Systems, Ceilings, Trim",
+      "12-Outdoor Living: Decking, Railings, Pergolas, Outdoor Kitchens",
+      "13-Site & Landscape: Pavers, Retaining Walls, Irrigation",
+      "14-Materials: Aluminum, Steel, Stone, Masonry, Glass",
+      "15-Software & Services: Construction Software, Estimating, Advisory, Financing"
+    ].join("\n");
+
+    var prompt =
+      "Bir fuar emailini analiz et. IBS Kategori Ağacını kullanarak sınıflandır.\n\n"
+      + "EMAIL KONUSU: " + subject + "\n"
+      + "EMAIL: " + body.substring(0, 2000) + "\n\n"
+      + "IBS KATEGORİ AĞACI:\n" + ibsTree + "\n\n"
+      + "TÜRKÇE yanıtla, tam olarak bu format (başka bir şey yazma):\n"
+      + "FİRMA: <Gönderenin şirket adı — domain/imzadan çıkar, 'Bilinmiyor' olabilir>\n"
+      + "IBS_SEGMENT: <Yukarıdan en uygun kategori numarası ve adı>\n"
+      + "ALT_KATEGORİ: <O kategorinin en uygun alt ürün grubu>\n"
+      + "ÜRÜNLER: <Emailde bahsedilen ürün adları — virgülle, max 4 adet>\n"
+      + "AKSİYON: <Somut öneri — 'Demo iste' / 'Fiyat al' / 'Toplantı ayarla' / 'Sil' gibi>\n"
+      + "ÖNCELİK: <Yüksek / Orta / Düşük>\n"
+      + "NEDEN: <1 cümle gerekçe>";
+
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY;
+
+    var resp = UrlFetchApp.fetch(url, {
+      method: "POST",
+      contentType: "application/json",
+      payload: JSON.stringify({
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 350}
+      }),
+      muteHttpExceptions: true
+    });
+
+    if (resp.getResponseCode() !== 200) {
+      Logger.log("Gemini " + resp.getResponseCode() + ": " + resp.getContentText().substring(0, 200));
+      return "";
+    }
+
+    var result = JSON.parse(resp.getContentText()).candidates[0].content.parts[0].text || "";
+    Logger.log("  🤖 " + result.split("\n")[0]); // İlk satırı logla
+    return result;
+  } catch(e) {
+    Logger.log("Gemini exception: " + e);
+    return "";
+  }
+}
+
 
 /**
  * Supabase notes tablosuna ekler.
