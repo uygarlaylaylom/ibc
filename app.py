@@ -290,7 +290,7 @@ else:
                             # Create main folder if missing
                             main_folder_id = find_or_create_folder("IBS_2026_Gallery")
                             if not main_folder_id:
-                                st.error("Google Drive kütüphanesine bağlanılamadı. credentials.json kontrol edin.")
+                                st.error("Google Drive kütüphanesine bağlanılamadı. Ayarları kontrol edin.")
                             else:
                                 # Provide clean name
                                 clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
