@@ -213,65 +213,90 @@ if app_mode == "Firma Listesi":
                     current_tags = comp.get('tags') or []
                     current_products = comp.get('products') or []
 
-                    # Combine both into one unified list (products = selected subcategories, tags = custom labels)
-                    all_tags_options = list(set(AVAILABLE_TAGS + current_tags))
-                    new_tags = st.multiselect(
-                        "🏷️ Etiketler (Tags)",
-                        options=all_tags_options,
-                        default=current_tags,
-                        key=f"tags_{comp['id']}"
-                    )
-
+                # ── Görsel Etiketler & Agentic Asistan (Phase 4) ──────────────────
                 st.markdown("---")
-
-                # ── IBS Ürün Kategorisi Seçici (Category Tree) ──────────────────
-                with st.expander("📦 Ürün Kategorileri & Segmentler — Düzenle", expanded=False):
-                    IBS_CATEGORIES = {
-                        "1️⃣ Structural Systems": ["Framing Systems", "Steel Framing", "Insulating Concrete Forms", "Concrete Systems", "Structural Connectors", "Sheathing", "Subfloor", "Anchors", "Fasteners"],
-                        "2️⃣ Building Envelope": ["Siding", "Cladding", "Exterior Trim", "Weather Barriers", "Air Barriers", "Waterproofing", "Sealants"],
-                        "3️⃣ Roofing": ["Asphalt Roofing", "Metal Roofing", "Flat Roofing", "Roofing Accessories", "Roof Drainage"],
-                        "4️⃣ Windows, Doors & Openings": ["Windows", "Exterior Doors", "Interior Doors", "Garage Doors", "Skylights", "Louvers", "Entry Systems"],
-                        "5️⃣ Insulation & Energy": ["Insulation", "Spray Foam", "Radiant Systems", "Energy Efficiency Systems", "Weatherization"],
-                        "6️⃣ HVAC & Air Quality": ["HVAC Systems", "HVAC Controls", "Ventilation", "Indoor Air Quality", "Heat Pumps"],
-                        "7️⃣ Plumbing": ["Plumbing Fixtures", "Pipe Systems", "Water Heaters", "Drainage Systems"],
-                        "8️⃣ Electrical": ["Wiring Devices", "Lighting", "Lighting Controls", "Electrical Distribution"],
-                        "9️⃣ Smart Home & Security": ["Home Automation", "Access Control", "Security Systems", "Connected Devices"],
-                        "🔟 Kitchen & Bath": ["Kitchen Cabinets", "Bathroom Fixtures", "Countertops", "Storage Systems"],
-                        "11️⃣ Interior Finishes": ["Flooring", "Paint", "Coatings", "Wall Systems", "Ceilings", "Trim", "Molding"],
-                        "12️⃣ Outdoor Living": ["Composite Decking", "Wood Decking", "Railings", "Pergolas", "Gazebos", "Outdoor Kitchens"],
-                        "13️⃣ Site & Landscape": ["Pavers", "Retaining Walls", "Irrigation", "Greenhouses"],
-                        "14️⃣ Materials & Components": ["Aluminum Products", "Steel Products", "Extrusions", "Stone", "Masonry", "Glass Systems"],
-                        "15️⃣ Software & Business Services": ["Construction Software", "Estimating Tools", "Permit Platforms", "Advisory Services", "Financing Platforms", "Web Development"],
-                    }
-                    
-                    new_products = list(current_products)
-                    
-                    for main_cat, sub_cats in IBS_CATEGORIES.items():
-                        # Check if any subcategory is already selected for this company
-                        selected_in_cat = [s for s in sub_cats if s in new_products]
-                        is_expanded = len(selected_in_cat) > 0
-                        
-                        with st.expander(f"{main_cat}  {'  ✅ ' + str(len(selected_in_cat)) if selected_in_cat else ''}", expanded=is_expanded):
-                            selected = st.multiselect(
-                                "Seçin:",
-                                options=sub_cats,
-                                default=selected_in_cat,
-                                key=f"prod_{comp['id']}_{main_cat}",
-                                label_visibility="collapsed"
-                            )
-                            # Merge: remove old entries from this category, add new ones
-                            new_products = [p for p in new_products if p not in sub_cats] + selected
-                    
-                cat_changed = set(new_products) != set(current_products)
-                tag_changed = set(new_tags) != set(current_tags)
                 
-                if cat_changed or tag_changed:
-                    if st.button("💾 Kategorileri & Etiketleri Kaydet", key=f"save_cats_{comp['id']}", type="primary", use_container_width=True):
-                        update_company(comp['id'], tags=new_tags, products=new_products)
-                        st.success("Kaydedildi!")
-                        st.rerun()
-                else:
-                    st.info(f"Seçili ürün: {len(new_products)} | Etiket: {len(new_tags)}")
+                # Smart Agent Proactive Warnings
+                # Check current activities roughly by looking at global lists (or making a small query if needed, but we avoid too many queries)
+                notes_data = get_notes(comp['id'])
+                emails = [n for n in notes_data if n.get('type') == 'email']
+                tasks = [n for n in notes_data if n.get('type') in ('task', 'To Do', 'In Progress')]
+                
+                warning_col, tag_col = st.columns([0.6, 0.4])
+                
+                with warning_col:
+                    st.markdown("### 🤖 Otonom Asistan")
+                    needs_attention = False
+                    
+                    if emails and not tasks:
+                        st.warning("⚠️ **E-posta Alındı:** Müşteriden email var ancak planlanmış bir görev/aksiyon bulunmuyor.")
+                        needs_attention = True
+                    if comp.get('priority', 1) >= 4 and not comp.get('visited'):
+                        st.error("🔥 **Kritik Ziyaret:** Önceliği çok yüksek ancak henüz standına gidilmedi!")
+                        needs_attention = True
+                    if not emails and not notes_data:
+                        st.info("💡 Henüz hiç etkileşim yok. Tanışma maili atmak ister misiniz?")
+                        needs_attention = True
+                    if not needs_attention:
+                        st.success("✨ Her şey yolunda, bu firma için bekleyen acil durum yok.")
+                        
+                    # Phase 4: Mail Drafter
+                    if st.button("✍️ Taslak E-posta (Follow-up) Oluştur", key=f"draft_{comp['id']}"):
+                        with st.spinner("AI iletişim geçmişini analiz ediyor..."):
+                            try:
+                                from openai import OpenAI
+                                import os
+                                api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+                                if api_key:
+                                    client = OpenAI(api_key=api_key)
+                                    ctx = f"Firma: {comp.get('company_name', '')}\\nSegment: {comp.get('segment', '')}\\n"
+                                    if emails: ctx += f"Son Email: {emails[0]['content'][:400]}\\n"
+                                    
+                                    prompt = f"Sen profesyonel bir fuar asistanısın. Bu firma için kısa, etkili ve dönüş odaklı bir takip (follow-up) e-postası taslakla. Metin referans verileri:\\n{ctx}"
+                                    resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+                                    st.session_state[f"mail_draft_{comp['id']}"] = resp.choices[0].message.content.strip()
+                            except Exception as e:
+                                st.error(f"Taslak oluşturulamadı: {e}")
+
+                    if st.session_state.get(f"mail_draft_{comp['id']}"):
+                        st.text_area("Mail Taslağınız:", st.session_state[f"mail_draft_{comp['id']}"], height=150, key=f"draft_txt_{comp['id']}")
+                        import urllib.parse
+                        subject = urllib.parse.quote(f"IBS Fuarı Görüşmemiz - {comp.get('company_name', '')}")
+                        body = urllib.parse.quote(st.session_state[f"mail_draft_{comp['id']}"])
+                        st.markdown(f"<a href='mailto:?subject={subject}&body={body}' target='_blank'><button style='padding: 5px 10px; border-radius: 5px; background-color: #0078D4; color: white; border: none; cursor: pointer;'>📧 Outlook/Mail'de Aç ve Gönder</button></a>", unsafe_allow_html=True)
+
+                with tag_col:
+                    st.markdown("### 🏷️ Kategori & Ürünler")
+                    current_tags = comp.get('tags') or []
+                    current_products = comp.get('products') or []
+                    
+                    if hasattr(st, "pills"):
+                        if current_tags:
+                            st.pills("Genel Etiketler", current_tags, disabled=True)
+                        if current_products:
+                            st.pills("Ürün Grupları", current_products, disabled=True)
+                    else:
+                        st.markdown("**Genel:** " + ", ".join(current_tags) if current_tags else "Genel: Yok")
+                        st.markdown("**Ürün:** " + ", ".join(current_products) if current_products else "Ürün: Yok")
+
+                    with st.expander("✏️ Kategorileri Düzenle"):
+                        # Flattened 15 categories for excellent UX
+                        FLAT_CATEGORIES = [
+                            "Structural Systems", "Building Envelope", "Roofing", "Windows & Doors", 
+                            "Insulation & Energy", "HVAC", "Plumbing", "Electrical", "Smart Home", 
+                            "Kitchen & Bath", "Interior Finishes", "Outdoor Living", "Site & Landscape", 
+                            "Materials", "Software & Services"
+                        ]
+                        all_tags_options = list(set(AVAILABLE_TAGS + current_tags))
+                        
+                        new_tags = st.multiselect("Firma Durumu (Tags)", options=all_tags_options, default=current_tags, key=f"tags_edit_{comp['id']}")
+                        new_products = st.multiselect("Odak Ürün Kategorileri", options=list(set(FLAT_CATEGORIES + current_products)), default=current_products, key=f"prod_edit_{comp['id']}")
+                        
+                        if set(new_products) != set(current_products) or set(new_tags) != set(current_tags):
+                            if st.button("💾 Kaydet", key=f"save_cats_{comp['id']}", type="primary"):
+                                update_company(comp['id'], tags=new_tags, products=new_products)
+                                st.success("Etiketler Güncellendi!")
+                                st.rerun()
 
             
                 # Content Tabs
