@@ -298,8 +298,35 @@ else:
                                 
                                 filename = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
                                 
-                                file_bytes = uploaded_file.getvalue()
                                 mime_type = uploaded_file.type
+                                file_bytes = uploaded_file.getvalue()
+                                
+                                # --- Image Compression ---
+                                if "image" in mime_type:
+                                    try:
+                                        from PIL import Image
+                                        import io
+                                        img = Image.open(io.BytesIO(file_bytes))
+                                        
+                                        # Only compress if the image is larger than 1920px (width or height)
+                                        max_size = (1920, 1920)
+                                        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                                        
+                                        # Convert RGBA to RGB if saving as JPEG
+                                        if img.mode in ("RGBA", "P"):
+                                            img = img.convert("RGB")
+                                            
+                                        # Save compressed image to bytes
+                                        img_byte_arr = io.BytesIO()
+                                        
+                                        # Determine save format based on original mime type
+                                        fmt = "JPEG" if "jpeg" in mime_type or "jpg" in mime_type else "PNG"
+                                        img.save(img_byte_arr, format=fmt, quality=85, optimize=True)
+                                        
+                                        file_bytes = img_byte_arr.getvalue()
+                                    except Exception as img_err:
+                                        st.warning(f"Görsel sıkıştırma atlandı: {img_err}")
+                                # -----------------------
                                 
                                 gdrive_link = upload_file_to_drive(file_bytes, filename, mime_type, subfolder_id)
                                 
