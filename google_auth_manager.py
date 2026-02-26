@@ -100,7 +100,7 @@ def check_custom_google_auth():
     auth_url, _ = flow.authorization_url(prompt='consent')
     
     st.markdown(
-        f'<a href="{auth_url}" target="_self" '
+        f'<a href="{auth_url}" target="_top" '
         f'style="display: inline-block; padding: 10px 20px; background-color: #4285F4; color: white; '
         f'text-decoration: none; border-radius: 5px; font-weight: bold;">'
         f'G ile Giriş Yap</a>',
