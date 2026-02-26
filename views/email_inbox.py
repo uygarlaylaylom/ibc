@@ -3,10 +3,10 @@ import sys, os, re, datetime
 from collections import Counter
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from supabase_utils import get_supabase, get_companies, update_company
+from supabase_utils import get_supabase, get_companies
 
 # ──────────────────────────────────────────────────────────
-# Mevcut Gmail arama anahtar kelimeleri — kullanıcı buraya ekleyebilir
+# Mevcut Gmail arama anahtar kelimeleri
 # ──────────────────────────────────────────────────────────
 BASE_KEYWORDS = [
     "IBS", "KBIS", "International Builders", "Kitchen Bath", "NAHB", "NKBA",
@@ -19,7 +19,6 @@ BASE_KEYWORDS = [
     "framing", "siding", "waterproof", "trim", "molding", "fastener"
 ]
 
-# Gürültüden arındırmak için atlanacak genel kelimeler
 STOPWORDS = set([
     "the", "and", "for", "are", "with", "this", "that", "from", "have", "our",
     "your", "will", "you", "can", "has", "all", "any", "more", "new", "been",
@@ -30,25 +29,63 @@ STOPWORDS = set([
 ])
 
 
+def _get_gemini():
+    """Gemini API istemcisini döner. Hata olursa None."""
+    try:
+        import google.generativeai as genai
+        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+        if not api_key:
+            return None
+        genai.configure(api_key=api_key)
+        return genai.GenerativeModel("gemini-1.5-flash")
+    except Exception:
+        return None
+
+
+def _gemini_analyze(model, email_content, company_names):
+    """Gemini'ye emaili analiz ettirir. Dict döner."""
+    company_list_str = ", ".join(company_names[:50])
+    prompt = f"""Aşağıdaki bir fuar/ticari etkinlik emailidir. Lütfen kısaca Türkçe analiz et:
+
+EMAIL:
+{email_content[:2500]}
+
+Şu formatta yanıtla (JSON olmadan, düz metin):
+1. ÖZET: (1-2 cümle, emailin ana konusu)
+2. FİRMA TAHMİNİ: (Gönderen muhtemelen şu firmalardan biridir, listeden en yakın olanı seç veya "Listede yok" de: {company_list_str})
+3. ÜRÜN/KATEGORİ: (Email hangi ürün veya kategoriden bahsediyor?)
+4. AKSİYON: (Yapılması gereken en önemli eylem nedir? Örn: "Fiyat listesi iste", "Demo ayarla", "Görmezden gel")
+5. ÖNCELİK: (Yüksek / Orta / Düşük ve neden)"""
+
+    try:
+        resp = model.generate_content(prompt)
+        return resp.text
+    except Exception as e:
+        return f"⚠️ Gemini hatası: {e}"
+
+
 def show_email_inbox():
     st.title("📬 Email Kutusu")
-    st.markdown("Gmail'den toplanan fuar emailleri. Firmaya atanmamış olanları burada eşleştirebilirsiniz.")
+    st.caption("Gmail'den toplanan fuar emailleri. Firmaya atanmamış olanları eşleştirin veya silin.")
 
     supabase = get_supabase()
 
-    # ── Sekmeler ──────────────────────────────────────────
+    # Gemini modeli — eğer API key yoksa None
+    gemini_model = _get_gemini()
+    if not gemini_model:
+        st.sidebar.warning("🤖 Gemini API aktif değil. `GEMINI_API_KEY` Streamlit Secrets'a ekleyin.")
+
     tab1, tab2 = st.tabs(["📩 Eşleşmemiş Emailler", "💡 Anahtar Kelime Önerileri"])
 
     # ──────────────────────────────────────────
     # SEKME 1: Eşleşmemiş Emailler
     # ──────────────────────────────────────────
     with tab1:
-        # Tüm firmaları dropdown için çek
         companies = get_companies()
         company_options = {c['company_name']: c['id'] for c in companies if c.get('company_name')}
-        company_names_sorted = ["— Firma Seç —"] + sorted(company_options.keys())
+        company_names_list = sorted(company_options.keys())
+        company_names_sorted = ["— Firma Seç —"] + company_names_list
 
-        # Eşleşmemiş emailler = company_id IS NULL, type=email
         resp = (supabase.table("notes")
                 .select("*")
                 .is_("company_id", "null")
@@ -59,161 +96,158 @@ def show_email_inbox():
         emails = resp.data or []
 
         if not emails:
-            st.info("📭 Eşleşmemiş email yok. Harika!")
+            st.success("📭 Eşleşmemiş email yok!")
             return
 
-        # Fuar filtresi
-        all_events = list(set([_detect_event(e.get('content', '')) for e in emails]))
-        event_filter = st.selectbox("🎪 Fuar Filtrele", ["Tümü"] + sorted(all_events), key="inbox_event")
-        
-        # Urgency filtresi
-        urgency_filter = st.selectbox("🔥 Öncelik Filtrele", ["Tümü", "🔴 Yüksek (7+)", "🟡 Orta (4-6)", "🟢 Düşük (0-3)"], key="inbox_urgency")
+        # Filtreler
+        fcol1, fcol2 = st.columns(2)
+        with fcol1:
+            all_events = sorted(set([_detect_event(e.get('content', '')) for e in emails]))
+            event_filter = st.selectbox("🎪 Fuar", ["Tümü"] + all_events, key="inbox_event")
+        with fcol2:
+            urgency_filter = st.selectbox("🔥 Öncelik", ["Tümü", "🔴 Yüksek (7+)", "🟡 Orta (4-6)", "🟢 Düşük (0-3)"], key="inbox_urgency")
 
-        st.markdown(f"**{len(emails)} eşleşmemiş email**")
+        visible = [e for e in emails
+                   if (event_filter == "Tümü" or _detect_event(e.get('content','')) == event_filter)
+                   and _urgency_passes(e.get('content',''), urgency_filter)]
+
+        st.markdown(f"**{len(visible)} / {len(emails)} email gösteriliyor**")
         st.markdown("---")
 
-        matched_count = 0
-        for em in emails:
+        for em in visible:
             content = em.get('content', '')
             event_tag = _detect_event(content)
             urgency = _score_urgency(content)
-
-            # Filtre uygula
-            if event_filter != "Tümü" and event_tag != event_filter:
-                continue
-            if urgency_filter == "🔴 Yüksek (7+)" and urgency < 7:
-                continue
-            if urgency_filter == "🟡 Orta (4-6)" and not (4 <= urgency <= 6):
-                continue
-            if urgency_filter == "🟢 Düşük (0-3)" and urgency > 3:
-                continue
-
-            matched_count += 1
-            
             urgency_badge = "🔴" if urgency >= 7 else "🟡" if urgency >= 4 else "🟢"
             date_str = _parse_date(em.get('created_at', ''))
-            
-            # Email başlık satırından konu çıkar
             subject = _extract_subject(content)
+            em_id = em['id']
 
             with st.container(border=True):
-                col_meta, col_action = st.columns([0.75, 0.25])
-                
-                with col_meta:
+                # Başlık satırı
+                hcol1, hcol2, hcol3 = st.columns([0.55, 0.30, 0.15])
+                with hcol1:
                     st.markdown(f"{urgency_badge} **{subject}**")
-                    st.caption(f"🎪 {event_tag}  ·  📅 {date_str}  ·  Skor: {urgency}/10")
-                
-                with col_action:
+                    st.caption(f"📅 {date_str}  ·  🎪 {event_tag}  ·  Skor {urgency}/10")
+                with hcol2:
                     sel_company = st.selectbox(
                         "Firmaya Ata",
                         company_names_sorted,
-                        key=f"assign_{em['id']}",
+                        key=f"assign_{em_id}",
                         label_visibility="collapsed"
                     )
                     if sel_company != "— Firma Seç —":
-                        if st.button("💾 Ata", key=f"save_assign_{em['id']}", type="primary", use_container_width=True):
-                            comp_id = company_options[sel_company]
-                            supabase.table("notes").update({"company_id": comp_id}).eq("id", em['id']).execute()
-                            st.success(f"✅ '{sel_company}' firmasına atandı!")
+                        if st.button("💾 Ata", key=f"save_{em_id}", type="primary", use_container_width=True):
+                            supabase.table("notes").update(
+                                {"company_id": company_options[sel_company]}
+                            ).eq("id", em_id).execute()
+                            st.toast(f"✅ {sel_company} firmasına atandı!")
                             st.rerun()
+                with hcol3:
+                    if st.button("🗑️ Sil", key=f"del_{em_id}", use_container_width=True):
+                        supabase.table("notes").delete().eq("id", em_id).execute()
+                        st.toast("🗑️ Email silindi.")
+                        st.rerun()
 
-                # Önizleme
-                with st.expander("📄 Email İçeriğini Göster"):
-                    # İlk 800 karakter
-                    preview = content[:800] + ("…" if len(content) > 800 else "")
-                    st.text(preview)
+                # Detay paneli
+                with st.expander("📄 İçerik & 🤖 Gemini Analizi"):
+                    ecol1, ecol2 = st.columns([0.5, 0.5])
 
-        if matched_count == 0:
-            st.info("Bu filtreyle eşleşen email bulunamadı.")
+                    with ecol1:
+                        st.markdown("**Email İçeriği:**")
+                        preview = content[:1000] + ("…" if len(content) > 1000 else "")
+                        st.text(preview)
+
+                    with ecol2:
+                        st.markdown("**🤖 Gemini Analizi:**")
+                        if gemini_model:
+                            cache_key = f"gemini_result_{em_id}"
+                            if cache_key not in st.session_state:
+                                if st.button("▶️ Gemini ile Analiz Et", key=f"gemini_btn_{em_id}"):
+                                    with st.spinner("Analiz ediliyor..."):
+                                        result = _gemini_analyze(gemini_model, content, company_names_list)
+                                        st.session_state[cache_key] = result
+                            if st.session_state.get(cache_key):
+                                st.markdown(st.session_state[cache_key])
+                                # Gemini firma önerisi varsa hızlı atama butonu
+                                if "FİRMA TAHMİNİ:" in st.session_state[cache_key]:
+                                    lines = st.session_state[cache_key].split('\n')
+                                    for l in lines:
+                                        if "FİRMA TAHMİNİ:" in l:
+                                            suggested = l.split("FİRMA TAHMİNİ:")[-1].strip().strip(".")
+                                            # Listede tam match var mı?
+                                            if suggested in company_options:
+                                                if st.button(f"⚡ '{suggested}' firmasına hızlı ata", key=f"quick_{em_id}"):
+                                                    supabase.table("notes").update(
+                                                        {"company_id": company_options[suggested]}
+                                                    ).eq("id", em_id).execute()
+                                                    st.toast(f"✅ {suggested} firmasına atandı!")
+                                                    st.rerun()
+                        else:
+                            st.info("Gemini API key yok. Streamlit Secrets'a `GEMINI_API_KEY` ekleyin.\n\n[Ücretsiz anahtar al →](https://aistudio.google.com/app/apikey)")
 
     # ──────────────────────────────────────────
     # SEKME 2: Anahtar Kelime Önerileri
     # ──────────────────────────────────────────
     with tab2:
-        st.markdown("### 💡 Email İçeriklerinden Yeni Anahtar Kelime Önerileri")
-        st.markdown(
-            "Emaillerinizde sık geçen ama mevcut arama listemizde **olmayan** kelimeler. "
-            "Bunları listeye eklerseniz ilgili emailler daha erken yakalanır."
-        )
+        st.markdown("### 💡 Email İçeriklerinden Anahtar Kelime Önerileri")
+        st.caption("Emaillerinizde sık geçen ama mevcut arama listemizde **olmayan** kelimeler.")
 
-        # Tüm emailleri al (eşleşmiş + eşleşmemiş)
-        all_resp = (supabase.table("notes")
-                    .select("content")
-                    .eq("type", "email")
-                    .execute())
+        all_resp = supabase.table("notes").select("content").eq("type", "email").execute()
         all_emails = all_resp.data or []
 
         if not all_emails:
             st.info("Öneri için email yok.")
             return
 
-        # Tüm içeriklerden kelime frekansı çıkar
         word_freq = Counter()
         for em in all_emails:
-            body = em.get('content', '')
-            words = re.findall(r'\b[A-Za-z][a-zA-Z]{3,}\b', body)
+            words = re.findall(r'\b[A-Za-z][a-zA-Z]{3,}\b', em.get('content', ''))
             for w in words:
-                w_lower = w.lower()
-                if w_lower not in STOPWORDS:
-                    word_freq[w_lower] += 1
+                wl = w.lower()
+                if wl not in STOPWORDS:
+                    word_freq[wl] += 1
 
-        # Mevcut keyword listesinde olmayanları bul
-        base_lower = set([k.lower() for k in BASE_KEYWORDS])
-        candidates = [(w, c) for w, c in word_freq.items()
-                      if w not in base_lower and c >= 3]  # En az 3 kez geçenler
-        candidates.sort(key=lambda x: -x[1])
-        top_candidates = candidates[:40]
+        base_lower = set(k.lower() for k in BASE_KEYWORDS)
+        candidates = sorted(
+            [(w, c) for w, c in word_freq.items() if w not in base_lower and c >= 3],
+            key=lambda x: -x[1]
+        )[:40]
 
-        if not top_candidates:
+        if not candidates:
             st.success("🎉 Tüm sık geçen kelimeler zaten listemizde!")
             return
 
-        st.markdown(f"**{len(top_candidates)} yeni kelime önerisi** (3+ kez geçen):")
+        st.markdown(f"**{len(candidates)} öneri** (3+ kez geçen):")
         st.markdown("---")
 
-        # Supabase'de keywords tablosu yoksa, kendi .gs link öneri listesine ekliyoruz
-        # Kullanıcı buradan seçer, biz kodu güncelleriz
         selected_words = []
         cols = st.columns(4)
-        for i, (word, count) in enumerate(top_candidates):
+        for i, (word, count) in enumerate(candidates):
             with cols[i % 4]:
                 if st.checkbox(f"`{word}` ({count}x)", key=f"kw_{word}"):
                     selected_words.append(word)
 
         if selected_words:
             st.markdown("---")
-            st.success(f"**{len(selected_words)} kelime seçildi:** {', '.join(selected_words)}")
-            st.markdown("Bu kelimeleri Gmail arama listesine eklemek için aşağıdaki butona tıklayın:")
-            
-            if st.button("➕ Seçili Kelimeleri Kaydet (Apps Script'e Eklenecek)", type="primary"):
-                # Supabase'de bir `email_keywords` tablosu yoksa properties'e yazarız
-                props_resp = supabase.table("notes").select("id").limit(1).execute()
-                
-                # Şimdilik session_state'e kaydet ve kullanıcıya göster
+            st.success(f"**Seçilen:** {', '.join(selected_words)}")
+            if st.button("➕ Bana Bildir (Apps Script'e Eklenecek)", type="primary"):
                 if "custom_keywords" not in st.session_state:
                     st.session_state["custom_keywords"] = []
-                st.session_state["custom_keywords"] = list(set(
-                    st.session_state.get("custom_keywords", []) + selected_words
-                ))
-
-                st.info(
-                    f"✅ Şu kelimeler listeye eklendi: **{', '.join(selected_words)}**\n\n"
-                    "Bu kelimeler `gmail_to_supabase.gs` dosyasındaki arama sorgusuna "
-                    "eklenebilir. Geliştiriciye (Antigravity) bildirin."
+                st.session_state["custom_keywords"] = list(
+                    set(st.session_state["custom_keywords"] + selected_words)
                 )
+                st.info(f"✅ Kaydedildi: **{', '.join(selected_words)}**\n\nBunları geliştiriciye bildirin — `gmail_to_supabase.gs` arama listesine eklenecek.")
 
-        # Eklenmiş özel kelimeler listesi
         if st.session_state.get("custom_keywords"):
             st.markdown("---")
-            st.markdown("**📋 Şu an aktif özel anahtar kelimeler:**")
-            for kw in st.session_state["custom_keywords"]:
-                c1, c2 = st.columns([0.8, 0.2])
-                with c1:
-                    st.code(kw)
-                with c2:
-                    if st.button("🗑️", key=f"del_kw_{kw}"):
-                        st.session_state["custom_keywords"].remove(kw)
-                        st.rerun()
+            st.markdown("**📋 Bekleyen özel kelimeler:**")
+            for kw in list(st.session_state["custom_keywords"]):
+                c1, c2 = st.columns([0.85, 0.15])
+                c1.code(kw)
+                if c2.button("✕", key=f"del_kw_{kw}"):
+                    st.session_state["custom_keywords"].remove(kw)
+                    st.rerun()
 
 
 # ──────────────────────────────────────────────────────────
@@ -233,24 +267,24 @@ def _detect_event(text):
 def _score_urgency(text):
     s = text.lower()
     score = 0
-    high = ["urgent", "deadline", "offer", "price list", "quote", "teklif",
-            "meeting", "appointment", "expires", "asap", "exclusive", "today",
-            "katalog", "catalog", "sample", "demo request", "fiyat"]
-    med  = ["new product", "launch", "announcement", "schedule", "brochure",
-            "partnership", "distributor", "follow up", "follow-up", "product line"]
-    for w in high:
+    for w in ["urgent","deadline","offer","price list","quote","teklif","meeting","appointment","expires","asap","exclusive","today","katalog","catalog","sample","demo request","fiyat"]:
         if w in s: score += 2
-    for w in med:
+    for w in ["new product","launch","announcement","schedule","brochure","partnership","distributor","follow up","follow-up","product line"]:
         if w in s: score += 1
     return min(score, 10)
 
+def _urgency_passes(content, filter_str):
+    u = _score_urgency(content)
+    if filter_str == "🔴 Yüksek (7+)": return u >= 7
+    if filter_str == "🟡 Orta (4-6)":  return 4 <= u <= 6
+    if filter_str == "🟢 Düşük (0-3)": return u <= 3
+    return True
+
 def _extract_subject(content):
-    """Email içeriğinden konu satırını çıkarmaya çalışır."""
-    lines = content.split('\n')
-    for line in lines[:3]:
+    for line in content.split('\n')[:3]:
         if '**' in line:
-            return line.replace('📧', '').replace('**', '').strip()
-    return lines[0][:80] if lines else "(Konu yok)"
+            return line.replace('📧', '').replace('**', '').strip()[:80]
+    return content[:80]
 
 def _parse_date(iso_str):
     try:
