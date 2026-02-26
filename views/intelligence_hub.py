@@ -77,23 +77,24 @@ def _show_ai_assistant():
                     notes = notes_resp.data or []
 
                     # Özet context oluştur
+                    # Limit numbers reduced to prevent Gemini API 429 Quota Exceeded Token Limit errors
                     comp_summary = "\n".join([
                         f"- {c.get('company_name','?')} | Booth:{c.get('booth_number','?')} | "
                         f"Öncelik:{c.get('priority','?')} | Ürünler:{','.join((c.get('products') or [])[:3])}"
-                        for c in companies[:80]
+                        for c in companies[:30]  # Reduced from 80
                     ])
 
                     manual_notes = [n for n in notes if n.get('type') == 'note']
                     email_notes  = [n for n in notes if n.get('type') == 'email']
 
                     notes_summary = "\n".join([
-                        f"[{n.get('created_at','')[:10]}] {n.get('content','')[:200]}"
-                        for n in manual_notes[:50]
+                        f"[{n.get('created_at','')[:10]}] {n.get('content','')[:100]}"
+                        for n in manual_notes[:20]  # Reduced from 50 and text cut to 100
                     ])
 
                     email_summary = "\n".join([
-                        f"[Email] {n.get('content','')[:150]}"
-                        for n in email_notes[:30]
+                        f"[Email] {n.get('content','')[:100]}"
+                        for n in email_notes[:10]   # Reduced from 30 and text cut to 100
                     ])
 
                     prompt = (
