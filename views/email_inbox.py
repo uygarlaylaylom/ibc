@@ -98,7 +98,7 @@ def show_email_inbox():
         company_names_list = sorted(company_options.keys())
         company_names_sorted = ["— Firma Seç —"] + company_names_list
 
-        resp = (supabase.table("notes")
+        resp = (supabase.table("activities")
                 .select("*")
                 .is_("company_id", "null")
                 .eq("type", "email")
@@ -197,7 +197,7 @@ def show_email_inbox():
                     if row.get("firma_id"):
                         if rc[4].button("✅ Ekle", key=f"bulk_assign_{row['id']}",
                                          help=f"{row['firma']} firmasına ata", use_container_width=True):
-                            supabase.table("notes").update(
+                            supabase.table("activities").update(
                                 {"company_id": row["firma_id"]}
                             ).eq("id", row["id"]).execute()
                             to_remove.append(row["id"])
@@ -207,7 +207,7 @@ def show_email_inbox():
 
                     # Sil butonu
                     if rc[5].button("🗑️", key=f"bulk_del_{row['id']}", use_container_width=True):
-                        supabase.table("notes").delete().eq("id", row["id"]).execute()
+                        supabase.table("activities").delete().eq("id", row["id"]).execute()
                         to_remove.append(row["id"])
                         st.toast("🗑️ Silindi")
 
@@ -248,14 +248,14 @@ def show_email_inbox():
                     )
                     if sel_company != "— Firma Seç —":
                         if st.button("💾 Ata", key=f"save_{em_id}", type="primary", use_container_width=True):
-                            supabase.table("notes").update(
+                            supabase.table("activities").update(
                                 {"company_id": company_options[sel_company]}
                             ).eq("id", em_id).execute()
                             st.toast(f"✅ {sel_company} firmasına atandı!")
                             st.rerun()
                 with hcol3:
                     if st.button("🗑️ Sil", key=f"del_{em_id}", use_container_width=True):
-                        supabase.table("notes").delete().eq("id", em_id).execute()
+                        supabase.table("activities").delete().eq("id", em_id).execute()
                         st.toast("🗑️ Email silindi.")
                         st.rerun()
 
@@ -288,7 +288,7 @@ def show_email_inbox():
                                             # Listede tam match var mı?
                                             if suggested in company_options:
                                                 if st.button(f"⚡ '{suggested}' firmasına hızlı ata", key=f"quick_{em_id}"):
-                                                    supabase.table("notes").update(
+                                                    supabase.table("activities").update(
                                                         {"company_id": company_options[suggested]}
                                                     ).eq("id", em_id).execute()
                                                     st.toast(f"✅ {suggested} firmasına atandı!")
@@ -303,7 +303,7 @@ def show_email_inbox():
         st.markdown("### 💡 Email İçeriklerinden Anahtar Kelime Önerileri")
         st.caption("Emaillerinizde sık geçen ama mevcut arama listemizde **olmayan** kelimeler.")
 
-        all_resp = supabase.table("notes").select("content").eq("type", "email").execute()
+        all_resp = supabase.table("activities").select("content").eq("type", "email").execute()
         all_emails = all_resp.data or []
 
         if not all_emails:

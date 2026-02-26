@@ -280,166 +280,155 @@ if app_mode == "Firma Listesi":
             
                 # TAB 1: Notes & Intelligence
                 with tab1:
-                    ai_cols = st.columns(3)
-                    with ai_cols[0]:
-                        if st.button("🗂️ Toplantı Brifingi", help="Bu firma ile görüşmeden önce bilinmesi gerekenlerin özetini çıkarır.", use_container_width=True, key=f"ai_brief_{comp['id']}"):
-                            st.session_state[f"run_ai_brief_{comp['id']}"] = True
-                    with ai_cols[1]:
-                        if st.button("✏️ AI Not Asistanı", help="Kabataslak notunuzu IBS formatına (#etiket @kişi) çevirir.", use_container_width=True, key=f"ai_note_{comp['id']}"):
-                            st.session_state[f"show_ai_note_{comp['id']}"] = not st.session_state.get(f"show_ai_note_{comp['id']}", False)
-                    with ai_cols[2]:
-                        if st.button("⚡ Takip Listesi", help="Tüm notlardan çıkarılan aksiyonları listeler.", use_container_width=True, key=f"ai_tasks_{comp['id']}"):
-                            st.session_state[f"run_ai_tasks_{comp['id']}"] = True
+                    @st.experimental_fragment
+                    def render_notes_fragment(comp):
+                        ai_cols = st.columns(3)
+                        with ai_cols[0]:
+                            if st.button("🗂️ Toplantı Brifingi", help="Bu firma ile görüşmeden önce bilinmesi gerekenlerin özetini çıkarır.", use_container_width=True, key=f"ai_brief_{comp['id']}"):
+                                st.session_state[f"run_ai_brief_{comp['id']}"] = True
+                        with ai_cols[1]:
+                            if st.button("✏️ AI Not Asistanı", help="Kabataslak notunuzu IBS formatına (#etiket @kişi) çevirir.", use_container_width=True, key=f"ai_note_{comp['id']}"):
+                                st.session_state[f"show_ai_note_{comp['id']}"] = not st.session_state.get(f"show_ai_note_{comp['id']}", False)
+                        with ai_cols[2]:
+                            if st.button("⚡ Takip Listesi", help="Tüm notlardan çıkarılan aksiyonları listeler.", use_container_width=True, key=f"ai_tasks_{comp['id']}"):
+                                st.session_state[f"run_ai_tasks_{comp['id']}"] = True
 
-                    st.markdown("---")
+                        st.markdown("---")
 
-                    notes = get_notes(comp['id'])
+                        notes = get_notes(comp['id'])
 
-                    # 1. AI Not Asistanı UI
-                    if st.session_state.get(f"show_ai_note_{comp['id']}", False):
-                        with st.container(border=True):
-                            st.markdown("🤖 **Akıllı Not Asistanı**")
-                            raw_note = st.text_area("Kabataslak notunuzu yazın:", key=f"raw_note_{comp['id']}", height=100)
+                        # 1. AI Not Asistanı UI
+                        if st.session_state.get(f"show_ai_note_{comp['id']}", False):
+                            with st.container(border=True):
+                                st.markdown("🤖 **Akıllı Not Asistanı**")
+                                raw_note = st.text_area("Kabataslak notunuzu yazın:", key=f"raw_note_{comp['id']}", height=100)
                             
-                            col_n1, col_n2 = st.columns(2)
-                            with col_n1:
-                                if st.button("✨ Formatla", use_container_width=True, key=f"format_btn_{comp['id']}"):
-                                    if raw_note:
-                                        with st.spinner("Formatlanıyor..."):
-                                            try:
-                                                import google.generativeai as genai
-                                                import os
-                                                api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-                                                if api_key:
-                                                    genai.configure(api_key=api_key)
-                                                    model = genai.GenerativeModel("gemini-2.0-flash")
-                                                    prompt = (
-                                                        f"Aşağıdaki notu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim, kategori varsa köşeli parantez içinde) düzenle.\n"
-                                                        f"SADECE FORMATLANMIŞ METNİ DÖNDÜR, BAŞKA BİR ŞEY YAZMA.\n\nNot: {raw_note}"
-                                                    )
-                                                    resp = model.generate_content(prompt)
-                                                    st.session_state[f"fmt_note_{comp['id']}"] = resp.text.strip()
-                                            except Exception as e:
-                                                st.error(f"Hata: {e}")
+                                col_n1, col_n2 = st.columns(2)
+                                with col_n1:
+                                    if st.button("✨ Formatla", use_container_width=True, key=f"format_btn_{comp['id']}"):
+                                        if raw_note:
+                                            with st.spinner("Formatlanıyor..."):
+                                                try:
+                                                    import google.generativeai as genai
+                                                    import os
+                                                    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                                    if api_key:
+                                                        genai.configure(api_key=api_key)
+                                                        model = genai.GenerativeModel("gemini-2.0-flash")
+                                                        prompt = (
+                                                            f"Aşağıdaki notu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim, kategori varsa köşeli parantez içinde) düzenle.\n"
+                                                            f"SADECE FORMATLANMIŞ METNİ DÖNDÜR, BAŞKA BİR ŞEY YAZMA.\n\nNot: {raw_note}"
+                                                        )
+                                                        resp = model.generate_content(prompt)
+                                                        st.session_state[f"fmt_note_{comp['id']}"] = resp.text.strip()
+                                                except Exception as e:
+                                                    st.error(f"Hata: {e}")
                             
-                            with col_n2:
-                                if st.session_state.get(f"fmt_note_{comp['id']}"):
-                                    final_note = st.text_area("Kaydedilecek Not:", value=st.session_state[f"fmt_note_{comp['id']}"], key=f"final_n_{comp['id']}")
-                                    if st.button("💾 Kaydet", type="primary", use_container_width=True, key=f"save_ai_note_{comp['id']}"):
-                                        add_note(comp['id'], final_note, note_type="manual")
-                                        from tasks_module.parser import parse_and_create_task
-                                        from tasks_module.repository import insert_task
-                                        from supabase_utils import get_supabase
+                                with col_n2:
+                                    if st.session_state.get(f"fmt_note_{comp['id']}"):
+                                        final_note = st.text_area("Kaydedilecek Not:", value=st.session_state[f"fmt_note_{comp['id']}"], key=f"final_n_{comp['id']}")
+                                        if st.button("💾 Kaydet", type="primary", use_container_width=True, key=f"save_ai_note_{comp['id']}"):
+                                            add_note(comp['id'], final_note, note_type="manual", company_name=comp['company_name'])
+                                            st.toast("Not & (varsa) Görev eklendi!", icon="✅")
                                         
-                                        new_task = parse_and_create_task(comp['company_name'], final_note)
-                                        if new_task:
-                                            insert_task(get_supabase(), new_task)
-                                            st.toast("Kanban panosuna da eklendi!", icon="✅")
-                                        
-                                        st.session_state[f"show_ai_note_{comp['id']}"] = False
-                                        st.session_state[f"fmt_note_{comp['id']}"] = ""
-                                        st.rerun()
-
-                    # 2. Toplantı Brifingi İşlemi
-                    if st.session_state.get(f"run_ai_brief_{comp['id']}"):
-                        with st.container(border=True):
-                            st.markdown("🗂️ **Toplantı Brifingi**")
-                            with st.spinner("Notlar ve emailler analiz ediliyor..."):
-                                try:
-                                    import google.generativeai as genai
-                                    import os
-                                    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-                                    if api_key:
-                                        genai.configure(api_key=api_key)
-                                        model = genai.GenerativeModel("gemini-2.0-flash")
-                                        
-                                        all_text = "\n".join([n['content'] for n in notes])
-                                        prompt = (
-                                            f"Sen bir fuar asistanısın. {comp['company_name']} firmasıyla toplantıya gireceğim.\n"
-                                            f"Aşağıdaki geçmiş notlar ve emaillere bakarak bana 3 maddelik çok kısa bir özet (brifing) çıkar.\n"
-                                            f"Nelere dikkat etmeliyim, açıkta kalan konular neler?\n\nVeri: {all_text}"
-                                        )
-                                        resp = model.generate_content(prompt)
-                                        st.markdown(resp.text)
-                                        if st.button("Kapat", key=f"close_brief_{comp['id']}"):
-                                            st.session_state[f"run_ai_brief_{comp['id']}"] = False
+                                            st.session_state[f"show_ai_note_{comp['id']}"] = False
+                                            st.session_state[f"fmt_note_{comp['id']}"] = ""
                                             st.rerun()
-                                except Exception as e:
-                                    st.error(f"Hata: {e}")
 
-                    # 3. Takip Listesi İşlemi
-                    if st.session_state.get(f"run_ai_tasks_{comp['id']}"):
-                        with st.container(border=True):
-                            st.markdown("⚡ **Önerilen Takip Aksiyonları**")
-                            with st.spinner("Görevler güncelleniyor..."):
-                                try:
-                                    import google.generativeai as genai
-                                    import os
-                                    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-                                    if api_key:
-                                        genai.configure(api_key=api_key)
-                                        model = genai.GenerativeModel("gemini-2.0-flash")
+                        # 2. Toplantı Brifingi İşlemi
+                        if st.session_state.get(f"run_ai_brief_{comp['id']}"):
+                            with st.container(border=True):
+                                st.markdown("🗂️ **Toplantı Brifingi**")
+                                with st.spinner("Notlar ve emailler analiz ediliyor..."):
+                                    try:
+                                        import google.generativeai as genai
+                                        import os
+                                        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                        if api_key:
+                                            genai.configure(api_key=api_key)
+                                            model = genai.GenerativeModel("gemini-2.0-flash")
                                         
-                                        all_text = "\n".join([n['content'] for n in notes])
-                                        prompt = (
-                                            f"Bu firmanın notlarından çıkarılması gereken SOMUT GÖREVLER listesi oluştur.\n"
-                                            f"Eğer notta görev yoksa 'Görev bulunamadı' yaz. "
-                                            f"Madde imi olarak '-' kullan.\n\nNotlar: {all_text}"
-                                        )
-                                        resp = model.generate_content(prompt)
-                                        st.markdown(resp.text)
-                                        if st.button("Kapat", key=f"close_tasks_{comp['id']}"):
-                                            st.session_state[f"run_ai_tasks_{comp['id']}"] = False
-                                            st.rerun()
-                                except Exception as e:
-                                    st.error(f"Hata: {e}")
+                                            all_text = "\n".join([n['content'] for n in notes])
+                                            prompt = (
+                                                f"Sen bir fuar asistanısın. {comp['company_name']} firmasıyla toplantıya gireceğim.\n"
+                                                f"Aşağıdaki geçmiş notlar ve emaillere bakarak bana 3 maddelik çok kısa bir özet (brifing) çıkar.\n"
+                                                f"Nelere dikkat etmeliyim, açıkta kalan konular neler?\n\nVeri: {all_text}"
+                                            )
+                                            resp = model.generate_content(prompt)
+                                            st.markdown(resp.text)
+                                            if st.button("Kapat", key=f"close_brief_{comp['id']}"):
+                                                st.session_state[f"run_ai_brief_{comp['id']}"] = False
+                                                st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Hata: {e}")
 
-                    st.markdown("---")
+                        # 3. Takip Listesi İşlemi
+                        if st.session_state.get(f"run_ai_tasks_{comp['id']}"):
+                            with st.container(border=True):
+                                st.markdown("⚡ **Önerilen Takip Aksiyonları**")
+                                with st.spinner("Görevler güncelleniyor..."):
+                                    try:
+                                        import google.generativeai as genai
+                                        import os
+                                        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                                        if api_key:
+                                            genai.configure(api_key=api_key)
+                                            model = genai.GenerativeModel("gemini-2.0-flash")
+                                        
+                                            all_text = "\n".join([n['content'] for n in notes])
+                                            prompt = (
+                                                f"Bu firmanın notlarından çıkarılması gereken SOMUT GÖREVLER listesi oluştur.\n"
+                                                f"Eğer notta görev yoksa 'Görev bulunamadı' yaz. "
+                                                f"Madde imi olarak '-' kullan.\n\nNotlar: {all_text}"
+                                            )
+                                            resp = model.generate_content(prompt)
+                                            st.markdown(resp.text)
+                                            if st.button("Kapat", key=f"close_tasks_{comp['id']}"):
+                                                st.session_state[f"run_ai_tasks_{comp['id']}"] = False
+                                                st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Hata: {e}")
 
-                    # Standart Manuel Not Ekleme
-                    with st.expander("➕ Hızlı Not Ekle"):
-                        new_note = st.text_area("Notunuzu yazın:", key=f"note_input_{comp['id']}")
-                        if st.button("Kaydet", key=f"save_note_{comp['id']}"):
-                            add_note(comp['id'], new_note, note_type="manual")
-                            
-                            from tasks_module.parser import parse_and_create_task
-                            from tasks_module.repository import insert_task
-                            from supabase_utils import get_supabase
-                            new_task = parse_and_create_task(comp['company_name'], new_note)
-                            if new_task:
-                                insert_task(get_supabase(), new_task)
-                            
-                            st.success("Note saved!")
-                            st.rerun()
-                
-                    # Notları ve Emailleri kronolojik listele
-                    sorted_notes = sorted(notes, key=lambda x: x['created_at'], reverse=True)
-                    
-                    for n in sorted_notes:
-                        date_str = datetime.datetime.fromisoformat(n['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
-                        
-                        col_note, col_del = st.columns([0.85, 0.15])
-                        with col_note:
-                            if n['type'] == 'email':
-                                st.markdown(f"""
-                                <div class="note-box" style="border-left: 4px solid #3B82F6; background-color: #F3F4F6;">
-                                    <small style="color:#555;">📧 <b>Email</b> | {date_str}</small><br>
-                                    <div style="font-size: 0.9em; white-space: pre-wrap; margin-top: 4px;">{n['content']}</div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            else:
-                                st.markdown(f"""
-                                <div class="note-box">
-                                    <small style="color:#555;">📝 {date_str}</small><br>
-                                    {n['content']}
-                                </div>
-                                """, unsafe_allow_html=True)
-                        with col_del:
-                            if st.button("🗑️", key=f"del_note_{n['id']}"):
-                                delete_note(n['id'])
+                        st.markdown("---")
+
+                        # Standart Manuel Not Ekleme
+                        with st.expander("➕ Hızlı Not Ekle"):
+                            new_note = st.text_area("Notunuzu yazın:", key=f"note_input_{comp['id']}")
+                            if st.button("Kaydet", key=f"save_note_{comp['id']}"):
+                                add_note(comp['id'], new_note, note_type="manual", company_name=comp['company_name'])
+                                st.success("Note saved!")
                                 st.rerun()
+                
+                        # Notları ve Emailleri kronolojik listele
+                        sorted_notes = sorted(notes, key=lambda x: x['created_at'], reverse=True)
+                    
+                        for n in sorted_notes:
+                            date_str = datetime.datetime.fromisoformat(n['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
+                        
+                            col_note, col_del = st.columns([0.85, 0.15])
+                            with col_note:
+                                if n['type'] == 'email':
+                                    st.markdown(f"""
+                                    <div class="note-box" style="border-left: 4px solid #3B82F6; background-color: #F3F4F6;">
+                                        <small style="color:#555;">📧 <b>Email</b> | {date_str}</small><br>
+                                        <div style="font-size: 0.9em; white-space: pre-wrap; margin-top: 4px;">{n['content']}</div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f"""
+                                    <div class="note-box">
+                                        <small style="color:#555;">📝 {date_str}</small><br>
+                                        {n['content']}
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                            with col_del:
+                                if st.button("🗑️", key=f"del_note_{n['id']}"):
+                                    delete_note(n['id'])
+                                    st.rerun()
 
-                # TAB 2: Attachments / Media
+                    render_notes_fragment(comp)
+
+                    # TAB 2: Attachments / Media
                 with tab2:
                     st.info("📦 **Dosyalar Google Drive'a Yüklenecektir** (IBS_2026_Gallery)")
                 

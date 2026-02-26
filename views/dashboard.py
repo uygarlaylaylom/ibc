@@ -136,25 +136,25 @@ def show_dashboard():
 
         with col_btn2:
             if st.button("Kaydet", type="primary", use_container_width=True):
-
-            if new_company and new_note:
-                new_task = parse_and_create_task(new_company, new_note)
-                if new_task:
-                    inserted = insert_task(get_client_safely(), new_task)
-                    if inserted:
-                        st.success("Not kaydedildi!")
-                        # Sync High priority tasks to the company master record
-                        if inserted.get("priority") == "High" and new_company in company_name_to_id:
-                            comp_id = company_name_to_id[new_company]
+                if new_company and new_note:
+                    comp_id = company_name_to_id.get(new_company)
+                    if comp_id:
+                        from supabase_utils import add_note
+                        add_note(comp_id, new_note, note_type="manual", company_name=new_company)
+                        
+                        # Sync priority 5 if high priority
+                        new_task = parse_and_create_task(new_company, new_note)
+                        if new_task and new_task.priority == "High":
                             update_company(comp_id, priority=5)
                             st.info("Firma genel önceliği 5 (Ateşli) olarak senkronize edildi!")
+                        
+                        st.session_state['draft_note'] = ''
+                        st.success("Not & Görev başarıyla kaydedildi!")
                         st.rerun()
                     else:
-                        st.error("Veritabanına kaydedilirken hata oluştu.")
+                        st.error("Firma ID bulunamadı.")
                 else:
-                    st.warning("Not ayrıştırılamadı. Geçerli bir etiket (tag), mention veya kategori bulunamadı.")
-            else:
-                st.warning("Firma adı ve not alanı zorunludur.")
+                    st.warning("Firma adı ve not alanı zorunludur.")
 
 
     # ==========================================================
@@ -231,11 +231,12 @@ def show_dashboard():
 
 
     # ==========================================================
-    # 5. KANBAN GÖRÜNÜMÜ
+    # 5. KANBAN GÖRÜNÜMÜ (FRAGMENT)
     # ==========================================================
-    if view_mode == "Kanban":
+    @st.experimental_fragment
+    def render_kanban_board(tasks_data):
         grouped_tasks = {"Todo": [], "In Progress": [], "Done": []}
-        for t in filtered_tasks:
+        for t in tasks_data:
             stat = t.get("status", "Todo")
             if stat in grouped_tasks:
                 grouped_tasks[stat].append(t)
@@ -251,7 +252,6 @@ def show_dashboard():
         for col, title, status_key in columns_mapping:
             with col:
                 tasks_list = grouped_tasks[status_key]
-                # Badge header
                 st.markdown(f"<div style='background-color:#F1F5F9; padding: 8px; border-radius: 8px; margin-bottom: 12px'><b>{title}</b> <span style='background:#E2E8F0; padding: 2px 6px; border-radius: 9999px; font-size:0.75rem'>{len(tasks_list)}</span></div>", unsafe_allow_html=True)
             
                 for task in tasks_list:
@@ -276,7 +276,6 @@ def show_dashboard():
                         due_date = task.get('due_date')
                         meta_html = ""
                         if due_date:
-                            # try parse iso
                             try:
                                 d = datetime.datetime.fromisoformat(due_date.replace("Z", "+00:00")).strftime("%Y-%m-%d")
                                 meta_html += f"<span style='font-size:0.75rem; color:#64748B; margin-right:8px'>📅 {d}</span>"
@@ -299,11 +298,13 @@ def show_dashboard():
                             task_id = task['id']
                             current_status = task.get('status', status_key)
                         
-                            # We use on_change to trigger immediately
                             def status_changed(t_id, state_key):
                                 new_val = st.session_state[state_key]
-                                success = update_task_status(get_client_safely(), t_id, new_val)
-                                # Rerun is automatically handled by streamlit after on_change callback completes
+                                update_task_status(get_client_safely(), t_id, new_val)
+                                for t in tasks_data:
+                                    if t['id'] == t_id:
+                                        t['status'] = new_val
+                                        break
 
                             s_key = f"status_{task_id}"
                             st.selectbox(
@@ -315,6 +316,10 @@ def show_dashboard():
                                 on_change=status_changed,
                                 args=(task_id, s_key)
                             )
+                            
+    if view_mode == "Kanban":
+        render_kanban_board(filtered_tasks)
+
 
     # ==========================================================
     # 6. TABLO GÖRÜNÜMÜ (DATA GRID)

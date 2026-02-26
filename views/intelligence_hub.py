@@ -73,7 +73,7 @@ def _show_ai_assistant():
                 with st.spinner("Gemini verilerinizi analiz ediyor..."):
                     # Veri topla
                     companies = get_companies()
-                    notes_resp = supabase.table("notes").select("*").limit(200).execute()
+                    notes_resp = supabase.table("activities").select("*").limit(200).execute()
                     notes = notes_resp.data or []
 
                     # Özet context oluştur

@@ -44,14 +44,15 @@ def get_companies(search_query="", visited_only=False, min_priority=1, has_notes
     # In a production app, we should use a SQL View for performance.
     # Here, we do a quick second query if requested.
     if has_notes or has_email:
-        notes_query = supabase.table("notes").select("company_id, type").execute()
+        notes_query = supabase.table("activities").select("company_id, type").execute()
         notes_data = notes_query.data
         
         valid_company_ids = set()
         for n in notes_data:
-            if has_notes and n['type'] == 'manual':
+            t = n.get('type')
+            if has_notes and t in ('note', 'manual', 'task', 'meeting'):
                 valid_company_ids.add(n['company_id'])
-            if has_email and n['type'] == 'email':
+            if has_email and t == 'email':
                 valid_company_ids.add(n['company_id'])
                 
         companies = [c for c in companies if c['id'] in valid_company_ids]
@@ -69,30 +70,48 @@ def update_company(company_id, **kwargs):
     except Exception as e:
         print("Error updating company:", e)
 
-# --- Notes ---
+# --- Activities (Merged Notes & Tasks) ---
 
 def get_notes(company_id):
-    """Fetches notes for a specific company."""
+    """Fetches all activities (notes, emails, tasks) for a specific company."""
     supabase = get_supabase()
-    response = supabase.table("notes").select("*").eq("company_id", company_id).order("created_at", desc=True).execute()
+    response = supabase.table("activities").select("*").eq("company_id", company_id).order("created_at", desc=True).execute()
     return response.data
 
-def add_note(company_id, content, note_type="manual"):
-    """Adds a new note."""
+def add_note(company_id, content, note_type="manual", company_name=None):
+    """Adds a new activity. If note_type is manual, parses for tasks."""
     if not content.strip():
         return
     supabase = get_supabase()
+    
+    # Map old types
+    final_type = 'note' if note_type == 'manual' else note_type
+    
     data = {
         "company_id": company_id,
-        "type": note_type,
+        "type": final_type,
         "content": content
     }
-    supabase.table("notes").insert(data).execute()
+    
+    # If it's a manual entry, check if it contains task parsing
+    if final_type == 'note' and company_name:
+        from tasks_module.parser import parse_and_create_task
+        parsed_task = parse_and_create_task(company_name, content)
+        if parsed_task:
+            data["type"] = "task"
+            data["tags"] = parsed_task.tags
+            data["mentions"] = parsed_task.mentions
+            data["bracket_category"] = parsed_task.bracket_category
+            data["priority"] = parsed_task.priority
+            if parsed_task.due_date:
+                data["due_date"] = parsed_task.due_date.isoformat()
+            
+    supabase.table("activities").insert(data).execute()
 
 def delete_note(note_id):
-    """Deletes a specific note."""
+    """Deletes a specific activity."""
     supabase = get_supabase()
-    supabase.table("notes").delete().eq("id", note_id).execute()
+    supabase.table("activities").delete().eq("id", note_id).execute()
 
 # --- Attachments ---
 

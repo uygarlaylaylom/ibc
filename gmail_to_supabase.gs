@@ -246,7 +246,7 @@ function callGemini(subject, body) {
  */
 function insertNote(content, gmailMsgId, eventTag, urgency, senderDomain) {
   // Tekrar kontrolü: aynı gmail msg ID zaten var mı?
-  var checkUrl = SUPABASE_URL + "/rest/v1/notes?select=id&limit=1&content=like.*" + encodeURIComponent(gmailMsgId.substring(0, 12)) + "*";
+  var checkUrl = SUPABASE_URL + "/rest/v1/activities?select=id&limit=1&content=like.*" + encodeURIComponent(gmailMsgId.substring(0, 12)) + "*";
   // (Basit kontrol — processed listesi asıl deduplication yapar)
 
   var payload = {
@@ -269,7 +269,7 @@ function insertNote(content, gmailMsgId, eventTag, urgency, senderDomain) {
     muteHttpExceptions: true
   };
 
-  var resp = UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/notes", options);
+  var resp = UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/activities", options);
   return resp.getResponseCode() === 201;
 }
 
