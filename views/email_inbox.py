@@ -273,13 +273,13 @@ def show_email_inbox():
                         st.text(preview)
 
                     with ecol2:
-                        st.markdown("**🤖 Gemini Analizi:**")
-                        if gemini_model:
-                            cache_key = f"gemini_result_{em_id}"
+                        st.markdown("**🤖 ChatGPT Analizi:**")
+                        if openai_client:
+                            cache_key = f"openai_result_{em_id}"
                             if cache_key not in st.session_state:
-                                if st.button("▶️ Gemini ile Analiz Et", key=f"gemini_btn_{em_id}"):
+                                if st.button("▶️ ChatGPT ile Analiz Et", key=f"openai_btn_{em_id}"):
                                     with st.spinner("Analiz ediliyor..."):
-                                        result = _gemini_analyze(gemini_model, content, company_names_list)
+                                        result = _openai_analyze(openai_client, content, company_names_list)
                                         st.session_state[cache_key] = result
                             if st.session_state.get(cache_key):
                                 st.markdown(st.session_state[cache_key])
