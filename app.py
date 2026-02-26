@@ -292,6 +292,60 @@ if app_mode == "Firma Listesi":
                         body = urllib.parse.quote(st.session_state[f"mail_draft_{comp['id']}"])
                         st.markdown(f"<a href='mailto:?subject={subject}&body={body}' target='_blank'><button style='padding: 5px 10px; border-radius: 5px; background-color: #0078D4; color: white; border: none; cursor: pointer;'>📧 Outlook/Mail'de Aç ve Gönder</button></a>", unsafe_allow_html=True)
 
+                    # Phase 4 Retroactive Categorizer
+                    manual_notes = [n for n in notes_data if n.get('type') in ('note', 'manual')]
+                    if manual_notes:
+                        if st.button("🔍 Mevcut Notları Tara & Kategorilendir", use_container_width=True, key=f"scan_old_{comp['id']}"):
+                            with st.spinner("Geçmiş notlar okunuyor..."):
+                                try:
+                                    from openai import OpenAI
+                                    import os, json
+                                    api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+                                    if api_key:
+                                        client = OpenAI(api_key=api_key)
+                                        combined_text = "\\n".join([n.get('content', '') for n in manual_notes])
+                                        
+                                        prompt = f"""Ekteki notlar IBS inşaat fuarından alınmıştır. Lütfen bu şirketin notlarında geçen tüm inşaat/yapı ürünlerini KATEGORİLER listesiyle tamamen eşleşecek şekilde bulun.
+                                        
+KATEGORİLER:
+{FLAT_CATEGORIES_DETAILED}
+
+SADECE JSON FORMATINDA YANIT VER:
+{{
+  "detected_categories": ["KATEGORİLER listesinden birebir aynı formatta isimler"]
+}}
+
+Notlar: {combined_text}"""
+                                        resp = client.chat.completions.create(
+                                            model="gpt-4o-mini",
+                                            response_format={ "type": "json_object" },
+                                            messages=[{"role": "user", "content": prompt}],
+                                            temperature=0.1
+                                        )
+                                        result = json.loads(resp.choices[0].message.content)
+                                        valid_cats = [c for c in result.get('detected_categories', []) if c in FLAT_CATEGORIES_DETAILED]
+                                        st.session_state[f"retro_cats_{comp['id']}"] = valid_cats
+                                except Exception as e:
+                                    st.error(f"Tarama hatası: {e}")
+                                    
+                        if st.session_state.get(f"retro_cats_{comp['id']}") is not None:
+                            detected = st.session_state[f"retro_cats_{comp['id']}"]
+                            if detected:
+                                st.info("Eski notlarda şu kategoriler bulundu:\\n- " + "\\n- ".join(detected))
+                                new_prods = [d for d in detected if d not in current_products]
+                                if new_prods:
+                                    if st.button(f"✅ Hepsini Firmaya Ekle ({len(new_prods)} Yeni)", type="primary", key=f"add_retro_{comp['id']}"):
+                                        merged = list(set(current_products + new_prods))
+                                        update_company(comp['id'], products=merged)
+                                        st.toast("Kategoriler genişletildi!", icon="📦")
+                                        st.session_state[f"retro_cats_{comp['id']}"] = None
+                                        st.rerun()
+                                else:
+                                    st.success("Tüm bulunan ürünler zaten firmanın kataloğuna eklenmiş.")
+                            else:
+                                st.warning("Eski notlarda yeni bir ürün veya kategori eşleşmesi bulunamadı.")
+
+
                 with tag_col:
                     st.markdown("### 🏷️ Kategori & Ürünler")
                     current_tags = comp.get('tags') or []
