@@ -305,7 +305,8 @@ if app_mode == "Firma Listesi":
                                         client = OpenAI(api_key=api_key)
                                         combined_text = "\\n".join([n.get('content', '') for n in manual_notes])
                                         
-                                        prompt = f"""Ekteki notlar IBS inşaat fuarından alınmıştır. Lütfen bu şirketin notlarında geçen tüm inşaat/yapı ürünlerini KATEGORİLER listesiyle tamamen eşleşecek şekilde bulun.
+                                        prompt = f"""Ekteki notlar IBS inşaat fuarından alınmıştır. Lütfen bu şirketin notlarında geçen tüm inşaat/yapı ürünlerini analiz edin.
+ÖNEMLİ: Notlar Türkçe olabilir, ancak KATEGORİLER listesi İngilizcedir. Lütfen metnin anlamını çevirerek, bahsedilen ürünlerin (örn: alüminyum -> Aluminum Products, kapı pencere -> Windows & Doors) KATEGORİLER listesindeki TAM İngilizce karşılıklarını bulun. Eşleştirirken sadece listedeki İngilizce orijinal metinleri kullanın.
                                         
 KATEGORİLER:
 {FLAT_CATEGORIES_DETAILED}
@@ -419,7 +420,7 @@ Notlar: {combined_text}"""
                                                     if api_key:
                                                         client = OpenAI(api_key=api_key)
                                                         prompt = f"""Sen profesyonel bir B2B Fuar asistanısın. Aşağıdaki ham ürün notunu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim) temiz ve maddeler halinde düzenle.
-Aynı zamanda notta bahsedilen inşaat/yapı ürünlerini analiz et ve aşağıdaki KATEGORİLER listesinden TAM OLARAK eşleşenleri seç. (Eğer tam uyan yoksa boş liste bırak).
+Aynı zamanda notta bahsedilen inşaat/yapı ürünlerini analiz et. ÖNEMLİ: Kullanıcının notu Türkçe olabilir, ancak KATEGORİLER listesi İngilizcedir. Lütfen cümlenin anlamını analiz ederek, bahsedilen ürünlerin (örn: alüminyum, kapı, pencere vb.) İngilizce karşılıklarını aşağıdaki KATEGORİLER listesinden (örn: '4️⃣ Windows & Doors - Windows', '14️⃣ Materials - Aluminum Products') bularak zihinsel olarak çevirip eşleştir. (Eğer uyan yoksa boş liste bırak).
 
 KATEGORİLER:
 {FLAT_CATEGORIES_DETAILED}
