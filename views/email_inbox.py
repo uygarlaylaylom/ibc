@@ -129,7 +129,6 @@ def show_email_inbox():
         if gemini_model and visible:
             if st.button(f"🤖 Tümünü Analiz Et ({len(visible)} email)", type="primary", use_container_width=True):
                 with st.spinner(f"{min(len(visible), 15)} email Gemini ile analiz ediliyor..."):
-                    import re
                     bulk_results = []
                     for em in visible[:15]:
                         content = em.get('content', '')
