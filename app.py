@@ -282,10 +282,10 @@ else:
                 # Check for existing Google Drive folder for this company or just use a main folder
                 # We'll put everything in one main folder or subfolders, let's use: IBS_2026_Gallery / [Booth]_[Name]
                 
-                uploaded_file = st.file_uploader("Katalog veya Fotoğraf Yükle (PDF, PNG, JPG vb.)", type=['png', 'jpg', 'jpeg', 'pdf'], key=f"file_{comp['id']}")
-                if uploaded_file is not None:
-                    if st.button("Google Drive'a Yükle", key=f"up_btn_{comp['id']}", type="primary"):
-                        with st.spinner("Google Drive'a gönderiliyor..."):
+                uploaded_files = st.file_uploader("Katalog veya Fotoğraf Yükle (Çoklu Seçim)", type=['png', 'jpg', 'jpeg', 'pdf'], key=f"file_{comp['id']}", accept_multiple_files=True)
+                if uploaded_files:
+                    if st.button(f"{len(uploaded_files)} Dosyayı Google Drive'a Yükle", key=f"up_btn_{comp['id']}", type="primary"):
+                        with st.spinner("Dosyalar Drive'a gönderiliyor..."):
                             # Create main folder if missing
                             main_folder_id = find_or_create_folder("IBS_2026_Gallery")
                             if not main_folder_id:
@@ -296,54 +296,59 @@ else:
                                 subfolder_name = f"{comp['booth_number']}_{clean_cname}"
                                 subfolder_id = find_or_create_folder(subfolder_name, parent_id=main_folder_id)
                                 
-                                filename = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
-                                
-                                mime_type = uploaded_file.type
-                                file_bytes = uploaded_file.getvalue()
-                                
-                                # --- Image Compression ---
-                                if "image" in mime_type:
-                                    try:
-                                        from PIL import Image
-                                        import io
-                                        img = Image.open(io.BytesIO(file_bytes))
-                                        
-                                        # Only compress if the image is larger than 1920px (width or height)
-                                        max_size = (1920, 1920)
-                                        img.thumbnail(max_size, Image.Resampling.LANCZOS)
-                                        
-                                        # Convert RGBA to RGB if saving as JPEG
-                                        if img.mode in ("RGBA", "P"):
-                                            img = img.convert("RGB")
-                                            
-                                        # Save compressed image to bytes
-                                        img_byte_arr = io.BytesIO()
-                                        
-                                        # Determine save format based on original mime type
-                                        fmt = "JPEG" if "jpeg" in mime_type or "jpg" in mime_type else "PNG"
-                                        img.save(img_byte_arr, format=fmt, quality=85, optimize=True)
-                                        
-                                        file_bytes = img_byte_arr.getvalue()
-                                    except Exception as img_err:
-                                        st.warning(f"Görsel sıkıştırma atlandı: {img_err}")
-                                # -----------------------
-                                
-                                gdrive_link = upload_file_to_drive(file_bytes, filename, mime_type, subfolder_id)
-                                
-                                if gdrive_link:
-                                    # Save link to Supabase
-                                    # Build tags string
-                                    all_tags = (comp.get('tags') or []) + (comp.get('products') or [])
-                                    all_tags_str = ",".join(all_tags) if all_tags else "untagged"
+                                success_count = 0
+                                for uploaded_file in uploaded_files:
+                                    filename = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
                                     
-                                    # Use source="gdrive" and satisfy CHECK constraint (image, document)
-                                    db_file_type = "image" if "image" in mime_type else "document"
-                                    gdrive_link_with_tags = f"{gdrive_link}#tags={all_tags_str}"
-                                    upload_attachment(comp['id'], file_name=gdrive_link_with_tags, file_type=db_file_type, source="gdrive")
-                                    st.success("Google Drive'a başarıyla kaydedildi!")
+                                    mime_type = uploaded_file.type
+                                    file_bytes = uploaded_file.getvalue()
+                                    
+                                    # --- Image Compression ---
+                                    if "image" in mime_type:
+                                        try:
+                                            from PIL import Image
+                                            import io
+                                            img = Image.open(io.BytesIO(file_bytes))
+                                            
+                                            # Only compress if the image is larger than 1920px (width or height)
+                                            max_size = (1920, 1920)
+                                            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                                            
+                                            # Convert RGBA to RGB if saving as JPEG
+                                            if img.mode in ("RGBA", "P"):
+                                                img = img.convert("RGB")
+                                                
+                                            # Save compressed image to bytes
+                                            img_byte_arr = io.BytesIO()
+                                            
+                                            # Determine save format based on original mime type
+                                            fmt = "JPEG" if "jpeg" in mime_type or "jpg" in mime_type else "PNG"
+                                            img.save(img_byte_arr, format=fmt, quality=85, optimize=True)
+                                            
+                                            file_bytes = img_byte_arr.getvalue()
+                                        except Exception as img_err:
+                                            st.warning(f"Görsel sıkıştırma atlandı ({uploaded_file.name}): {img_err}")
+                                    # -----------------------
+                                    
+                                    gdrive_link = upload_file_to_drive(file_bytes, filename, mime_type, subfolder_id)
+                                    
+                                    if gdrive_link:
+                                        # Save link to Supabase
+                                        # Build tags string
+                                        all_tags = (comp.get('tags') or []) + (comp.get('products') or [])
+                                        all_tags_str = ",".join(all_tags) if all_tags else "untagged"
+                                        
+                                        # Use source="gdrive" and satisfy CHECK constraint (image, document)
+                                        db_file_type = "image" if "image" in mime_type else "document"
+                                        gdrive_link_with_tags = f"{gdrive_link}#tags={all_tags_str}"
+                                        upload_attachment(comp['id'], file_name=gdrive_link_with_tags, file_type=db_file_type, source="gdrive")
+                                        success_count += 1
+                                    else:
+                                        st.error(f"Hata: {uploaded_file.name} yüklenemedi.")
+                                
+                                if success_count > 0:
+                                    st.success(f"Başarılı! {success_count} adet dosya Google Drive'a kaydedildi.")
                                     st.rerun()
-                                else:
-                                    st.error("Google Drive yükleme hatası.")
                             
                 attachments = get_attachments(comp['id'])
                 if attachments:
