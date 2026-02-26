@@ -96,9 +96,47 @@ def show_dashboard():
         # Yeni Not Ekle (Smart Parsing Input)
         st.markdown("#### 📝 Yeni Firma / Not Ekle")
         new_company = st.selectbox("Firma Seçin", [""] + all_company_names)
-        new_note = st.text_area("Notunuzu girin (Örn: #acil toplantı ayarla @Sony [Kameralar])", height=100)
+        new_note = st.text_area("Notunuzu girin (Örn: #acil toplantı ayarla @Sony [Kameralar])",
+                                value=st.session_state.get('draft_note', ''),
+                                height=100)
     
-        if st.button("Kaydet", type="primary", use_container_width=True):
+        col_btn1, col_btn2 = st.columns([1, 1])
+        with col_btn1:
+            if st.button("🤖 AI Format", help="Yazdığınız düz metni otomatik olarak #etiket @kişi [Kategori] formatına çevirir.", use_container_width=True):
+                if new_note and new_company:
+                    with st.spinner("Formatlanıyor..."):
+                        try:
+                            import google.generativeai as genai
+                            import os
+                            
+                            api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                            if api_key:
+                                genai.configure(api_key=api_key)
+                                model = genai.GenerativeModel("gemini-2.0-flash")
+                                
+                                prompt = (
+                                    f"Sen bir asistan olarak şu düz metin notu IBS fuar sistemine uygun formata çevireceksin.\n"
+                                    f"Kurallar:\n"
+                                    f"1. Önemliyse veya acilse '#acil' veya '#high' etiketi ekle.\n"
+                                    f"2. Bir kişiden bahsediliyorsa önüne '@' koy (örnek: @John).\n"
+                                    f"3. Konu bir ürün kategorisiyle ilgiliyse sonuna köşeli parantez içinde kategori adını ekle (örnek: [Flooring]).\n"
+                                    f"4. SADECE FORMATLANMIŞ METNİ DÖNDÜR, BAŞKA HİÇBİR ŞEY YAZMA.\n\n"
+                                    f"Firma: {new_company}\n"
+                                    f"Orijinal Not: {new_note}"
+                                )
+                                response = model.generate_content(prompt)
+                                st.session_state['draft_note'] = response.text.strip()
+                                st.rerun()
+                            else:
+                                st.error("GEMINI_API_KEY eksik.")
+                        except Exception as e:
+                            st.error(f"Hata: {e}")
+                else:
+                    st.warning("Firma ve not girmelisiniz.")
+
+        with col_btn2:
+            if st.button("Kaydet", type="primary", use_container_width=True):
+
             if new_company and new_note:
                 new_task = parse_and_create_task(new_company, new_note)
                 if new_task:
