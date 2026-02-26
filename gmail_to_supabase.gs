@@ -11,7 +11,7 @@ var SUPABASE_URL      = "https://voiexsboyzgglnmtinhf.supabase.co";
 var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvaWV4c2JveXpnZ2xubXRpbmhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTIxODQsImV4cCI6MjA4NzQ2ODE4NH0.Q5-EXFDNVKAW_sCBp0KQRrv7xzziQqFuZ2MXqwbusdM";
 
 // Gemini AI — ücretsiz API key: aistudio.google.com/app/apikey
-var GEMINI_API_KEY = "AIzaSyBumuHjQ2yMTUQyf1UPDNrMBEsfhy6pcRk";
+var GEMINI_API_KEY = "AIzaSyDOIGXSHly4l1l3LG4Qm42ToMU8-3IodXU";
 var GEMINI_ENABLED = true;  // false yaparsanız Gemini atlanır
 
 // Gmail arama — IBC + KBIS + diğer fuarlar
