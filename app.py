@@ -12,31 +12,61 @@ from google_drive_utils import find_or_create_folder, upload_file_to_drive
 st.set_page_config(page_title="IBS 2026 Booth Tracker", page_icon="🏢", layout="wide")
 
 # --- Authentication ---
-def check_password():
-    """Returns `True` if the user had the correct password."""
-    def password_entered():
-        if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
-            st.session_state["password_correct"] = True
-        else:
-            st.session_state["password_correct"] = False
+from streamlit_google_auth import Authenticate
 
-    if "password_correct" not in st.session_state:
-        # First run, show input for password.
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-        return False
-    elif not st.session_state["password_correct"]:
-        # Password incorrect, show input + error.
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-        st.error("😕 Hatalı şifre. Lütfen tekrar deneyin.")
-        return False
-    else:
-        # Password correct.
-        return True
+def check_google_auth():
+    """Authenticate user via Google OAuth and check against whitelist."""
+    try:
+        client_id = st.secrets.get("GOOGLE_CLIENT_ID")
+        client_secret = st.secrets.get("GOOGLE_CLIENT_SECRET")
+        
+        if not client_id or not client_secret:
+            st.error("Google OAuth eksik. GOOGLE_CLIENT_ID ve GOOGLE_CLIENT_SECRET ayarlara girilmedi.")
+            st.stop()
+        
+        # Load allowed emails from secrets, comma-separated
+        allowed_raw = st.secrets.get("ALLOWED_EMAILS", "")
+        allowed_emails = [e.strip().lower() for e in allowed_raw.split(",") if e.strip()]
+        
+        authenticator = Authenticate(
+            secret_credentials_path=None,
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=st.secrets.get("REDIRECT_URI", "http://localhost:8501"),
+        )
+        
+        authenticator.check_authentification()
 
-if not check_password():
-    st.stop()  # Do not continue if not authenticated
+        if not st.session_state.get("connected"):
+            st.markdown("## 🏢 IBS 2026 Fuar Asistanı")
+            st.info("Bu uygulamaya erişmek için yetkili Google hesabınızla giriş yapın.")
+            authenticator.login()
+            st.stop()
+        
+        user_email = st.session_state.get("email", "").lower()
+        if allowed_emails and user_email not in allowed_emails:
+            st.error(f"❌ '{user_email}' adresi bu uygulamaya erişim iznine sahip değil.")
+            authenticator.logout()
+            st.stop()
+            
+    except ImportError:
+        # Graceful fallback if package fails to import
+        def password_entered():
+            if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
+                st.session_state["password_correct"] = True
+            else:
+                st.session_state["password_correct"] = False
+        
+        if "password_correct" not in st.session_state:
+            st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
+            st.stop()
+        elif not st.session_state["password_correct"]:
+            st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
+            st.error("😕 Hatalı şifre.")
+            st.stop()
 
-# --- END Authentication ---
+check_google_auth()
+
 
 # Custom CSS for modern look
 st.markdown("""
