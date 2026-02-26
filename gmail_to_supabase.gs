@@ -1,5 +1,5 @@
 // ============================================================
-// IBC / KBIS / Fuar Mailleri → Supabase Sync Script
+// IBC / KBIS / Fuar Mailleri → Supabase Sync Script (Zero-Touch Pipeline V2)
 // Gmail Apps Script — uygar@mercan.net Workspace'inde çalışır
 // Her 15 dakikada otomatik tetiklenir
 // ============================================================
@@ -10,10 +10,10 @@
 var SUPABASE_URL      = "https://voiexsboyzgglnmtinhf.supabase.co";
 var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvaWV4c2JveXpnZ2xubXRpbmhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTIxODQsImV4cCI6MjA4NzQ2ODE4NH0.Q5-EXFDNVKAW_sCBp0KQRrv7xzziQqFuZ2MXqwbusdM";
 
-// Gemini AI key — Script Properties'ten okunur (kod içinde görünmez, GitHub'a gitmez)
-// Kurulum: saveGeminiKey() fonksiyonunu bir kez çalıştırın
-var GEMINI_API_KEY = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY") || "";
-var GEMINI_ENABLED = true;  // false yaparsanız Gemini atlanır
+// OpenAI AI key — Script Properties'ten okunur (kod içinde görünmez, GitHub'a gitmez)
+// Kurulum: saveOpenAIKey() fonksiyonunu bir kez çalıştırın
+var OPENAI_API_KEY = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY") || "";
+var OPENAI_ENABLED = true;  // false yaparsanız OpenAI atlanır ve düz metin atılır
 
 // Gmail arama — IBC + KBIS + diğer fuarlar
 var GMAIL_SEARCH_QUERY = [
@@ -29,7 +29,7 @@ var GMAIL_SEARCH_QUERY = [
 ].join(' ');
 
 // İşlenen mail ID'lerini Properties'te sakla
-var PROCESSED_KEY = "ibc_processed_ids_v2";
+var PROCESSED_KEY = "ibc_processed_ids_v3";
 
 // ──────────────────────────────────────────────────────────
 // 2. ANA FONKSİYON
@@ -38,6 +38,10 @@ function syncEmailsToSupabase() {
   var props = PropertiesService.getScriptProperties();
   var processedRaw = props.getProperty(PROCESSED_KEY) || "[]";
   var processed = JSON.parse(processedRaw);
+
+  // 1. Supabase'ten Şirketleri Çek (Eşleştirme için)
+  var companies = fetchCompanies();
+  var companyNames = companies.map(function(c) { return c.company_name; }).join(", ");
 
   var threads = GmailApp.search(GMAIL_SEARCH_QUERY, 0, 100);
   var newProcessed = [];
@@ -54,28 +58,72 @@ function syncEmailsToSupabase() {
       var body     = msg.getPlainBody().substring(0, 4000);
       var fullText = subject + " " + body;
 
-      // Hangi fuarla ilgili?
+      // Manuel filtreler ve etiketler
       var eventTag = detectEvent(fullText);
-
-      // Aciliyet skoru (0-10)
       var urgency = scoreUrgency(subject, body);
-
-      // Gönderen domain
       var senderDomain = extractDomain(sender);
 
-      // Gemini ile analiz et (aktifse)
-      var geminiSummary = "";
-      if (GEMINI_ENABLED) {
-        geminiSummary = callGemini(subject, body);
+      // 2. OpenAI ile Tam Otonom Analiz
+      var aiResult = null;
+      var companyId = null;
+
+      if (OPENAI_ENABLED && OPENAI_API_KEY) {
+        aiResult = callOpenAI(subject, body, companyNames);
+        // Eşleşen Şirketi Bul (Fuzzy Search in JS)
+        if (aiResult && aiResult.FİRMA && aiResult.FİRMA !== "Listede Yok") {
+           var matchStr = aiResult.FİRMA.toLowerCase();
+           for (var i = 0; i < companies.length; i++) {
+             // Çok yönlü eşleştirme (Şirket adı aiResult içinde geçiyorsa veya tam tersi)
+             var compName = companies[i].company_name.toLowerCase();
+             if (compName === matchStr || 
+                 compName.indexOf(matchStr) > -1 ||
+                 matchStr.indexOf(compName) > -1) {
+                companyId = companies[i].id;
+                aiResult.FİRMA = companies[i].company_name; // Eşleşen Net ismi yaz
+                break;
+             }
+           }
+        }
       }
 
-      var content = buildContent(subject, sender, senderDomain, dateObj, eventTag, urgency, body, geminiSummary);
+      // Email İçeriğini Formatla
+      var content = buildContent(subject, sender, senderDomain, dateObj, eventTag, urgency, body, aiResult);
 
-      var success = insertNote(content, msgId, eventTag, urgency, senderDomain);
+      // 3. Email'i Activities Tablosuna Kaydet (Zero-Touch DB Insert)
+      var emailPayload = {
+        "company_id": companyId, // Eşleşmediyse null kalır ve Eşleşmemiş sekmesine düşer
+        "content": content,
+        "type": "email"
+      };
+
+      var success = insertActivity(emailPayload);
       if (success) {
         newProcessed.push(msgId);
         insertCount++;
-        Logger.log("✅ [" + eventTag + "] " + subject);
+        Logger.log("✅ [" + eventTag + "] " + subject + (companyId ? " (Eşleşti: " + aiResult.FİRMA + ")" : ""));
+
+        // 4. Görev (Task) İsteği Varsa Kanban Board İçin Task Oluştur
+        if (companyId && aiResult && aiResult.AKSİYON && 
+            aiResult.AKSİYON.toLowerCase().indexOf("yok") === -1 && 
+            aiResult.AKSİYON.toLowerCase() !== "sil") {
+            
+            var priorityLevel = "Medium";
+            if (aiResult.ÖNCELİK) {
+                if (aiResult.ÖNCELİK.toLowerCase().indexOf("yüksek") > -1) priorityLevel = "High";
+                else if (aiResult.ÖNCELİK.toLowerCase().indexOf("düşük") > -1) priorityLevel = "Low";
+            }
+
+            var taskPayload = {
+               "company_id": companyId,
+               "content": "📧 **[Otomatik Action: " + subject + "]**\n" + aiResult.AKSİYON + "\n\nÜrünler: " + (aiResult.ÜRÜNLER || "-"),
+               "type": "task",
+               "status": "To Do",
+               "priority": priorityLevel,
+               "due_date": new Date().toISOString()
+            };
+            insertActivity(taskPayload);
+            Logger.log("   📌 Görev oluşturuldu ve Kanban'a yollandı: " + aiResult.AKSİYON);
+        }
       }
     });
   });
@@ -85,7 +133,7 @@ function syncEmailsToSupabase() {
   if (allProcessed.length > 1000) allProcessed = allProcessed.slice(-1000);
   props.setProperty(PROCESSED_KEY, JSON.stringify(allProcessed));
 
-  Logger.log("─── Tamamlandı: " + insertCount + " yeni email eklendi ───");
+  Logger.log("─── Tamamlandı: " + insertCount + " yeni email Pipeline'dan geçti ───");
 }
 
 // ──────────────────────────────────────────────────────────
@@ -93,68 +141,108 @@ function syncEmailsToSupabase() {
 // ──────────────────────────────────────────────────────────
 
 /**
- * Email metnine bakarak hangi fuar/etkinlikle ilgili olduğunu tespit eder.
+ * 1. Supabase'ten güncel firma listesini çeker.
  */
+function fetchCompanies() {
+  var options = {
+    method: "GET",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY
+    },
+    muteHttpExceptions: true
+  };
+  var resp = UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/companies?select=id,company_name", options);
+  if (resp.getResponseCode() === 200) {
+    return JSON.parse(resp.getContentText());
+  }
+  Logger.log("❌ Supabase firmaları çekilemedi: " + resp.getContentText());
+  return [];
+}
+
+/**
+ * 2. OpenAI (GPT-4o-mini) kullanarak Email üzerinden yapılandırılmış JSON çıkartır.
+ */
+function callOpenAI(subject, body, companyListStr) {
+  try {
+    var ibsTree = "1-Structural: Framing, Concrete\n2-Building Envelope: Siding, Waterproofing\n3-Roofing: Asphalt, Metal\n4-Windows & Doors\n5-Insulation\n6-HVAC\n7-Plumbing\n8-Electrical\n9-Smart Home\n10-Kitchen & Bath\n11-Interior Finishes\n12-Outdoor Living\n13-Site & Landscape\n14-Materials: Stone, Aluminum\n15-Software & Services";
+
+    var systemPrompt = "Sen bir fuar asistanısın. E-postayı analiz edip kesinlikle geçerli bir JSON objesi döndürmelisin.";
+    
+    var userPrompt = "EMAİL KONUSU: " + subject + "\n\nEMAIL METNİ: " + body.substring(0, 1500) + "\n\n"
+      + "IBS KATEGORİSİ AĞACI:\n" + ibsTree + "\n\n"
+      + "FİRMA LİSTESİ (Sadece bu listeden seç, hiçbiri eşleşmiyorsa 'Listede Yok' yaz):\n" + companyListStr + "\n\n"
+      + "Lütfen TÜRKÇE olarak aşağıdaki JSON formatında yanıtla (sadece geçerli JSON çıktısı ver):\n"
+      + "{\n"
+      + '  "FİRMA": "<Gönderenin firma adı listeden seç, yoksa Listede Yok>",\n'
+      + '  "IBS_SEGMENT": "<en uygun kategori adı>",\n'
+      + '  "ÜRÜNLER": "<Bahsedilen ürünler>",\n'
+      + '  "AKSİYON": "<Somut eylem: Demo İste, Katalog İncele, Toplantı Ayarla, Yok, Sil>",\n'
+      + '  "ÖNCELİK": "<Yüksek / Orta / Düşük>"\n'
+      + "}";
+
+    var payload = {
+      "model": "gpt-4o-mini",
+      "response_format": { "type": "json_object" },
+      "messages": [
+        { "role": "system", "content": systemPrompt },
+        { "role": "user", "content": userPrompt }
+      ],
+      "temperature": 0.1
+    };
+
+    var options = {
+      method: "POST",
+      contentType: "application/json",
+      headers: { "Authorization": "Bearer " + OPENAI_API_KEY },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    var url = "https://api.openai.com/v1/chat/completions";
+    var resp = UrlFetchApp.fetch(url, options);
+    
+    if (resp.getResponseCode() === 200) {
+      var jsonStr = JSON.parse(resp.getContentText()).choices[0].message.content;
+      return JSON.parse(jsonStr);
+    } else {
+      Logger.log("OpenAI Error: " + resp.getContentText());
+      return null;
+    }
+  } catch(e) {
+    Logger.log("OpenAI Exception: " + e);
+    return null;
+  }
+}
+
 function detectEvent(text) {
   var t = text.toLowerCase();
-  if (t.indexOf("kbis") !== -1 || t.indexOf("kitchen bath") !== -1 || t.indexOf("kitchen & bath") !== -1) {
-    return "KBIS";
-  }
-  if (t.indexOf("ibs") !== -1 || t.indexOf("international builders") !== -1 || t.indexOf("ibsvegas") !== -1) {
-    return "IBS";
-  }
-  if (t.indexOf("nahb") !== -1) {
-    return "NAHB";
-  }
-  if (t.indexOf("nkba") !== -1) {
-    return "NKBA";
-  }
-  if (t.indexOf("orlando") !== -1) {
-    return "KBIS-Orlando";
-  }
-  if (t.indexOf("las vegas") !== -1) {
-    return "IBS-LasVegas";
-  }
-  if (t.indexOf("trade show") !== -1 || t.indexOf("exhibitor") !== -1) {
-    return "TradeShow";
-  }
+  if (t.indexOf("kbis") !== -1 || t.indexOf("kitchen bath") !== -1 || t.indexOf("kitchen & bath") !== -1) return "KBIS";
+  if (t.indexOf("ibs") !== -1 || t.indexOf("international builders") !== -1 || t.indexOf("ibsvegas") !== -1) return "IBS";
+  if (t.indexOf("nahb") !== -1) return "NAHB";
+  if (t.indexOf("nkba") !== -1) return "NKBA";
+  if (t.indexOf("orlando") !== -1) return "KBIS-Orlando";
+  if (t.indexOf("las vegas") !== -1) return "IBS-LasVegas";
+  if (t.indexOf("trade show") !== -1 || t.indexOf("exhibitor") !== -1) return "TradeShow";
   return "Fuar-Genel";
 }
 
-/**
- * Aciliyet skorlayıcı (0-10):
- * - Subject'te "urgent", "deadline", "offer" geçiyorsa +puan
- * - Fiyat listesi, katalog, toplantı daveti → yüksek
- */
 function scoreUrgency(subject, body) {
   var score = 0;
   var s = (subject + " " + body).toLowerCase();
-
-  var highSignals = ["urgent", "deadline", "offer", "price list", "quote", "fiyat", "teklif",
-                     "meeting", "appointment", "invite", "exclusive", "limited", "today", "asap",
-                     "expires", "katalog", "catalog", "sample", "demo request"];
-  var medSignals  = ["new product", "launch", "announcement", "visit", "schedule", "brochure",
-                     "partnership", "distributor", "follow up", "follow-up", "product line"];
-
+  var highSignals = ["urgent", "deadline", "offer", "price list", "quote", "fiyat", "teklif", "meeting", "appointment", "invite", "exclusive", "limited", "today", "asap", "expires", "katalog", "catalog", "sample", "demo request"];
+  var medSignals  = ["new product", "launch", "announcement", "visit", "schedule", "brochure", "partnership", "distributor", "follow up", "follow-up", "product line"];
   highSignals.forEach(function(w) { if (s.indexOf(w) !== -1) score += 2; });
   medSignals.forEach(function(w)  { if (s.indexOf(w) !== -1) score += 1; });
-
-  return Math.min(score, 10); // Maks 10
+  return Math.min(score, 10);
 }
 
-/**
- * "John Doe <john@company.com>" formatından domain çıkarır.
- */
 function extractDomain(sender) {
   var match = sender.match(/@([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
   return match ? match[1] : "bilinmiyor";
 }
 
-/**
- * Supabase'e yüklenecek içeriği formatlı markdown olarak oluşturur.
- * geminiSummary: Gemini'den gelen analiz metni (boş olabilir)
- */
-function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body, geminiSummary) {
+function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body, aiResult) {
   var dateStr = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "dd.MM.yyyy HH:mm");
   var urgencyBadge = urgency >= 7 ? "🔴 YÜKSEK" : urgency >= 4 ? "🟡 ORTA" : "🟢 Düşük";
 
@@ -167,108 +255,31 @@ function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body,
        + "| 🔥 Öncelik | " + urgencyBadge + " (" + urgency + "/10) |\n"
        + "| 📅 Tarih | " + dateStr + " |\n\n"
        + "---\n"
-       + body;
+       + body.substring(0, 1500) + "\n\n";
 
-  if (geminiSummary) {
-    base += "\n\n---\n🤖 **Gemini Analizi (Otomatik)**\n" + geminiSummary;
+  if (aiResult) {
+    base += "---\n🤖 **ChatGPT Analizi (Zero-Touch V2)**\n"
+         + "- **Eşleşen Firma:** " + (aiResult.FİRMA || "Yok") + "\n"
+         + "- **IBS Segmenti:** " + (aiResult.IBS_SEGMENT || "Yok") + "\n"
+         + "- **Ürünler:** " + (aiResult.ÜRÜNLER || "-") + "\n"
+         + "- **Aksiyon:** " + (aiResult.AKSİYON || "Yok") + "\n"
+         + "- **Yapay Zeka Önceliği:** " + (aiResult.ÖNCELİK || "Normal");
   }
   return base;
 }
 
-/**
- * Gemini REST API — IBS kategori ağacıyla zenginleştirilmiş analiz
- * Her email otomatik olarak doğru segmente atanır
- */
-function callGemini(subject, body) {
-  try {
-    var ibsTree = [
-      "1-Structural: Framing, Steel Framing, Concrete, Sheathing, Anchors, Fasteners",
-      "2-Building Envelope: Siding, Cladding, Waterproofing, Sealants, Weather Barriers",
-      "3-Roofing: Asphalt, Metal, Flat Roofing, Roof Drainage",
-      "4-Windows & Doors: Windows, Exterior Doors, Garage Doors, Skylights",
-      "5-Insulation & Energy: Insulation, Spray Foam, Heat Pumps, Weatherization",
-      "6-HVAC: HVAC Systems, Ventilation, Air Quality, Controls",
-      "7-Plumbing: Fixtures, Pipe Systems, Water Heaters, Drainage",
-      "8-Electrical: Wiring, Lighting, Controls, Distribution",
-      "9-Smart Home: Home Automation, Security Systems, Access Control",
-      "10-Kitchen & Bath: Cabinets, Bathroom Fixtures, Countertops, Storage",
-      "11-Interior Finishes: Flooring, Paint, Wall Systems, Ceilings, Trim",
-      "12-Outdoor Living: Decking, Railings, Pergolas, Outdoor Kitchens",
-      "13-Site & Landscape: Pavers, Retaining Walls, Irrigation",
-      "14-Materials: Aluminum, Steel, Stone, Masonry, Glass",
-      "15-Software & Services: Construction Software, Estimating, Advisory, Financing"
-    ].join("\n");
-
-    var prompt =
-      "Bir fuar emailini analiz et. IBS Kategori Ağacını kullanarak sınıflandır.\n\n"
-      + "EMAIL KONUSU: " + subject + "\n"
-      + "EMAIL: " + body.substring(0, 2000) + "\n\n"
-      + "IBS KATEGORİ AĞACI:\n" + ibsTree + "\n\n"
-      + "TÜRKÇE yanıtla, tam olarak bu format (başka bir şey yazma):\n"
-      + "FİRMA: <Gönderenin şirket adı — domain/imzadan çıkar, 'Bilinmiyor' olabilir>\n"
-      + "IBS_SEGMENT: <Yukarıdan en uygun kategori numarası ve adı>\n"
-      + "ALT_KATEGORİ: <O kategorinin en uygun alt ürün grubu>\n"
-      + "ÜRÜNLER: <Emailde bahsedilen ürün adları — virgülle, max 4 adet>\n"
-      + "AKSİYON: <Somut öneri — 'Demo iste' / 'Fiyat al' / 'Toplantı ayarla' / 'Sil' gibi>\n"
-      + "ÖNCELİK: <Yüksek / Orta / Düşük>\n"
-      + "NEDEN: <1 cümle gerekçe>";
-
-    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY;
-
-    var resp = UrlFetchApp.fetch(url, {
-      method: "POST",
-      contentType: "application/json",
-      payload: JSON.stringify({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 350}
-      }),
-      muteHttpExceptions: true
-    });
-
-    if (resp.getResponseCode() !== 200) {
-      Logger.log("Gemini " + resp.getResponseCode() + ": " + resp.getContentText().substring(0, 200));
-      return "";
-    }
-
-    var result = JSON.parse(resp.getContentText()).candidates[0].content.parts[0].text || "";
-    Logger.log("  🤖 " + result.split("\n")[0]); // İlk satırı logla
-    return result;
-  } catch(e) {
-    Logger.log("Gemini exception: " + e);
-    return "";
-  }
-}
-
-
-/**
- * Supabase notes tablosuna ekler.
- * company_id = NULL → sonradan eşleştirilecek
- */
-function insertNote(content, gmailMsgId, eventTag, urgency, senderDomain) {
-  // Tekrar kontrolü: aynı gmail msg ID zaten var mı?
-  var checkUrl = SUPABASE_URL + "/rest/v1/activities?select=id&limit=1&content=like.*" + encodeURIComponent(gmailMsgId.substring(0, 12)) + "*";
-  // (Basit kontrol — processed listesi asıl deduplication yapar)
-
-  var payload = {
-    "company_id": null,          // Şimdi eşleştirme YOK
-    "content": content,
-    "type": "email"
-    // Not: daha zengin metadata için notes tablosuna ileride
-    // event_tag, urgency, sender_domain sütunları eklenebilir
-  };
-
+function insertActivity(payload) {
   var options = {
     method: "POST",
     contentType: "application/json",
     headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-      "Prefer": "return=minimal"
+       "apikey": SUPABASE_ANON_KEY,
+       "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+       "Prefer": "return=minimal"
     },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   };
-
   var resp = UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/activities", options);
   return resp.getResponseCode() === 201;
 }
@@ -295,7 +306,6 @@ function setupTrigger() {
 // 5. TEK SEFERLİK GERİ DOLDURMA (geçmiş mailler için)
 // ──────────────────────────────────────────────────────────
 function backfillLast90Days() {
-  // GMAIL_SEARCH_QUERY'yi geçici olarak 90 gün yapıp çalıştır
   var oldQuery = GMAIL_SEARCH_QUERY;
   GMAIL_SEARCH_QUERY = GMAIL_SEARCH_QUERY.replace("newer_than:30d", "newer_than:90d");
   syncEmailsToSupabase();
@@ -304,15 +314,11 @@ function backfillLast90Days() {
 }
 
 // ──────────────────────────────────────────────────────────
-// 6. GEMİNİ KEY KAYIT — Sadece bir kez çalıştırın!
+// 6. OPENAI KEY KAYIT — Sadece bir kez çalıştırın!
 // ──────────────────────────────────────────────────────────
-/**
- * Gemini API key'ini Script Properties'e kaydeder.
- * Script Editor'de bu fonksiyonu seçip ▶️ çalıştır.
- * Key artık kod içinde olmaz, GitHub'a gitmez.
- */
-function saveGeminiKey() {
-  var key = "AIzaSyDOIGXSHly4l1l3LG4Qm42ToMU8-3IodXU"; // ← key'iniz
-  PropertiesService.getScriptProperties().setProperty("GEMINI_API_KEY", key);
-  Logger.log("✅ Gemini API key Script Properties'e kaydedildi. Artık bu satırı silebilirsiniz.");
+function saveOpenAIKey() {
+  // OPENAI Key'inizi aşağıya tırnak içine yapıştırın
+  var key = "sk-proj-...(BURAYA_YAPISTIRIN)..."; 
+  PropertiesService.getScriptProperties().setProperty("OPENAI_API_KEY", key);
+  Logger.log("✅ OpenAI API key Script Properties'e kaydedildi. Güvenlik için bu satırı silebilirsiniz.");
 }
