@@ -357,43 +357,46 @@ Notlar: {combined_text}"""
                     current_tags = comp.get('tags') or []
                     current_products = comp.get('products') or []
                     
-                    # PHASE 5: Notion / Linear Style HTML Badges
-                    tags_html = ""
-                    for tag in current_tags:
-                        tags_html += f"<span style='background:#6366f1;color:white;padding:4px 12px;border-radius:16px;font-size:13px;margin:3px;display:inline-block;font-weight:600;box-shadow: 0 2px 4px rgba(99,102,241,0.2);'>#{tag}</span>"
-                    for prod in current_products:
-                        tags_html += f"<span style='background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:4px 12px;border-radius:16px;font-size:13px;margin:3px;display:inline-block;margin-top:5px;box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>📦 {prod}</span>"
+                    # PHASE 6: Instant Interactive Tagging Arrays
+                    # We define callbacks that immediately save when the user clicks 'x' or adds a tag.
+                    def instant_tag_save(cid):
+                        new_tags = st.session_state[f"inst_tags_{cid}"]
+                        update_company(cid, tags=new_tags)
                     
-                    if tags_html:
-                        st.markdown(f"<div style='margin-bottom:15px;line-height:2.0;'>{tags_html}</div>", unsafe_allow_html=True)
-                    else:
-                        st.info("Henüz etiket veya ürün kategorisi atanmamış.")
+                    def instant_prod_save(cid):
+                        new_prods = st.session_state[f"inst_prod_{cid}"]
+                        update_company(cid, products=new_prods)
 
-                    with st.expander("✏️ Kategorileri Düzenle"):
-                        st.markdown("---")
-                        
-                        # Use all global dynamic tags for options so nothing is hidden from the user, and use raw current_tags as default
-                        all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
-                        new_tags = st.multiselect("Genel Etiketler (Tags)", options=all_tag_opts, default=current_tags, key=f"tags_edit_{comp['id']}")
-                        
-                        # Allow custom tag input
-                        custom_tag = st.text_input("Yeni Özel Etiket Ekle (Enter'a basın):", placeholder="Örn: Bayilik Veriyor", key=f"custom_tag_{comp['id']}")
-                        if custom_tag:
-                            new_custom_tag = custom_tag.strip().title()
-                            if new_custom_tag not in new_tags:
-                                new_tags.append(new_custom_tag)
-
-                        new_products = st.multiselect("Odak Ürün Kategorileri", options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), default=current_products, key=f"prod_edit_{comp['id']}")
-                        
-                        if set(new_products) != set(current_products) or set(new_tags) != set(current_tags):
-                            if st.button("💾 Kaydet", key=f"save_cats_{comp['id']}", type="primary"):
-                                update_company(comp['id'], tags=new_tags, products=new_products)
-                                # Clear widget states to force redraw from DB
-                                for reset_key in [f"tags_edit_{comp['id']}", f"prod_edit_{comp['id']}", f"custom_tag_{comp['id']}"]:
-                                    if reset_key in st.session_state:
-                                        del st.session_state[reset_key]
-                                st.toast("Kategoriler Güncellendi!", icon="✅")
-                                st.rerun()
+                    all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
+                    
+                    st.multiselect(
+                        "📌 Şirket Etiketleri (Silmek için ❌ basın)", 
+                        options=all_tag_opts, 
+                        default=current_tags, 
+                        key=f"inst_tags_{comp['id']}",
+                        on_change=instant_tag_save,
+                        args=(comp['id'],)
+                    )
+                    
+                    st.multiselect(
+                        "📦 Ürün Kategorileri", 
+                        options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), 
+                        default=current_products, 
+                        key=f"inst_prod_{comp['id']}",
+                        on_change=instant_prod_save,
+                        args=(comp['id'],)
+                    )
+                    
+                    # Add simple single custom tag inserter outside the multiselect to allow totally new words
+                    custom_tag = st.text_input("➕ Yeni Özgün Etiket Ekle (Enter'a basın):", placeholder="#VIP, #TeklifBekliyor", key=f"custom_tag_{comp['id']}")
+                    if custom_tag:
+                        clean_tag = custom_tag.strip().title()
+                        if clean_tag not in current_tags:
+                            merged_tags = current_tags + [clean_tag]
+                            update_company(comp['id'], tags=merged_tags)
+                            st.session_state[f"inst_tags_{comp['id']}"] = merged_tags
+                            del st.session_state[f"custom_tag_{comp['id']}"]
+                            st.rerun()
 
             
                 # Content Tabs
@@ -564,6 +567,24 @@ Not: {raw_note}"""
 
                         st.markdown("---")
 
+                        # --- EMAILS SEKTION ---
+                        emails = [n for n in notes if n['type'] == 'email']
+                        if emails:
+                            with st.expander(f"📥 Bu Firmadan Gelen Emailler ({len(emails)} Adet)", expanded=True):
+                                sorted_emails = sorted(emails, key=lambda x: x['created_at'], reverse=True)
+                                for em in sorted_emails:
+                                    date_str = datetime.datetime.fromisoformat(em['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
+                                    st.markdown(f"""
+                                    <div class="note-box" style="border-left: 4px solid #3B82F6; background-color: #F8FAFC; margin-bottom: 10px;">
+                                        <small style="color:#64748b;">📧 <b>Gelen Kutu</b> | {date_str}</small><br>
+                                        <div style="font-size: 0.9em; white-space: pre-wrap; margin-top: 6px; color: #334155;">{em['content']}</div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                        else:
+                            st.info("Bu firma ile henüz eşleşmiş bir email yok. Sağ üstteki + Butonundan ekleyebilirsiniz.")
+                            
+                        st.markdown("---")
+
                         # Standart Manuel Not Ekleme
                         with st.expander("➕ Hızlı Not Ekle"):
                             new_note = st.text_area("Notunuzu yazın:", key=f"note_input_{comp['id']}")
@@ -572,28 +593,21 @@ Not: {raw_note}"""
                                 st.success("Note saved!")
                                 st.rerun()
                 
-                        # Notları ve Emailleri kronolojik listele
-                        sorted_notes = sorted(notes, key=lambda x: x['created_at'], reverse=True)
+                        # Manuel Notları kronolojik listele
+                        manual_notes = [n for n in notes if n['type'] != 'email']
+                        sorted_notes = sorted(manual_notes, key=lambda x: x['created_at'], reverse=True)
                     
                         for n in sorted_notes:
                             date_str = datetime.datetime.fromisoformat(n['created_at'].replace('Z', '+00:00')).strftime("%Y-%m-%d %H:%M")
                         
                             col_note, col_del = st.columns([0.85, 0.15])
                             with col_note:
-                                if n['type'] == 'email':
-                                    st.markdown(f"""
-                                    <div class="note-box" style="border-left: 4px solid #3B82F6; background-color: #F3F4F6;">
-                                        <small style="color:#555;">📧 <b>Email</b> | {date_str}</small><br>
-                                        <div style="font-size: 0.9em; white-space: pre-wrap; margin-top: 4px;">{n['content']}</div>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f"""
-                                    <div class="note-box">
-                                        <small style="color:#555;">📝 {date_str}</small><br>
-                                        {n['content']}
-                                    </div>
-                                    """, unsafe_allow_html=True)
+                                st.markdown(f"""
+                                <div class="note-box">
+                                    <small style="color:#555;">📝 {date_str}</small><br>
+                                    {n['content']}
+                                </div>
+                                """, unsafe_allow_html=True)
                             with col_del:
                                 if st.button("🗑️", key=f"del_note_{n['id']}"):
                                     delete_note(n['id'])
