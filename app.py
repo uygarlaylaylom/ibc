@@ -306,7 +306,7 @@ if app_mode == "Firma Listesi":
                                         combined_text = "\\n".join([n.get('content', '') for n in manual_notes])
                                         
                                         prompt = f"""Ekteki notlar IBS inşaat fuarından alınmıştır. Lütfen bu şirketin notlarında geçen tüm inşaat/yapı ürünlerini analiz edin.
-ÖNEMLİ: Notlar Türkçe olabilir, ancak KATEGORİLER listesi İngilizcedir. Lütfen metnin anlamını çevirerek, bahsedilen ürünlerin (örn: alüminyum -> Aluminum Products, kapı pencere -> Windows & Doors) KATEGORİLER listesindeki TAM İngilizce karşılıklarını bulun. Eşleştirirken sadece listedeki İngilizce orijinal metinleri kullanın.
+ÖNEMLİ: Notların dili İngilizce, Türkçe veya karışık olabilir. Sizin göreviniz metnin özünü anlayıp (örn: "wooden stair parts, balusters" -> "Interior Finishes - Trim" veya "Molding", "alüminyum" -> "Aluminum Products"), KATEGORİLER listesinden EN ALAKALI, UYGUN VE GENİŞ kategorileri bularak eşleştirmektir. Ürün listemizde metindeki ürünün alt kümesi veya üst kümesi varsa bile onu seçebilirsiniz. Tek şart: Seçtiğiniz isimler bu KATEGORİLER listesindekilerle BİREBİR YAZILIŞTA aynı olmalıdır.
                                         
 KATEGORİLER:
 {FLAT_CATEGORIES_DETAILED}
@@ -420,7 +420,7 @@ Notlar: {combined_text}"""
                                                     if api_key:
                                                         client = OpenAI(api_key=api_key)
                                                         prompt = f"""Sen profesyonel bir B2B Fuar asistanısın. Aşağıdaki ham ürün notunu IBS fuar formatına uygun şekilde (önemliyse #acil, kişi varsa @isim) temiz ve maddeler halinde düzenle.
-Aynı zamanda notta bahsedilen inşaat/yapı ürünlerini analiz et. ÖNEMLİ: Kullanıcının notu Türkçe olabilir, ancak KATEGORİLER listesi İngilizcedir. Lütfen cümlenin anlamını analiz ederek, bahsedilen ürünlerin (örn: alüminyum, kapı, pencere vb.) İngilizce karşılıklarını aşağıdaki KATEGORİLER listesinden (örn: '4️⃣ Windows & Doors - Windows', '14️⃣ Materials - Aluminum Products') bularak zihinsel olarak çevirip eşleştir. (Eğer uyan yoksa boş liste bırak).
+Aynı zamanda notta bahsedilen inşaat/yapı ürünlerini analiz et. ÖNEMLİ: Kullanıcının notu İngilizce, Türkçe veya karışık olabilir. Lütfen cümlenin anlamını ve bağlamını analiz ederek, bahsedilen ürünleri (örn: Ahşap merdiven parçaları, stair parts, balusters -> "11️⃣ Interior Finishes - Trim" veya "11️⃣ Interior Finishes - Molding" vb.) aşağıdaki KATEGORİLER listesinden EN YAKIN VE EN MANTIKLI olan geniş kategorilerle eşleştir. Kusursuz nokta atışı olmak zorunda değil, doğru bağlamdaki en yakın kategoriyi seçebilirsin. Tek şart: Seçtiğin isimler AŞAĞIDAKİ LİSTEDEN kopyalanmış BİREBİR AYNI karakter formatında olmalıdır.
 
 KATEGORİLER:
 {FLAT_CATEGORIES_DETAILED}
@@ -428,7 +428,7 @@ KATEGORİLER:
 LÜTFEN SADECE AŞAĞIDAKİ JSON FORMATINDA YANIT VER:
 {{
   "formatted_note": "Düzenlenmiş, net ve sektörel not metni",
-  "detected_categories": ["KATEGORİLER listesinden birebir aynı formatta kopyalanmış isimler"]
+  "detected_categories": ["KATEGORİLER listesinden birebir aynı formatta kopyalanmış en alakalı isimler"]
 }}
 
 Not: {raw_note}"""
