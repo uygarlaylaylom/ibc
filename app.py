@@ -13,26 +13,43 @@ st.set_page_config(page_title="IBS 2026 Booth Tracker", page_icon="🏢", layout
 
 # --- Authentication ---
 from streamlit_google_auth import Authenticate
+import tempfile, json as _json
 
 def check_google_auth():
     """Authenticate user via Google OAuth and check against whitelist."""
     try:
         client_id = st.secrets.get("GOOGLE_CLIENT_ID")
         client_secret = st.secrets.get("GOOGLE_CLIENT_SECRET")
+        redirect_uri = st.secrets.get("REDIRECT_URI", "http://localhost:8501")
         
         if not client_id or not client_secret:
             st.error("Google OAuth eksik. GOOGLE_CLIENT_ID ve GOOGLE_CLIENT_SECRET ayarlara girilmedi.")
             st.stop()
+        
+        # Build the client_secret JSON structure and write to a temp file
+        client_config = {
+            "web": {
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uris": [redirect_uri + "/oauth2callback"],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token"
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            _json.dump(client_config, f)
+            tmp_path = f.name
         
         # Load allowed emails from secrets, comma-separated
         allowed_raw = st.secrets.get("ALLOWED_EMAILS", "")
         allowed_emails = [e.strip().lower() for e in allowed_raw.split(",") if e.strip()]
         
         authenticator = Authenticate(
-            secret_credentials_path=None,
-            client_id=client_id,
-            client_secret=client_secret,
-            redirect_uri=st.secrets.get("REDIRECT_URI", "http://localhost:8501"),
+            secret_credentials_path=tmp_path,
+            cookie_name="ibs_google_auth",
+            cookie_key=st.secrets.get("COOKIE_SECRET", "ibs_fuar_secret_key_2026"),
+            redirect_uri=redirect_uri,
         )
         
         authenticator.check_authentification()
