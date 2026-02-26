@@ -384,7 +384,6 @@ Notlar: {combined_text}"""
             
                 # TAB 1: Notes & Intelligence
                 with tab1:
-                    @st.fragment
                     def render_notes_fragment(comp):
                         ai_cols = st.columns(3)
                         with ai_cols[0]:
