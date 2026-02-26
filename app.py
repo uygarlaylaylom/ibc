@@ -586,6 +586,7 @@ if app_mode == "Firma Listesi":
                 # TAB 3: History / Emails
                 with tab3:
                     st.write("**Automated Email Captures**")
+                    notes = get_notes(comp['id'])
                     email_count = 0
                     for n in notes:
                         if n['type'] == 'email':
