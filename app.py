@@ -11,7 +11,7 @@ from supabase_utils import (
     get_supabase, get_companies, update_company, get_notes, add_note, delete_note, 
     get_attachments, upload_attachment, get_public_url, get_contacts, add_contact, delete_contact
 )
-from ocr_local import extract_text_from_image
+from ocr_local import extract_text_from_image_bytes
 from seed_database import seed_companies
 from google_drive_utils import find_or_create_folder, upload_file_to_drive
 
