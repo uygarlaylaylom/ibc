@@ -12,80 +12,30 @@ from google_drive_utils import find_or_create_folder, upload_file_to_drive
 st.set_page_config(page_title="IBS 2026 Booth Tracker", page_icon="🏢", layout="wide")
 
 # --- Authentication ---
-from streamlit_google_auth import Authenticate
-import tempfile, json as _json
+from google_auth_manager import check_custom_google_auth
 
-def check_google_auth():
-    """Authenticate user via Google OAuth and check against whitelist."""
-    try:
-        client_id = st.secrets.get("GOOGLE_CLIENT_ID")
-        client_secret = st.secrets.get("GOOGLE_CLIENT_SECRET")
-        redirect_uri = st.secrets.get("REDIRECT_URI", "http://localhost:8501")
-        
-        if not client_id or not client_secret:
-            st.error("Google OAuth eksik. GOOGLE_CLIENT_ID ve GOOGLE_CLIENT_SECRET ayarlara girilmedi.")
-            st.stop()
-        
-        # Build the client_secret JSON structure and write to a temp file
-        client_config = {
-            "web": {
-                "client_id": client_id,
-                "project_id": "streamlit-app",
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_secret": client_secret,
-                "redirect_uris": [redirect_uri + "/oauth2callback"],
-                "javascript_origins": [redirect_uri]
-            }
-        }
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            _json.dump(client_config, f)
-            tmp_path = f.name
-        
-        # Load allowed emails from secrets, comma-separated
-        allowed_raw = st.secrets.get("ALLOWED_EMAILS", "")
-        allowed_emails = [e.strip().lower() for e in allowed_raw.split(",") if e.strip()]
-        
-        authenticator = Authenticate(
-            secret_credentials_path=tmp_path,
-            cookie_name="ibs_google_auth",
-            cookie_key=st.secrets.get("COOKIE_SECRET", "ibs_fuar_secret_key_2026"),
-            redirect_uri=redirect_uri,
-        )
-        
-        authenticator.check_authentification()
+try:
+    check_custom_google_auth()
+except Exception as e:
+    # Graceful fallback if any Google setup fails
+    import traceback
+    st.error(f"Google Girişi Yapılandırma Hatası: {e}")
+    st.code(traceback.format_exc())
+    
+    def password_entered():
+        if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
+            st.session_state["password_correct"] = True
+        else:
+            st.session_state["password_correct"] = False
+    
+    if "password_correct" not in st.session_state:
+        st.text_input("Lütfen Giriş Şifresini Yazın (Fallback)", type="password", on_change=password_entered, key="pwd_input")
+        st.stop()
+    elif not st.session_state["password_correct"]:
+        st.text_input("Lütfen Giriş Şifresini Yazın (Fallback)", type="password", on_change=password_entered, key="pwd_input")
+        st.error("😕 Hatalı şifre.")
+        st.stop()
 
-        if not st.session_state.get("connected"):
-            st.markdown("## 🏢 IBS 2026 Fuar Asistanı")
-            st.info("Bu uygulamaya erişmek için yetkili Google hesabınızla giriş yapın.")
-            authenticator.login()
-            st.stop()
-        
-        user_email = st.session_state.get("email", "").lower()
-        if allowed_emails and user_email not in allowed_emails:
-            st.error(f"❌ '{user_email}' adresi bu uygulamaya erişim iznine sahip değil.")
-            authenticator.logout()
-            st.stop()
-            
-    except ImportError:
-        # Graceful fallback if package fails to import
-        def password_entered():
-            if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
-                st.session_state["password_correct"] = True
-            else:
-                st.session_state["password_correct"] = False
-        
-        if "password_correct" not in st.session_state:
-            st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-            st.stop()
-        elif not st.session_state["password_correct"]:
-            st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-            st.error("😕 Hatalı şifre.")
-            st.stop()
-
-check_google_auth()
 
 
 # Custom CSS for modern look
