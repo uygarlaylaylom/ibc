@@ -26,7 +26,7 @@ def get_client_config():
             "token_uri": "https://oauth2.googleapis.com/token",
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": client_secret,
-            "redirect_uris": [redirect_uri + "/oauth2callback", redirect_uri]
+            "redirect_uris": [redirect_uri]
         }
     }
 
@@ -48,11 +48,14 @@ def check_custom_google_auth():
     client_config = get_client_config()
     redirect_uri = st.secrets.get("REDIRECT_URI", "http://localhost:8501")
 
+    # If the URL ends with a slash, we must keep it for exact matching
+    exact_redirect_uri = redirect_uri if redirect_uri.endswith('/') else redirect_uri + "/"
+
     # Only initialize the Flow when needed
     flow = Flow.from_client_config(
         client_config,
         scopes=SCOPES,
-        redirect_uri=redirect_uri
+        redirect_uri=exact_redirect_uri
     )
 
     # 1. If already authenticated in session state, check whitelist and let them in
