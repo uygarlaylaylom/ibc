@@ -3,6 +3,7 @@ import json
 import io
 import streamlit as st
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
@@ -22,6 +23,10 @@ def get_drive_service():
             else:
                 token_dict = dict(token_info)
             creds = Credentials.from_authorized_user_info(token_dict, SCOPES)
+            # Auto-refresh the token if it has expired
+            if not creds.valid:
+                if creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
             return build('drive', 'v3', credentials=creds)
     except Exception as e:
         import traceback
