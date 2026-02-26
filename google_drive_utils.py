@@ -51,7 +51,7 @@ def find_or_create_folder(folder_name, parent_id=None):
             query += f" and '{parent_id}' in parents"
             
         # supportsAllDrives allows working within shared drives if applicable
-        response = service.files().list(q=query, corpora='allDrives', fields='files(id, name)', supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
+        response = service.files().list(q=query, fields='files(id, name)').execute()
         files = response.get('files', [])
         
         if files:
@@ -65,15 +65,14 @@ def find_or_create_folder(folder_name, parent_id=None):
         if parent_id:
             file_metadata['parents'] = [parent_id]
             
-        folder = service.files().create(body=file_metadata, fields='id', supportsAllDrives=True).execute()
+        folder = service.files().create(body=file_metadata, fields='id').execute()
         
         # Don't try to change permissions if we're inside a folder we don't own completely,
         # but try to make it reader accessible if possible
         try:
             service.permissions().create(
                 fileId=folder.get('id'),
-                body={'type': 'anyone', 'role': 'reader'},
-                supportsAllDrives=True
+                body={'type': 'anyone', 'role': 'reader'}
             ).execute()
         except:
             pass # Ignore if we can't change permissions, the parent folder sharing should cascade
@@ -98,7 +97,8 @@ def upload_file_to_drive(file_bytes, file_name, mime_type, folder_id):
         
     media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type, resumable=True)
     try:
-        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink, webContentLink', supportsAllDrives=True).execute()
+        # For My Drive, remove supportsAllDrives
+        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink, webContentLink').execute()
     except Exception as e:
         import traceback
         st.error(f"Google Drive Yükleme Hatası: {e}")
