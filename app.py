@@ -339,6 +339,10 @@ Notlar: {combined_text}"""
                                         merged = list(set(current_products + new_prods))
                                         update_company(comp['id'], products=merged)
                                         st.toast("Kategoriler genişletildi!", icon="📦")
+                                        # Clear widget state to force multiselect to reflect new DB values
+                                        for key_to_clear in [f"prod_edit_{comp['id']}", f"tags_edit_{comp['id']}"]:
+                                            if key_to_clear in st.session_state:
+                                                del st.session_state[key_to_clear]
                                         st.session_state[f"retro_cats_{comp['id']}"] = None
                                         st.rerun()
                                 else:
@@ -472,6 +476,10 @@ Not: {raw_note}"""
                                                 if set(merged) != set(curr):
                                                     update_company(comp['id'], products=merged)
                                                     st.toast("Ürün kataloğu da otomatik genişletildi! 📦", icon="✅")
+                                                    # Clear widget state to prevent Streamlit from holding onto old multiselect values
+                                                    for key_to_clear in [f"prod_edit_{comp['id']}", f"tags_edit_{comp['id']}"]:
+                                                        if key_to_clear in st.session_state:
+                                                            del st.session_state[key_to_clear]
                                                     
                                             st.toast("İşlem Başarılı!", icon="✅")
                                         
