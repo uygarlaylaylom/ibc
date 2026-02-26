@@ -153,7 +153,9 @@ try:
             companies = [c for c in companies if c.get('products') and selected_product_filter in c['products']]
             
 except Exception as e:
-    st.error("Error connecting to database. Please check your .env credentials.")
+    import traceback
+    st.error(f"Veritabanı bağlantı hatası: {e}")
+    st.code(traceback.format_exc())
     st.stop()
 
 # --- Main Dashboard ---
