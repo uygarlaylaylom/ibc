@@ -1,6 +1,7 @@
 import os
 import json
 import io
+import streamlit as st
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
@@ -13,7 +14,21 @@ CREDENTIALS_FILE = 'credentials.json'
 
 def get_drive_service():
     """Authenticates and returns the Google Drive API service."""
+    try:
+        if "gcp_service_account" in st.secrets:
+            creds_info = st.secrets["gcp_service_account"]
+            if isinstance(creds_info, str):
+                creds_dict = json.loads(creds_info)
+            else:
+                creds_dict = dict(creds_info)
+            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+            return build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"Error loading secrets: {e}")
+        
+    # Fallback to local file for testing
     if not os.path.exists(CREDENTIALS_FILE):
+        print("No Google Service Account credentials found in st.secrets or local credentials.json")
         return None
         
     creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)

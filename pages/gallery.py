@@ -13,19 +13,18 @@ st.set_page_config(page_title="Medya Kütüphanesi", page_icon="📸", layout="w
 def check_password():
     """Returns `True` if the user had the correct password."""
     def password_entered():
-        if st.session_state["password"] == st.secrets.get("APP_PASSWORD", "fuar2026"):
+        if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
             st.session_state["password_correct"] = True
-            del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="password")
+        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
         return False
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error.
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="password")
+        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
         st.error("😕 Hatalı şifre. Lütfen tekrar deneyin.")
         return False
     else:
