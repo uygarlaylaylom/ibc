@@ -35,15 +35,23 @@ def get_drive_service():
     service = build('drive', 'v3', credentials=creds)
     return service
 
-def find_or_create_folder(folder_name):
-    """Finds a folder by name or creates it if it doesn't exist."""
+def find_or_create_folder(folder_name, parent_id=None):
+    """Finds a folder by name or creates it if it doesn't exist inside parent."""
     service = get_drive_service()
     if not service: return None
     
+    # If no parent_id is given, try to use a Root ID from secrets
+    if not parent_id:
+        parent_id = st.secrets.get("GDRIVE_ROOT_FOLDER_ID", None)
+        
     try:
         # Check if folder exists
         query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-        response = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+        if parent_id:
+            query += f" and '{parent_id}' in parents"
+            
+        # supportsAllDrives allows working within shared drives if applicable
+        response = service.files().list(q=query, spaces='drive', fields='files(id, name)', supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         files = response.get('files', [])
         
         if files:
@@ -54,14 +62,22 @@ def find_or_create_folder(folder_name):
             'name': folder_name,
             'mimeType': 'application/vnd.google-apps.folder'
         }
-        folder = service.files().create(body=file_metadata, fields='id').execute()
+        if parent_id:
+            file_metadata['parents'] = [parent_id]
+            
+        folder = service.files().create(body=file_metadata, fields='id', supportsAllDrives=True).execute()
         
-        # Make folder public so Streamlit can view files inside
-        service.permissions().create(
-            fileId=folder.get('id'),
-            body={'type': 'anyone', 'role': 'reader'}
-        ).execute()
-        
+        # Don't try to change permissions if we're inside a folder we don't own completely,
+        # but try to make it reader accessible if possible
+        try:
+            service.permissions().create(
+                fileId=folder.get('id'),
+                body={'type': 'anyone', 'role': 'reader'},
+                supportsAllDrives=True
+            ).execute()
+        except:
+            pass # Ignore if we can't change permissions, the parent folder sharing should cascade
+            
         return folder.get('id')
     except Exception as e:
         import traceback
@@ -75,13 +91,14 @@ def upload_file_to_drive(file_bytes, file_name, mime_type, folder_id):
     if not service: return None
     
     file_metadata = {
-        'name': file_name,
-        'parents': [folder_id]
+        'name': file_name
     }
-    
+    if folder_id:
+        file_metadata['parents'] = [folder_id]
+        
     media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type, resumable=True)
     try:
-        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink, webContentLink').execute()
+        file = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink, webContentLink', supportsAllDrives=True).execute()
     except Exception as e:
         import traceback
         st.error(f"Google Drive Yükleme Hatası: {e}")
