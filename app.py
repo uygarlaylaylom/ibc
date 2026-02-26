@@ -494,18 +494,17 @@ if app_mode == "Firma Listesi":
                      else:
                          st.info("Henüz kayıtlı kişi yok.")
 
-                # --- Admin Section for Database Reset ---
-                st.sidebar.markdown("---")
-                st.sidebar.title("⚙️ Admin Tools")
-                if st.sidebar.button("🔄 Reset & Seed Database (Danger)"):
-                    with st.spinner("Flushing old data and importing clean Excel..."):
-                        seed_companies("ibs_2026_all_exhibitors_clean.xlsx")
-                        st.success("Database successfully reset to clean version! Refresh the page.")
-                        # We don't auto rerun instantly to let them read the success message, 
-                        # but they can reload the app.
 
-                if len(companies) > 50:
-                    st.warning("Showing top 50 results. Use the search bar to find more specific companies.")
+
+
+    # --- Admin Section for Database Reset (outside company loop) ---
+    st.sidebar.markdown("---")
+    st.sidebar.title("⚙️ Admin Tools")
+    if st.sidebar.button("🔄 Reset & Seed Database (Danger)"):
+        with st.spinner("Flushing old data and importing clean Excel..."):
+            seed_companies("ibs_2026_all_exhibitors_clean.xlsx")
+            st.success("Database successfully reset to clean version! Refresh the page.")
+
 elif app_mode == "Medya Kütüphanesi":
     from views.gallery import show_gallery
     show_gallery()
