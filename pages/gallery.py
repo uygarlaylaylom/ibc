@@ -10,29 +10,29 @@ from supabase_utils import get_supabase
 st.set_page_config(page_title="Medya Kütüphanesi", page_icon="📸", layout="wide")
 
 # --- Authentication ---
-def check_password():
-    """Returns `True` if the user had the correct password."""
+from google_auth_manager import check_custom_google_auth
+
+try:
+    check_custom_google_auth()
+except Exception as e:
+    # Graceful fallback if any Google setup fails
+    import traceback
+    st.error(f"Google Girişi Yapılandırma Hatası: {e}")
+    st.code(traceback.format_exc())
+    
     def password_entered():
         if st.session_state.get("pwd_input", "") == st.secrets.get("APP_PASSWORD", "fuar2026"):
             st.session_state["password_correct"] = True
         else:
             st.session_state["password_correct"] = False
-
+    
     if "password_correct" not in st.session_state:
-        # First run, show input for password.
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-        return False
+        st.text_input("Lütfen Giriş Şifresini Yazın (Fallback)", type="password", on_change=password_entered, key="pwd_input")
+        st.stop()
     elif not st.session_state["password_correct"]:
-        # Password incorrect, show input + error.
-        st.text_input("Lütfen Giriş Şifresini Yazın", type="password", on_change=password_entered, key="pwd_input")
-        st.error("😕 Hatalı şifre. Lütfen tekrar deneyin.")
-        return False
-    else:
-        # Password correct.
-        return True
-
-if not check_password():
-    st.stop()  # Do not continue if not authenticated
+        st.text_input("Lütfen Giriş Şifresini Yazın (Fallback)", type="password", on_change=password_entered, key="pwd_input")
+        st.error("😕 Hatalı şifre.")
+        st.stop()  # Do not continue if not authenticated
 
 # --- END Authentication ---
 
