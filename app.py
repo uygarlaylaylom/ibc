@@ -21,7 +21,7 @@ st.set_page_config(page_title="IBS 2026 İstihbarat", page_icon="🏢", layout="
 
 # --- Navigation (SPA) ---
 st.sidebar.title("📌 IBS 2026 Navigasyon")
-app_mode = st.sidebar.radio("Modül Seçin:", ["Firma Listesi", "Medya Kütüphanesi", "Analiz & Görevler", "📬 Email Kutusu"])
+app_mode = st.sidebar.radio("Modül Seçin:", ["Firma Listesi", "Medya Kütüphanesi", "🧠 İstihbarat Merkezi"])
 st.sidebar.markdown("---")
 
 if app_mode == "Firma Listesi":
@@ -262,17 +262,16 @@ if app_mode == "Firma Listesi":
                             # Merge: remove old entries from this category, add new ones
                             new_products = [p for p in new_products if p not in sub_cats] + selected
                     
-                    cat_changed = set(new_products) != set(current_products)
-                    tag_changed = set(new_tags) != set(current_tags)
-                    
-                    if cat_changed or tag_changed:
-                        if st.button("💾 Kategorileri & Etiketleri Kaydet", key=f"save_cats_{comp['id']}", type="primary", use_container_width=True):
-                            update_company(comp['id'], tags=new_tags, products=new_products)
-                            st.success("Kaydedildi!")
-                            st.rerun()
-                    else:
-                        st.info(f"Seçili ürün: {len(new_products)} | Etiket: {len(new_tags)}")
-
+                cat_changed = set(new_products) != set(current_products)
+                tag_changed = set(new_tags) != set(current_tags)
+                
+                if cat_changed or tag_changed:
+                    if st.button("💾 Kategorileri & Etiketleri Kaydet", key=f"save_cats_{comp['id']}", type="primary", use_container_width=True):
+                        update_company(comp['id'], tags=new_tags, products=new_products)
+                        st.success("Kaydedildi!")
+                        st.rerun()
+                else:
+                    st.info(f"Seçili ürün: {len(new_products)} | Etiket: {len(new_tags)}")
 
             
                 # Content Tabs
