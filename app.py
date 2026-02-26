@@ -180,7 +180,11 @@ if app_mode == "Firma Listesi":
                         if new_name != comp.get('company_name'): updates['company_name'] = new_name
                         if new_seg != comp.get('segment'): updates['segment'] = new_seg
                         if new_desc != comp.get('description'): updates['description'] = new_desc
-                        if new_web != comp.get('website'): updates['website'] = new_web
+                        if new_web != comp.get('website'):
+                            # Ensure https:// prefix so the link actually opens
+                            if new_web and not new_web.startswith('http'):
+                                new_web = 'https://' + new_web
+                            updates['website'] = new_web
                     
                         if updates:
                             update_company(comp['id'], **updates)
@@ -188,7 +192,8 @@ if app_mode == "Firma Listesi":
                             st.rerun()
             
                 if comp.get('website'):
-                    st.markdown(f"🔗 <a href='{comp['website']}' target='_blank'>Ziyaret Et / Visit</a>", unsafe_allow_html=True)
+                    url = comp['website'] if comp['website'].startswith('http') else 'https://' + comp['website']
+                    st.markdown(f"🔗 <a href='{url}' target='_blank'>Ziyaret Et / Visit</a>", unsafe_allow_html=True)
             
                 # Action Row: Visited & Priority & Tags
                 col1, col2 = st.columns(2)
