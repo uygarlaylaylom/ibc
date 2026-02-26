@@ -48,8 +48,8 @@ def check_custom_google_auth():
     client_config = get_client_config()
     redirect_uri = st.secrets.get("REDIRECT_URI", "http://localhost:8501")
 
-    # If the URL ends with a slash, we must keep it for exact matching
-    exact_redirect_uri = redirect_uri if redirect_uri.endswith('/') else redirect_uri + "/"
+    # Ensure no trailing slash for Streamlit Cloud routing compatibility
+    exact_redirect_uri = redirect_uri.rstrip('/')
 
     # Only initialize the Flow when needed
     flow = Flow.from_client_config(
