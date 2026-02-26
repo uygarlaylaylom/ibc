@@ -312,8 +312,28 @@ if app_mode == "Firma Listesi":
                     # Check for existing Google Drive folder for this company or just use a main folder
                     # We'll put everything in one main folder or subfolders, let's use: IBS_2026_Gallery / [Booth]_[Name]
                 
-                    uploaded_files = st.file_uploader("Katalog veya Fotoğraf Yükle (Çoklu Seçim)", type=['png', 'jpg', 'jpeg', 'pdf'], key=f"file_{comp['id']}", accept_multiple_files=True)
+                    upload_mode = st.radio(
+                        "Kaynak Seç",
+                        ["📁 Dosya Yükle", "📷 Kameradan Çek"],
+                        horizontal=True,
+                        key=f"up_mode_{comp['id']}"
+                    )
+
+                    uploaded_files = []
+                    if upload_mode == "📁 Dosya Yükle":
+                        uploaded_files = st.file_uploader(
+                            "Katalog veya Fotoğraf Yükle (Çoklu Seçim)",
+                            type=['png', 'jpg', 'jpeg', 'pdf'],
+                            key=f"file_{comp['id']}",
+                            accept_multiple_files=True
+                        ) or []
+                    else:
+                        cam_img = st.camera_input("📷 Fotoğraf Çek", key=f"cam_{comp['id']}")
+                        if cam_img:
+                            uploaded_files = [cam_img]
+
                     if uploaded_files:
+
                         col_u1, col_u2 = st.columns(2)
                         with col_u1:
                             custom_name = st.text_input("Grup / Ortak Dosya Adı (Opsiyonel)", key=f"cname_{comp['id']}")
