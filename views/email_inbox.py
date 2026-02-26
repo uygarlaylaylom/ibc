@@ -148,24 +148,80 @@ def show_email_inbox():
                             m = pattern.search(text)
                             return m.group(1).strip() if m else "—"
 
-                        action = extract_field(result, 'AKSİYON')
+                        action   = extract_field(result, 'AKSİYON')
                         priority = extract_field(result, 'ÖNCELİK').split()[0] if extract_field(result, 'ÖNCELİK') != '—' else '—'
-                        bulk_results.append((subject[:55], action[:60], priority))
+                        firma_gem = extract_field(result, 'FİRMA')  # Gemini'nin firma tahmini
+                        # Firma tahminini company_options'ta ara (fuzzy-ish)
+                        firma_id  = None
+                        firma_gem_lower = firma_gem.lower()
+                        for name, cid in company_options.items():
+                            if firma_gem_lower in name.lower() or name.lower() in firma_gem_lower:
+                                firma_id  = cid
+                                firma_gem = name  # Tam ismi kullan
+                                break
+                        bulk_results.append({
+                            "id":       em['id'],
+                            "subject":  subject[:55],
+                            "action":   action[:70],
+                            "priority": priority,
+                            "firma":    firma_gem,
+                            "firma_id": firma_id,
+                        })
 
                     st.session_state["bulk_analysis"] = bulk_results
                     st.rerun()
-        
-        # Toplu analiz sonuçları
+
+        # Toplu analiz sonuçları — interaktif satırlar
         if st.session_state.get("bulk_analysis"):
-            with st.expander("📋 Toplu Analiz Sonuçları — Aksiyon Listesi", expanded=True):
-                st.markdown("| Email | Aksiyon | Öncelik |")
-                st.markdown("|-------|---------|---------|")
-                for subj, action, prio in st.session_state["bulk_analysis"]:
-                    badge = "🔴" if "Yüksek" in prio else "🟡" if "Orta" in prio else "🟢"
-                    st.markdown(f"| {subj} | {action} | {badge} {prio} |")
-                if st.button("🗑️ Sonuçları Temizle"):
+            with st.expander("📋 Toplu Analiz Sonuçları", expanded=True):
+                st.caption(f"{len(st.session_state['bulk_analysis'])} email analiz edildi")
+                # Başlık
+                hc = st.columns([0.30, 0.25, 0.10, 0.17, 0.10, 0.08])
+                hc[0].markdown("**Email**")
+                hc[1].markdown("**Aksiyon**")
+                hc[2].markdown("**Öncelik**")
+                hc[3].markdown("**Gemini Firma**")
+                hc[4].markdown("")
+                hc[5].markdown("")
+                st.markdown("---")
+
+                to_remove = []
+                for row in list(st.session_state["bulk_analysis"]):
+                    badge = "🔴" if "Yüksek" in row["priority"] else "🟡" if "Orta" in row["priority"] else "🟢"
+                    rc = st.columns([0.30, 0.25, 0.10, 0.17, 0.10, 0.08])
+                    rc[0].caption(row["subject"])
+                    rc[1].caption(row["action"])
+                    rc[2].markdown(f"{badge}")
+                    rc[3].caption(row["firma"] if row["firma"] != "—" else "—")
+
+                    # Firmaya Ekle butonu
+                    if row.get("firma_id"):
+                        if rc[4].button("✅ Ekle", key=f"bulk_assign_{row['id']}",
+                                         help=f"{row['firma']} firmasına ata", use_container_width=True):
+                            supabase.table("notes").update(
+                                {"company_id": row["firma_id"]}
+                            ).eq("id", row["id"]).execute()
+                            to_remove.append(row["id"])
+                            st.toast(f"✅ {row['firma']} firmasına atandı!")
+                    else:
+                        rc[4].caption("—")
+
+                    # Sil butonu
+                    if rc[5].button("🗑️", key=f"bulk_del_{row['id']}", use_container_width=True):
+                        supabase.table("notes").delete().eq("id", row["id"]).execute()
+                        to_remove.append(row["id"])
+                        st.toast("🗑️ Silindi")
+
+                if to_remove:
+                    st.session_state["bulk_analysis"] = [
+                        r for r in st.session_state["bulk_analysis"] if r["id"] not in to_remove
+                    ]
+                    st.rerun()
+
+                if st.button("🗑️ Listeyi Temizle", key="clear_bulk"):
                     del st.session_state["bulk_analysis"]
                     st.rerun()
+
 
         st.markdown("---")
 
