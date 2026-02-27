@@ -388,12 +388,18 @@ Notlar: {combined_text}"""
                         # Clear it immediately so it doesn't form a ghost state that prevents manual deletion later
                         del st.session_state[f"temp_list_tg_{comp['id']}"]
 
+                    # Initialize default state values if they are missing
+                    if f"inst_tags_{comp['id']}" not in st.session_state:
+                        st.session_state[f"inst_tags_{comp['id']}"] = current_tags
+                        
+                    if f"inst_prod_{comp['id']}" not in st.session_state:
+                        st.session_state[f"inst_prod_{comp['id']}"] = current_products
+
                     all_tag_opts = list(set(all_tag_opts))
                     
                     st.multiselect(
                         "📌 Şirket Etiketleri (Silmek için ❌ basın)", 
                         options=all_tag_opts, 
-                        default=current_tags, 
                         key=f"inst_tags_{comp['id']}",
                         on_change=instant_tag_save,
                         args=(comp['id'], f"inst_tags_{comp['id']}")
@@ -402,7 +408,6 @@ Notlar: {combined_text}"""
                     st.multiselect(
                         "📦 Ürün Kategorileri", 
                         options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), 
-                        default=current_products, 
                         key=f"inst_prod_{comp['id']}",
                         on_change=instant_prod_save,
                         args=(comp['id'], f"inst_prod_{comp['id']}")
