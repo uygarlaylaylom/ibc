@@ -359,12 +359,12 @@ Notlar: {combined_text}"""
                     
                     # PHASE 6: Instant Interactive Tagging Arrays
                     # We define callbacks that immediately save when the user clicks 'x' or adds a tag.
-                    def instant_tag_save(cid):
-                        new_tags = st.session_state[f"inst_tags_{cid}"]
+                    def instant_tag_save(cid, key_name):
+                        new_tags = st.session_state[key_name]
                         update_company(cid, tags=new_tags)
                     
-                    def instant_prod_save(cid):
-                        new_prods = st.session_state[f"inst_prod_{cid}"]
+                    def instant_prod_save(cid, key_name):
+                        new_prods = st.session_state[key_name]
                         update_company(cid, products=new_prods)
 
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
@@ -377,22 +377,30 @@ Notlar: {combined_text}"""
 
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
+                    import hashlib
+                    # Dynamic widget keys force Streamlit's React frontend to throw away sticky session state and respect new default props
+                    tag_hash = hashlib.md5(str(current_tags).encode()).hexdigest()[:6]
+                    prod_hash = hashlib.md5(str(current_products).encode()).hexdigest()[:6]
+                    
+                    tag_key = f"inst_tags_{comp['id']}_{tag_hash}"
+                    prod_key = f"inst_prod_{comp['id']}_{prod_hash}"
+                    
                     st.multiselect(
                         "📌 Şirket Etiketleri (Silmek için ❌ basın)", 
                         options=all_tag_opts, 
                         default=current_tags, 
-                        key=f"inst_tags_{comp['id']}",
+                        key=tag_key,
                         on_change=instant_tag_save,
-                        args=(comp['id'],)
+                        args=(comp['id'], tag_key)
                     )
                     
                     st.multiselect(
                         "📦 Ürün Kategorileri", 
                         options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), 
                         default=current_products, 
-                        key=f"inst_prod_{comp['id']}",
+                        key=prod_key,
                         on_change=instant_prod_save,
-                        args=(comp['id'],)
+                        args=(comp['id'], prod_key)
                     )
                                 
                 # Content Tabs
