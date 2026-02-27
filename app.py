@@ -379,35 +379,33 @@ Notlar: {combined_text}"""
                         for tmptg in st.session_state[f"temp_list_tg_{comp['id']}"]:
                             if tmptg not in current_tags:
                                 current_tags.append(tmptg)
+                            if tmptg not in all_tag_opts:
+                                all_tag_opts.append(tmptg)
+                        
+                        # Force Streamlit to pre-fill the widget correctly bypassing all caching quirks
+                        st.session_state[f"inst_tags_{comp['id']}"] = current_tags
+                        
                         # Clear it immediately so it doesn't form a ghost state that prevents manual deletion later
                         del st.session_state[f"temp_list_tg_{comp['id']}"]
 
-                    all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
-                    
-                    import hashlib
-                    # Dynamic widget keys force Streamlit's React frontend to throw away sticky session state and respect new default props
-                    tag_hash = hashlib.md5(str(current_tags).encode()).hexdigest()[:6]
-                    prod_hash = hashlib.md5(str(current_products).encode()).hexdigest()[:6]
-                    
-                    tag_key = f"inst_tags_{comp['id']}_{tag_hash}"
-                    prod_key = f"inst_prod_{comp['id']}_{prod_hash}"
+                    all_tag_opts = list(set(all_tag_opts))
                     
                     st.multiselect(
                         "📌 Şirket Etiketleri (Silmek için ❌ basın)", 
                         options=all_tag_opts, 
                         default=current_tags, 
-                        key=tag_key,
+                        key=f"inst_tags_{comp['id']}",
                         on_change=instant_tag_save,
-                        args=(comp['id'], tag_key)
+                        args=(comp['id'], f"inst_tags_{comp['id']}")
                     )
                     
                     st.multiselect(
                         "📦 Ürün Kategorileri", 
                         options=list(set(FLAT_CATEGORIES_DETAILED + current_products)), 
                         default=current_products, 
-                        key=prod_key,
+                        key=f"inst_prod_{comp['id']}",
                         on_change=instant_prod_save,
-                        args=(comp['id'], prod_key)
+                        args=(comp['id'], f"inst_prod_{comp['id']}")
                     )
                                 
                 # Content Tabs
