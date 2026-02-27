@@ -573,6 +573,11 @@ Not: {raw_note}"""
                                         if st.button("💾 Seçilileri Firmaya Ekle", type="primary", use_container_width=True, key=f"save_sugg_{comp['id']}"):
                                             merged_tags = list(set(current_tags + sel_tags))
                                             update_company(comp['id'], tags=merged_tags)
+                                            
+                                            # Optimistically inject tags into UI immediately
+                                            if sel_tags:
+                                                st.session_state[f"temp_list_tg_{comp['id']}"] = sel_tags
+                                                
                                             # Flush cache natively to prevent stale Streamlit Multiselect UI state natively
                                             for key_tgt in [f"inst_tags_{comp['id']}", f"sugg_tags_{comp['id']}"]:
                                                 if key_tgt in st.session_state:
