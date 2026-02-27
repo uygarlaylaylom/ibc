@@ -116,12 +116,11 @@ def add_note(company_id, content, note_type="manual", company_name=None):
     supabase.table("activities").insert(data).execute()
     
     # --- PHASE 5: Note-to-Firm Sync ---
-    # Merge any extracted tags into the parent company profile permanently
+    clean_tags = []
     if extracted_tags:
-        # Standardize tags (capitalize first letter, lowercase rest)
-        clean_tags = [t.strip().title() for t in extracted_tags]
+        # Standardize tags with # prefix and Title Case
+        clean_tags = ['#' + t.strip().title() for t in extracted_tags]
         try:
-            # Fetch current company tags
             comp_res = supabase.table("companies").select("tags").eq("id", company_id).execute()
             if comp_res.data:
                 curr_tags = comp_res.data[0].get("tags") or []
@@ -130,6 +129,8 @@ def add_note(company_id, content, note_type="manual", company_name=None):
                     supabase.table("companies").update({"tags": merged}).eq("id", company_id).execute()
         except Exception as e:
             print("Error syncing tags to company:", e)
+            
+    return clean_tags
 
 def delete_note(note_id):
     """Deletes a specific activity."""

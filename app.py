@@ -374,6 +374,11 @@ Notlar: {combined_text}"""
                         temp_tg = st.session_state[f"temp_tg_{comp['id']}"]
                         if temp_tg not in current_tags:
                             current_tags.append(temp_tg)
+                            
+                    if f"temp_list_tg_{comp['id']}" in st.session_state:
+                        for tmptg in st.session_state[f"temp_list_tg_{comp['id']}"]:
+                            if tmptg not in current_tags:
+                                current_tags.append(tmptg)
 
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
@@ -499,7 +504,9 @@ Not: {raw_note}"""
                                             btn_text = "💾 Sadece Notu Kaydet"
                                             
                                         if st.button(btn_text, type="primary", use_container_width=True, key=f"save_ai_note_{comp['id']}"):
-                                            add_note(comp['id'], final_note, note_type="manual", company_name=comp['company_name'])
+                                            extracted_tags = add_note(comp['id'], final_note, note_type="manual", company_name=comp['company_name'])
+                                            if extracted_tags:
+                                                st.session_state[f"temp_list_tg_{comp['id']}"] = extracted_tags
                                             
                                             # Merge categories into company profile
                                             if detected:
@@ -672,7 +679,10 @@ Not: {raw_note}"""
                         with st.expander("➕ Hızlı Not Ekle"):
                             new_note = st.text_area("Notunuzu yazın:", key=f"note_input_{comp['id']}")
                             if st.button("Kaydet", key=f"save_note_{comp['id']}"):
-                                add_note(comp['id'], new_note, note_type="manual", company_name=comp['company_name'])
+                                extracted_tags = add_note(comp['id'], new_note, note_type="manual", company_name=comp['company_name'])
+                                if extracted_tags:
+                                    st.session_state[f"temp_list_tg_{comp['id']}"] = extracted_tags
+                                
                                 st.success("Note saved!")
                                 # If the note contained hashtags, the DB tags were updated. We must flush the old multiselect state!
                                 if f"inst_tags_{comp['id']}" in st.session_state:
