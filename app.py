@@ -374,6 +374,8 @@ Notlar: {combined_text}"""
                         for tmptg in st.session_state[f"temp_list_tg_{comp['id']}"]:
                             if tmptg not in current_tags:
                                 current_tags.append(tmptg)
+                        # Clear it immediately so it doesn't form a ghost state that prevents manual deletion later
+                        del st.session_state[f"temp_list_tg_{comp['id']}"]
 
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
