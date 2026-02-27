@@ -14,6 +14,8 @@ local_libs/
 
 # Temporary Excel Files
 ~$*
-\ncredentials.json
-\nclient_secret.json\ntoken.json
-\n.streamlit/
+
+credentials.json
+client_secret.json
+token.json
+.streamlit/

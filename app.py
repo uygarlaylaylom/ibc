@@ -437,7 +437,9 @@ Notlar: {combined_text}"""
                         if st.session_state.get(f"show_ai_note_{comp['id']}", False):
                             with st.container(border=True):
                                 st.markdown("🤖 **Akıllı Not Asistanı**")
-                                raw_note = st.text_area("Kabataslak notunuzu yazın:", key=f"raw_note_{comp['id']}", height=100)
+                                st.session_state.setdefault(f"raw_ctr_{comp['id']}", 0)
+                                raw_key = f"raw_note_{comp['id']}_{st.session_state[f'raw_ctr_{comp['id']}']}"
+                                raw_note = st.text_area("Kabataslak notunuzu yazın:", key=raw_key, height=100)
                             
                                 col_n1, col_n2 = st.columns(2)
                                 with col_n1:
@@ -486,7 +488,10 @@ Not: {raw_note}"""
                             
                                 with col_n2:
                                     if st.session_state.get(f"fmt_note_{comp['id']}"):
-                                        final_note = st.text_area("Kaydedilecek Not:", value=st.session_state[f"fmt_note_{comp['id']}"], key=f"final_n_{comp['id']}")
+                                        st.session_state.setdefault(f"final_ctr_{comp['id']}", 0)
+                                        fin_key = f"final_n_{comp['id']}_{st.session_state[f'final_ctr_{comp['id']}']}"
+                                        
+                                        final_note = st.text_area("Kaydedilecek Not:", value=st.session_state[f"fmt_note_{comp['id']}"], key=fin_key)
                                         detected = st.session_state.get(f"det_cats_{comp['id']}", [])
                                         
                                         if detected:
@@ -518,9 +523,9 @@ Not: {raw_note}"""
                                             st.session_state[f"show_ai_note_{comp['id']}"] = False
                                             st.session_state[f"fmt_note_{comp['id']}"] = ""
                                             st.session_state[f"det_cats_{comp['id']}"] = []
-                                            st.session_state[f"raw_note_{comp['id']}"] = ""
-                                            if f"final_n_{comp['id']}" in st.session_state:
-                                                st.session_state[f"final_n_{comp['id']}"] = ""
+                                            
+                                            st.session_state[f"raw_ctr_{comp['id']}"] += 1
+                                            st.session_state[f"final_ctr_{comp['id']}"] += 1
                                             st.rerun()
 
                         # 1.5. AI Etiket Önerisi (Feature 8)
@@ -677,18 +682,24 @@ Not: {raw_note}"""
 
                         # Standart Manuel Not Ekleme
                         with st.expander("➕ Hızlı Not Ekle"):
-                            new_note = st.text_area("Notunuzu yazın:", key=f"note_input_{comp['id']}")
+                            st.session_state.setdefault(f"note_ctr_{comp['id']}", 0)
+                            ta_key = f"note_input_{comp['id']}_{st.session_state[f'note_ctr_{comp['id']}']}"
+                            
+                            new_note = st.text_area("Notunuzu yazın:", key=ta_key)
                             if st.button("Kaydet", key=f"save_note_{comp['id']}"):
-                                extracted_tags = add_note(comp['id'], new_note, note_type="manual", company_name=comp['company_name'])
-                                if extracted_tags:
-                                    st.session_state[f"temp_list_tg_{comp['id']}"] = extracted_tags
-                                
-                                st.success("Note saved!")
-                                # If the note contained hashtags, the DB tags were updated. We must flush the old multiselect state!
-                                if f"inst_tags_{comp['id']}" in st.session_state:
-                                    del st.session_state[f"inst_tags_{comp['id']}"]
-                                st.session_state[f"note_input_{comp['id']}"] = ""
-                                st.rerun()
+                                if new_note.strip():
+                                    extracted_tags = add_note(comp['id'], new_note, note_type="manual", company_name=comp['company_name'])
+                                    if extracted_tags:
+                                        st.session_state[f"temp_list_tg_{comp['id']}"] = extracted_tags
+                                    
+                                    st.success("Note saved!")
+                                    # If the note contained hashtags, the DB tags were updated. We must flush the old multiselect state!
+                                    if f"inst_tags_{comp['id']}" in st.session_state:
+                                        del st.session_state[f"inst_tags_{comp['id']}"]
+                                    
+                                    # Force a re-render of an empty text area by incrementing its unique key loop counter
+                                    st.session_state[f"note_ctr_{comp['id']}"] += 1
+                                    st.rerun()
                 
                         # Manuel Notları kronolojik listele
                         manual_notes = [n for n in notes if n['type'] != 'email']
