@@ -370,11 +370,6 @@ Notlar: {combined_text}"""
                     all_tag_opts = list(set(AVAILABLE_TAGS + current_tags + dynamic_tags))
                     
                     # OPTIMISTIC UI FIX: Merge db tags with temporary session tags to beat DB lag natively
-                    if f"temp_tg_{comp['id']}" in st.session_state:
-                        temp_tg = st.session_state[f"temp_tg_{comp['id']}"]
-                        if temp_tg not in current_tags:
-                            current_tags.append(temp_tg)
-                            
                     if f"temp_list_tg_{comp['id']}" in st.session_state:
                         for tmptg in st.session_state[f"temp_list_tg_{comp['id']}"]:
                             if tmptg not in current_tags:
@@ -399,27 +394,7 @@ Notlar: {combined_text}"""
                         on_change=instant_prod_save,
                         args=(comp['id'],)
                     )
-                    
-                    custom_tag = st.text_input("➕ Yeni Özgün Etiket Ekle (Enter'a basın):", placeholder="#VIP, #TeklifBekliyor", key=f"custom_tag_{comp['id']}")
-                    if custom_tag:
-                        clean_tag = custom_tag.strip().title()
-                        if not clean_tag.startswith('#'):
-                            clean_tag = '#' + clean_tag
-                            
-                        if clean_tag not in current_tags:
-                            merged_tags = current_tags + [clean_tag]
-                            update_company(comp['id'], tags=merged_tags)
-                            
-                            # Optimistically store new tag, clear widget memory to force re-evaluating default
-                            st.session_state[f"temp_tg_{comp['id']}"] = clean_tag
-                            if f"inst_tags_{comp['id']}" in st.session_state:
-                                del st.session_state[f"inst_tags_{comp['id']}"]
                                 
-                        # ALWAYS clear text input to prevent it from getting stuck on UI, then reload
-                        st.session_state[f"custom_tag_{comp['id']}"] = ""
-                        st.rerun()
-
-            
                 # Content Tabs
                 tab1, tab2, tab3, tab4 = st.tabs(["📝 Notes", "📂 Attachments", "📧 History", "👤 Contacts & OCR"])
             
