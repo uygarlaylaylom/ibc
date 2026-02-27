@@ -418,7 +418,7 @@ Notlar: {combined_text}"""
                 # TAB 1: Notes & Intelligence
                 with tab1:
                     def render_notes_fragment(comp):
-                        ai_cols = st.columns(3)
+                        ai_cols = st.columns(4)
                         with ai_cols[0]:
                             if st.button("🗂️ Toplantı Brifingi", help="Bu firma ile görüşmeden önce bilinmesi gerekenlerin özetini çıkarır.", use_container_width=True, key=f"ai_brief_{comp['id']}"):
                                 st.session_state[f"run_ai_brief_{comp['id']}"] = True
@@ -428,6 +428,9 @@ Notlar: {combined_text}"""
                         with ai_cols[2]:
                             if st.button("⚡ Takip Listesi", help="Tüm notlardan çıkarılan aksiyonları listeler.", use_container_width=True, key=f"ai_tasks_{comp['id']}"):
                                 st.session_state[f"run_ai_tasks_{comp['id']}"] = True
+                        with ai_cols[3]:
+                            if st.button("🏷️ AI Etiket Öner", help="Mevcut notları analiz edip firmaya özel YENİ etiketler önerir.", use_container_width=True, key=f"ai_tags_btn_{comp['id']}"):
+                                st.session_state[f"show_ai_tags_{comp['id']}"] = not st.session_state.get(f"show_ai_tags_{comp['id']}", False)
 
                         st.markdown("---")
 
@@ -516,6 +519,59 @@ Not: {raw_note}"""
                                             st.session_state[f"show_ai_note_{comp['id']}"] = False
                                             st.session_state[f"fmt_note_{comp['id']}"] = ""
                                             st.session_state[f"det_cats_{comp['id']}"] = []
+                                            st.rerun()
+
+                        # 1.5. AI Etiket Önerisi (Feature 8)
+                        if st.session_state.get(f"show_ai_tags_{comp['id']}", False):
+                            with st.container(border=True):
+                                st.markdown("🤖 **Akıllı Etiket Önerisi**")
+                                all_text = "\\n".join([n['content'] for n in notes if n['content']])
+                                
+                                if len(all_text.strip()) < 10:
+                                    st.info("Bu firma için yeterli not veya email içeriği bulunmuyor. Lütfen önce biraz veri girin.")
+                                else:
+                                    if st.button("✨ Notları Oku ve Öner", use_container_width=True, key=f"gen_tags_{comp['id']}"):
+                                        with st.spinner("Notlar analiz ediliyor ve benzersiz etiketler üretiliyor..."):
+                                            try:
+                                                from openai import OpenAI
+                                                import os, json
+                                                api_key = st.secrets.get("OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+                                                if api_key:
+                                                    client = OpenAI(api_key=api_key)
+                                                    prompt = (
+                                                        f"Sen B2B fuarında görüşülen firmaların yeteneklerini sınıflandıran bir veri analistisin.\\n"
+                                                        f"Aşağıdaki notlar {comp['company_name']} firmasına aittir:\\n{all_text}\\n\\n"
+                                                        f"Şu anki etiketleri şunlar: {current_tags}. BUNLARI KESİNLİKLE TEKRAR ÖNERME.\\n"
+                                                        f"Lütfen firmanın iş modelini, sektörünü ve odak noktasını tanımlayan 3 ila 6 TANE YENİ, kilit kelime niteliğinde etiket öner (örn: #MimariGlass, #Toptancı, #WoodSupply).\\n"
+                                                        f"Etiketler mutlaka '#' işaretiyle başlamalı, boşluk içermemeli ve CamelCase formatında olmalıdır.\\n"
+                                                    )
+                                                    resp = client.chat.completions.create(
+                                                        model="gpt-4o-mini",
+                                                        response_format={ "type": "json_object" },
+                                                        messages=[
+                                                            {"role": "system", "content": "You are a helpful assistant that strictly outputs JSON with the format {'suggested_tags': ['#Tag1', '#Tag2']}."},
+                                                            {"role": "user", "content": prompt}
+                                                        ],
+                                                        temperature=0.3
+                                                    )
+                                                    res = json.loads(resp.choices[0].message.content)
+                                                    safe_sugg = [str(t) for t in res.get('suggested_tags', []) if str(t) not in current_tags]
+                                                    st.session_state[f"sugg_tags_{comp['id']}"] = safe_sugg
+                                            except Exception as e:
+                                                st.error(f"Hata: {e}")
+                                            
+                                    if st.session_state.get(f"sugg_tags_{comp['id']}"):
+                                        sugg_opts = st.session_state[f"sugg_tags_{comp['id']}"]
+                                        sel_tags = st.multiselect("Önerilen Yeni Etiketler (İsteğinize göre seçimleri daraltabilirsiniz):", options=sugg_opts, default=sugg_opts, key=f"sel_sugg_{comp['id']}")
+                                        if st.button("💾 Seçilileri Firmaya Ekle", type="primary", use_container_width=True, key=f"save_sugg_{comp['id']}"):
+                                            merged_tags = list(set(current_tags + sel_tags))
+                                            update_company(comp['id'], tags=merged_tags)
+                                            # Flush cache natively to prevent stale Streamlit Multiselect UI state natively
+                                            for key_tgt in [f"inst_tags_{comp['id']}", f"sugg_tags_{comp['id']}"]:
+                                                if key_tgt in st.session_state:
+                                                    del st.session_state[key_tgt]
+                                            st.session_state[f"show_ai_tags_{comp['id']}"] = False
+                                            st.success("Yeni etiketler başarıyla entegre edildi!")
                                             st.rerun()
 
                         # 2. Toplantı Brifingi İşlemi
