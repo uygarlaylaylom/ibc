@@ -403,6 +403,9 @@ Notlar: {combined_text}"""
                     custom_tag = st.text_input("➕ Yeni Özgün Etiket Ekle (Enter'a basın):", placeholder="#VIP, #TeklifBekliyor", key=f"custom_tag_{comp['id']}")
                     if custom_tag:
                         clean_tag = custom_tag.strip().title()
+                        if not clean_tag.startswith('#'):
+                            clean_tag = '#' + clean_tag
+                            
                         if clean_tag not in current_tags:
                             merged_tags = current_tags + [clean_tag]
                             update_company(comp['id'], tags=merged_tags)
@@ -411,9 +414,10 @@ Notlar: {combined_text}"""
                             st.session_state[f"temp_tg_{comp['id']}"] = clean_tag
                             if f"inst_tags_{comp['id']}" in st.session_state:
                                 del st.session_state[f"inst_tags_{comp['id']}"]
-                            if f"custom_tag_{comp['id']}" in st.session_state:
-                                del st.session_state[f"custom_tag_{comp['id']}"]
-                            st.rerun()
+                                
+                        # ALWAYS clear text input to prevent it from getting stuck on UI, then reload
+                        st.session_state[f"custom_tag_{comp['id']}"] = ""
+                        st.rerun()
 
             
                 # Content Tabs
