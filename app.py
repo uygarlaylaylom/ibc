@@ -505,10 +505,11 @@ Not: {raw_note}"""
                                                 if set(merged) != set(curr):
                                                     update_company(comp['id'], products=merged)
                                                     st.toast("Ürün kataloğu da otomatik genişletildi! 📦", icon="✅")
-                                                    # Clear widget state to prevent Streamlit from holding onto old multiselect values
-                                                    for key_to_clear in [f"prod_edit_{comp['id']}", f"tags_edit_{comp['id']}"]:
-                                                        if key_to_clear in st.session_state:
-                                                            del st.session_state[key_to_clear]
+                                                    
+                                            # CLEAR inst_* widgets so they redraw with fresh DB data natively
+                                            for key_to_clear in [f"inst_prod_{comp['id']}", f"inst_tags_{comp['id']}"]:
+                                                if key_to_clear in st.session_state:
+                                                    del st.session_state[key_to_clear]
                                                     
                                             st.toast("İşlem Başarılı!", icon="✅")
                                         
@@ -617,6 +618,9 @@ Not: {raw_note}"""
                             if st.button("Kaydet", key=f"save_note_{comp['id']}"):
                                 add_note(comp['id'], new_note, note_type="manual", company_name=comp['company_name'])
                                 st.success("Note saved!")
+                                # If the note contained hashtags, the DB tags were updated. We must flush the old multiselect state!
+                                if f"inst_tags_{comp['id']}" in st.session_state:
+                                    del st.session_state[f"inst_tags_{comp['id']}"]
                                 st.rerun()
                 
                         # Manuel Notları kronolojik listele
