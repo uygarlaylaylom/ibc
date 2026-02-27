@@ -123,7 +123,12 @@ if app_mode == "Firma Listesi":
     st.sidebar.markdown("---")
 
     st.sidebar.title("🔍 Filters & Search")
-    search_query = st.sidebar.text_input("Search (Booth, Name...)", "")
+    
+    # URL Query param sync for persistent search across F5 refreshes
+    default_search = st.query_params.get("q", "")
+    search_query = st.sidebar.text_input("Search (Booth, Name...)", value=default_search)
+    if search_query != default_search:
+        st.query_params["q"] = search_query
 
     st.sidebar.markdown("### Status Filters")
     visited_only = st.sidebar.checkbox("✅ Visited Only", False)
