@@ -505,6 +505,9 @@ Not: {raw_note}"""
                                             st.session_state[f"show_ai_note_{comp['id']}"] = False
                                             st.session_state[f"fmt_note_{comp['id']}"] = ""
                                             st.session_state[f"det_cats_{comp['id']}"] = []
+                                            st.session_state[f"raw_note_{comp['id']}"] = ""
+                                            if f"final_n_{comp['id']}" in st.session_state:
+                                                st.session_state[f"final_n_{comp['id']}"] = ""
                                             st.rerun()
 
                         # 1.5. AI Etiket Önerisi (Feature 8)
@@ -671,6 +674,7 @@ Not: {raw_note}"""
                                 # If the note contained hashtags, the DB tags were updated. We must flush the old multiselect state!
                                 if f"inst_tags_{comp['id']}" in st.session_state:
                                     del st.session_state[f"inst_tags_{comp['id']}"]
+                                st.session_state[f"note_input_{comp['id']}"] = ""
                                 st.rerun()
                 
                         # Manuel Notları kronolojik listele
