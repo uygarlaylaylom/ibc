@@ -741,12 +741,6 @@ Not: {raw_note}"""
 
                     if uploaded_files:
 
-                        col_u1, col_u2 = st.columns(2)
-                        with col_u1:
-                            custom_name = st.text_input("Grup / Ortak Dosya Adı (Opsiyonel)", key=f"cname_{comp['id']}")
-                        with col_u2:
-                            custom_tags_val = st.text_input("Özel Etiketler (Örn: #katalog, #stand)", key=f"ctags_{comp['id']}")
-                            
                         if st.button(f"{len(uploaded_files)} Dosyayı Google Drive'a Yükle", key=f"up_btn_{comp['id']}", type="primary", use_container_width=True):
                             with st.spinner("Dosyalar Drive'a gönderiliyor..."):
                                 main_folder_id = find_or_create_folder("IBS_2026_Gallery")
@@ -760,11 +754,7 @@ Not: {raw_note}"""
                                     success_count = 0
                                     for idx, uploaded_file in enumerate(uploaded_files):
                                         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-                                        base_name = custom_name.strip() if custom_name.strip() else uploaded_file.name
-                                        if custom_name.strip():
-                                            filename = f"{timestamp}_{base_name}_{idx+1}"
-                                        else:
-                                            filename = f"{timestamp}_{base_name}"
+                                        filename = f"{timestamp}_{idx+1}"
                                         
                                         mime_type = uploaded_file.type
                                         file_bytes = uploaded_file.getvalue()
@@ -788,15 +778,9 @@ Not: {raw_note}"""
                                         gdrive_web_link, gdrive_file_id, gdrive_thumb = upload_file_to_drive(file_bytes, filename, mime_type, subfolder_id)
                                         
                                         if gdrive_web_link:
-                                            # Merge default tags and custom tags
+                                            # We no longer apply custom tags at upload time, just use the native company tags
                                             auto_tags = (comp.get('tags') or []) + (comp.get('products') or [])
-                                            
-                                            # Parse user inputted custom tags like "#katalog, #stand"
-                                            c_tags_list = []
-                                            if custom_tags_val:
-                                                c_tags_list = [t.strip().replace('#', '') for t in custom_tags_val.split(',') if t.strip()]
-                                            
-                                            final_tags = list(set(auto_tags + c_tags_list))
+                                            final_tags = list(set(auto_tags))
                                             all_tags_str = ",".join(final_tags) if final_tags else "untagged"
                                             
                                             db_file_type = "image" if "image" in mime_type else "document"
@@ -845,9 +829,24 @@ Not: {raw_note}"""
                                         preview_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
                                         embed_url = f"https://drive.google.com/file/d/{file_id}/preview"
                                         if att['file_type'] == 'image':
-                                            st.markdown(f'<a href="{clean_url}" target="_blank"><img src="{preview_url}" style="width:100%;border-radius:6px;" onerror="this.style.display=\'none\'"/></a>', unsafe_allow_html=True)
+                                            rot_key = f"rot_{att['id']}"
+                                            angle = st.session_state.get(rot_key, 0)
+                                            
+                                            st.markdown(f'''
+                                            <div style="display:flex; justify-content:center; align-items:center; min-height: 250px; margin-bottom: 10px;">
+                                                <a href="{clean_url}" target="_blank" style="display:block;">
+                                                    <img src="{preview_url}" style="max-width: 100%; max-height: 250px; border-radius:6px; transform: rotate({angle}deg); transition: transform 0.3s ease;" onerror="this.style.display='none'"/>
+                                                </a>
+                                            </div>
+                                            ''', unsafe_allow_html=True)
+                                            
+                                            if st.button("🔄 Çevir", key=f"btn_{rot_key}", use_container_width=True):
+                                                st.session_state[rot_key] = (angle + 90) % 360
+                                                st.rerun()
+                                                
                                         else:
                                             st.markdown(f'<iframe src="{embed_url}" width="100%" height="180" frameborder="0" allow="autoplay"></iframe>', unsafe_allow_html=True)
+                                        
                                         st.markdown(f"📦 [Drive'da Aç]({clean_url})")
                                     elif att['file_type'] == 'image' and not is_gdrive:
                                         st.image(url, use_column_width=True)
@@ -856,6 +855,28 @@ Not: {raw_note}"""
                                     
                                     if display_tags:
                                         st.caption(f"🏷️ {display_tags}")
+                                    else:
+                                        st.caption("🏷️ Etiketsiz")
+                                        
+                                    with st.expander("📝 Etiket Düzenle"):
+                                        new_tags_raw = st.text_input("Etiketler (Virgülle ayırın)", value=display_tags, key=f"edit_tags_{att['id']}")
+                                        if st.button("💾 Kaydet", key=f"save_tags_{att['id']}", use_container_width=True):
+                                            # Clean tags
+                                            new_tags_list = [t.strip().replace('#', '') for t in new_tags_raw.split(',') if t.strip()]
+                                            new_tags_str = ",".join(new_tags_list) if new_tags_list else "untagged"
+                                            
+                                            # Reconstruct URL with new tags
+                                            parts = raw_path.split('#')
+                                            new_parts = [parts[0]] # the base url
+                                            for p in parts[1:]:
+                                                if p.startswith('id='):
+                                                    new_parts.append(p)
+                                            new_parts.append(f"tags={new_tags_str}")
+                                            new_path = "#".join(new_parts)
+                                            
+                                            from supabase_utils import update_attachment_path
+                                            update_attachment_path(att['id'], new_path)
+                                            st.rerun()
                                     
                                     if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
                                         if is_gdrive and file_id:

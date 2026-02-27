@@ -189,6 +189,11 @@ def delete_attachment(attachment_id):
     supabase = get_supabase()
     supabase.table("attachments").delete().eq("id", attachment_id).execute()
 
+def update_attachment_path(attachment_id, new_path):
+    """Updates the file_path of an attachment natively."""
+    supabase = get_supabase()
+    supabase.table("attachments").update({"file_path": new_path}).eq("id", attachment_id).execute()
+
 
 # --- Contacts ---
 
