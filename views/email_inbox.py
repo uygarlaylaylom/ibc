@@ -1,5 +1,6 @@
 import streamlit as st
 import sys, os, re, datetime
+import unicodedata
 from collections import Counter
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -98,9 +99,33 @@ def show_email_inbox():
     # ──────────────────────────────────────────
     with tab1:
         companies = get_companies()
-        company_options = {c['company_name']: c['id'] for c in companies if c.get('company_name')}
-        company_names_list = sorted(company_options.keys())
-        company_names_sorted = ["— Firma Seç —"] + company_names_list
+        company_catalog = []
+        for c in companies:
+            company_name = c.get('company_name')
+            company_id = c.get('id')
+            if not company_name or not company_id:
+                continue
+
+            booth = (c.get('booth_number') or '').strip()
+            segment = (c.get('segment') or '').strip()
+            domain = (c.get('primary_domain') or '').strip()
+
+            badge_parts = [p for p in [booth, segment] if p]
+            badge = f" ({' • '.join(badge_parts)})" if badge_parts else ""
+            option_label = f"{company_name}{badge}"
+
+            searchable_text = _normalize_search_text(" ".join([company_name, booth, segment, domain]))
+            company_catalog.append({
+                "id": company_id,
+                "name": company_name,
+                "label": option_label,
+                "searchable": searchable_text
+            })
+
+        # Keep deterministic ordering for easier scanning
+        company_catalog = sorted(company_catalog, key=lambda x: x["name"].lower())
+        company_names_list = [c["name"] for c in company_catalog]
+        company_options = {c["name"]: c["id"] for c in company_catalog}
 
         resp = (supabase.table("activities")
                 .select("*")
@@ -244,16 +269,32 @@ def show_email_inbox():
                     st.markdown(f"{urgency_badge} **{subject}**")
                     st.caption(f"📅 {date_str}  ·  🎪 {event_tag}  ·  Skor {urgency}/10")
                 with hcol2:
+                    search_term = st.text_input(
+                        "Firma Ara (ad, booth, segment, domain)",
+                        key=f"assign_search_{em_id}",
+                        placeholder="Örn: Acme / C1234 / flooring / acme.com",
+                        label_visibility="collapsed"
+                    )
+
+                    filtered_companies = _filter_companies(company_catalog, search_term)
+
+                    options = ["— Firma Seç —"] + [c["label"] for c in filtered_companies[:80]]
+                    label_to_id = {c["label"]: c["id"] for c in filtered_companies[:80]}
+
                     sel_company = st.selectbox(
                         "Firmaya Ata",
-                        company_names_sorted,
+                        options,
                         key=f"assign_{em_id}",
                         label_visibility="collapsed"
                     )
+
+                    if search_term and len(filtered_companies) > 80:
+                        st.caption(f"İlk 80 sonuç gösteriliyor ({len(filtered_companies)} eşleşme). Aramayı daraltın.")
+
                     if sel_company != "— Firma Seç —":
                         if st.button("💾 Ata", key=f"save_{em_id}", type="primary", use_container_width=True):
                             supabase.table("activities").update(
-                                {"company_id": company_options[sel_company]}
+                                {"company_id": label_to_id[sel_company]}
                             ).eq("id", em_id).execute()
                             st.toast(f"✅ {sel_company} firmasına atandı!")
                             st.rerun()
@@ -283,20 +324,17 @@ def show_email_inbox():
                                         st.session_state[cache_key] = result
                             if st.session_state.get(cache_key):
                                 st.markdown(st.session_state[cache_key])
-                                # Gemini firma önerisi varsa hızlı atama butonu
-                                if "FİRMA TAHMİNİ:" in st.session_state[cache_key]:
-                                    lines = st.session_state[cache_key].split('\n')
-                                    for l in lines:
-                                        if "FİRMA TAHMİNİ:" in l:
-                                            suggested = l.split("FİRMA TAHMİNİ:")[-1].strip().strip(".")
-                                            # Listede tam match var mı?
-                                            if suggested in company_options:
-                                                if st.button(f"⚡ '{suggested}' firmasına hızlı ata", key=f"quick_{em_id}"):
-                                                    supabase.table("activities").update(
-                                                        {"company_id": company_options[suggested]}
-                                                    ).eq("id", em_id).execute()
-                                                    st.toast(f"✅ {suggested} firmasına atandı!")
-                                                    st.rerun()
+                                # ChatGPT firma önerisi varsa hızlı atama butonu
+                                suggested = _extract_ai_suggested_company(st.session_state[cache_key])
+                                if suggested:
+                                    exact_match = _find_company_exact_match(company_catalog, suggested)
+                                    if exact_match:
+                                        if st.button(f"⚡ '{suggested}' firmasına hızlı ata", key=f"quick_{em_id}"):
+                                            supabase.table("activities").update(
+                                                {"company_id": exact_match["id"]}
+                                            ).eq("id", em_id).execute()
+                                            st.toast(f"✅ {suggested} firmasına atandı!")
+                                            st.rerun()
                         else:
                             st.info("Gemini API key yok. Streamlit Secrets'a `GEMINI_API_KEY` ekleyin.\n\n[Ücretsiz anahtar al →](https://aistudio.google.com/app/apikey)")
 
@@ -367,6 +405,47 @@ def show_email_inbox():
 # ──────────────────────────────────────────────────────────
 # YARDIMCI FONKSİYONLAR
 # ──────────────────────────────────────────────────────────
+
+def _normalize_search_text(value):
+    if not value:
+        return ""
+    normalized = unicodedata.normalize("NFKD", str(value))
+    normalized = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    normalized = normalized.casefold()
+    return re.sub(r"[^\w\s.-]", " ", normalized).strip()
+
+def _filter_companies(company_catalog, raw_search_term):
+    term = _normalize_search_text(raw_search_term)
+    if not term:
+        return company_catalog
+
+    tokens = [t for t in term.split() if t]
+    if not tokens:
+        return company_catalog
+
+    def matches(company):
+        searchable = company.get("searchable", "")
+        return all(token in searchable for token in tokens)
+
+    return [c for c in company_catalog if matches(c)]
+
+def _extract_ai_suggested_company(ai_text):
+    if not ai_text:
+        return None
+
+    lines = ai_text.split("\n")
+    for line in lines:
+        for key in ("FİRMA TAHMİNİ:", "FIRMA TAHMINI:", "FİRMA:", "FIRMA:"):
+            if key in line:
+                return line.split(key, 1)[-1].strip().strip(".")
+    return None
+
+def _find_company_exact_match(company_catalog, suggested_name):
+    target = _normalize_search_text(suggested_name)
+    for company in company_catalog:
+        if _normalize_search_text(company.get("name")) == target:
+            return company
+    return None
 
 def _detect_event(text):
     t = text.lower()
