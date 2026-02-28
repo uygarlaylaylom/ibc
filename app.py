@@ -894,13 +894,30 @@ Not: {raw_note}"""
                                             update_attachment_path(att['id'], new_path)
                                             st.rerun()
                                     
-                                    if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
-                                        if is_gdrive and file_id:
-                                            from google_drive_utils import delete_drive_file
-                                            delete_drive_file(file_id)
-                                        from supabase_utils import delete_attachment
-                                        delete_attachment(att['id'])
-                                        st.rerun()
+                                    if is_gdrive and file_id:
+                                        c1, c2 = st.columns(2)
+                                        with c1:
+                                            if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
+                                                from google_drive_utils import delete_drive_file
+                                                delete_drive_file(file_id)
+                                                from supabase_utils import delete_attachment
+                                                delete_attachment(att['id'])
+                                                st.rerun()
+                                        with c2:
+                                            if st.button("🔙 Geri Al", help="Inbox'a geri gönderir", key=f"undo_att_{att['id']}", use_container_width=True):
+                                                from supabase_utils import delete_attachment
+                                                from google_drive_utils import find_or_create_folder, move_drive_file
+                                                inb_id = find_or_create_folder("00_INBOX_SAHIPSIZ")
+                                                if file_id and inb_id:
+                                                    move_drive_file(file_id, inb_id)
+                                                delete_attachment(att['id'])
+                                                st.toast("Medya Inbox'a geri gönderildi!", icon="↪️")
+                                                st.rerun()
+                                    else:
+                                        if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
+                                            from supabase_utils import delete_attachment
+                                            delete_attachment(att['id'])
+                                            st.rerun()
                     else:
                         st.info("Henüz eklenmiş dosya yok.")
 

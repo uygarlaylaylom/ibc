@@ -125,3 +125,45 @@ def delete_drive_file(file_id):
         import traceback
         print(f"Google Drive Silme Hatası: {e}")
         return False
+
+def move_drive_file(file_id, new_folder_id):
+    """Moves a file from its current parent folder(s) to a new folder."""
+    service = get_drive_service()
+    if not service: return False
+    
+    try:
+        # Retrieve the existing parents to remove
+        file = service.files().get(fileId=file_id, fields='parents').execute()
+        previous_parents = ",".join(file.get('parents', []))
+        
+        # Move the file to the new folder
+        service.files().update(
+            fileId=file_id,
+            addParents=new_folder_id,
+            removeParents=previous_parents,
+            fields='id, parents'
+        ).execute()
+        return True
+    except Exception as e:
+        import traceback
+        print(f"Google Drive Dosya Taşıma Hatası: {e}")
+        print(traceback.format_exc())
+        return False
+
+def list_folder_files(folder_id):
+    """Returns a list of all files inside a specific Google Drive folder."""
+    service = get_drive_service()
+    if not service: return []
+    
+    try:
+        # Only list files (not folders), not trashed
+        query = f"'{folder_id}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed=false"
+        response = service.files().list(
+            q=query, 
+            fields="files(id, name, mimeType, webViewLink, thumbnailLink)",
+            pageSize=100
+        ).execute()
+        return response.get('files', [])
+    except Exception as e:
+        print(f"Drive dosya listeleme hatası: {e}")
+        return []
