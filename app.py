@@ -9,11 +9,12 @@ import sys
 
 from supabase_utils import (
     get_supabase, get_companies, update_company, get_notes, add_note, delete_note, 
-    get_attachments, upload_attachment, get_public_url, get_contacts, add_contact, delete_contact
+    get_attachments, upload_attachment, get_public_url, get_contacts, add_contact, delete_contact,
+    delete_attachment, update_attachment_path
 )
 from ocr_local import extract_text_from_image_bytes
 from seed_database import seed_companies
-from google_drive_utils import find_or_create_folder, upload_file_to_drive
+from google_drive_utils import find_or_create_folder, upload_file_to_drive, delete_drive_file, move_drive_file
 
 # --- Configuration ---
 st.set_page_config(page_title="IBS 2026 İstihbarat", page_icon="🏢", layout="wide")
@@ -890,7 +891,6 @@ Not: {raw_note}"""
                                             new_parts.append(f"tags={new_tags_str}")
                                             new_path = "#".join(new_parts)
                                             
-                                            from supabase_utils import update_attachment_path
                                             update_attachment_path(att['id'], new_path)
                                             st.rerun()
                                     
@@ -898,15 +898,11 @@ Not: {raw_note}"""
                                         c1, c2 = st.columns(2)
                                         with c1:
                                             if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
-                                                from google_drive_utils import delete_drive_file
                                                 delete_drive_file(file_id)
-                                                from supabase_utils import delete_attachment
                                                 delete_attachment(att['id'])
                                                 st.rerun()
                                         with c2:
                                             if st.button("🔙 Geri Al", help="Inbox'a geri gönderir", key=f"undo_att_{att['id']}", use_container_width=True):
-                                                from supabase_utils import delete_attachment
-                                                from google_drive_utils import find_or_create_folder, move_drive_file
                                                 inb_id = find_or_create_folder("00_INBOX_SAHIPSIZ")
                                                 if file_id and inb_id:
                                                     move_drive_file(file_id, inb_id)
@@ -915,7 +911,6 @@ Not: {raw_note}"""
                                                 st.rerun()
                                     else:
                                         if st.button("🗑️ Sil", key=f"del_att_{att['id']}", use_container_width=True):
-                                            from supabase_utils import delete_attachment
                                             delete_attachment(att['id'])
                                             st.rerun()
                     else:

@@ -4,8 +4,8 @@ import sys
 
 # Ensure backend imports work
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from supabase_utils import get_supabase, get_companies
-from google_drive_utils import find_or_create_folder, list_folder_files, move_drive_file
+from supabase_utils import get_supabase, get_companies, delete_attachment, get_public_url
+from google_drive_utils import find_or_create_folder, list_folder_files, move_drive_file, delete_drive_file
 
 def show_gallery():
 
@@ -208,16 +208,12 @@ def show_gallery():
                             c1, c2 = st.columns(2)
                             with c1:
                                 if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
-                                    from google_drive_utils import delete_drive_file
-                                    from supabase_utils import delete_attachment
                                     if file_id:
                                         delete_drive_file(file_id)
                                     delete_attachment(m['id'])
                                     st.rerun()
                             with c2:
                                 if st.button("🔙 Geri Al", help="Inbox'a geri gönderir", key=f"undo_{m['id']}", use_container_width=True):
-                                    from supabase_utils import delete_attachment
-                                    from google_drive_utils import find_or_create_folder, move_drive_file
                                     inb_id = find_or_create_folder("00_INBOX_SAHIPSIZ")
                                     if file_id and inb_id:
                                         move_drive_file(file_id, inb_id)
@@ -227,15 +223,12 @@ def show_gallery():
                         elif "image" in file_type and file_url.startswith("http"):
                             st.image(file_url, use_column_width=True)
                             if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
-                                from supabase_utils import delete_attachment
                                 delete_attachment(m['id'])
                                 st.rerun()
                         else:
-                            from supabase_utils import get_public_url
                             public_link = get_public_url(file_url)
                             st.image(public_link, use_column_width=True)
                             if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
-                                from supabase_utils import delete_attachment
                                 delete_attachment(m['id'])
                                 st.rerun()
 
