@@ -98,9 +98,33 @@ def show_email_inbox():
     # ──────────────────────────────────────────
     with tab1:
         companies = get_companies()
-        company_options = {c['company_name']: c['id'] for c in companies if c.get('company_name')}
-        company_names_list = sorted(company_options.keys())
-        company_names_sorted = ["— Firma Seç —"] + company_names_list
+        company_catalog = []
+        for c in companies:
+            company_name = c.get('company_name')
+            company_id = c.get('id')
+            if not company_name or not company_id:
+                continue
+
+            booth = (c.get('booth_number') or '').strip()
+            segment = (c.get('segment') or '').strip()
+            domain = (c.get('primary_domain') or '').strip()
+
+            badge_parts = [p for p in [booth, segment] if p]
+            badge = f" ({' • '.join(badge_parts)})" if badge_parts else ""
+            option_label = f"{company_name}{badge}"
+
+            searchable_text = " ".join([company_name, booth, segment, domain]).lower().strip()
+            company_catalog.append({
+                "id": company_id,
+                "name": company_name,
+                "label": option_label,
+                "searchable": searchable_text
+            })
+
+        # Keep deterministic ordering for easier scanning
+        company_catalog = sorted(company_catalog, key=lambda x: x["name"].lower())
+        company_names_list = [c["name"] for c in company_catalog]
+        company_options = {c["name"]: c["id"] for c in company_catalog}
 
         resp = (supabase.table("activities")
                 .select("*")
@@ -244,16 +268,35 @@ def show_email_inbox():
                     st.markdown(f"{urgency_badge} **{subject}**")
                     st.caption(f"📅 {date_str}  ·  🎪 {event_tag}  ·  Skor {urgency}/10")
                 with hcol2:
+                    search_term = st.text_input(
+                        "Firma Ara (ad, booth, segment, domain)",
+                        key=f"assign_search_{em_id}",
+                        placeholder="Örn: Acme / C1234 / flooring / acme.com",
+                        label_visibility="collapsed"
+                    ).strip().lower()
+
+                    filtered_companies = [
+                        c for c in company_catalog
+                        if search_term in c["searchable"]
+                    ] if search_term else company_catalog
+
+                    options = ["— Firma Seç —"] + [c["label"] for c in filtered_companies[:80]]
+                    label_to_id = {c["label"]: c["id"] for c in filtered_companies[:80]}
+
                     sel_company = st.selectbox(
                         "Firmaya Ata",
-                        company_names_sorted,
+                        options,
                         key=f"assign_{em_id}",
                         label_visibility="collapsed"
                     )
+
+                    if search_term and len(filtered_companies) > 80:
+                        st.caption(f"İlk 80 sonuç gösteriliyor ({len(filtered_companies)} eşleşme). Aramayı daraltın.")
+
                     if sel_company != "— Firma Seç —":
                         if st.button("💾 Ata", key=f"save_{em_id}", type="primary", use_container_width=True):
                             supabase.table("activities").update(
-                                {"company_id": company_options[sel_company]}
+                                {"company_id": label_to_id[sel_company]}
                             ).eq("id", em_id).execute()
                             st.toast(f"✅ {sel_company} firmasına atandı!")
                             st.rerun()
@@ -290,10 +333,11 @@ def show_email_inbox():
                                         if "FİRMA TAHMİNİ:" in l:
                                             suggested = l.split("FİRMA TAHMİNİ:")[-1].strip().strip(".")
                                             # Listede tam match var mı?
-                                            if suggested in company_options:
+                                            exact_match = next((c for c in company_catalog if c["name"] == suggested), None)
+                                            if exact_match:
                                                 if st.button(f"⚡ '{suggested}' firmasına hızlı ata", key=f"quick_{em_id}"):
                                                     supabase.table("activities").update(
-                                                        {"company_id": company_options[suggested]}
+                                                        {"company_id": exact_match["id"]}
                                                     ).eq("id", em_id).execute()
                                                     st.toast(f"✅ {suggested} firmasına atandı!")
                                                     st.rerun()
