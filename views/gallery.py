@@ -86,38 +86,17 @@ def show_gallery():
             
             if not comp_options:
                 st.warning("⚠️ Aramanızla eşleşen firma bulunamadı.")
-            
-            # Pagination logic for Inbox
-            if 'inbox_page' not in st.session_state:
-                st.session_state['inbox_page'] = 1
-
-            inbox_items_per_page = 40
-            inbox_total = len(inbox_files)
-            inbox_total_pages = max(1, (inbox_total + inbox_items_per_page - 1) // inbox_items_per_page)
-
-            if st.session_state['inbox_page'] > inbox_total_pages:
-                st.session_state['inbox_page'] = 1
+            # Additive Load More Logic for Inbox
+            if 'inbox_load_limit' not in st.session_state:
+                st.session_state['inbox_load_limit'] = 20
                 
-            inb_current_page = st.session_state['inbox_page']
+            inbox_total = len(inbox_files)
+            inb_limit = st.session_state['inbox_load_limit']
             
-            st.success(f"İşlem bekleyen {inbox_total} medya var. (Sayfa {inb_current_page} / {inbox_total_pages})")
+            st.success(f"İşlem bekleyen toplam **{inbox_total}** medya var. Şu an ilk **{min(inb_limit, inbox_total)}** tanesi gösteriliyor. (Daha fazlası için en alta inin)")
 
-            # Pagination buttons for Inbox
-            if inbox_total_pages > 1:
-                col_p, col_m, col_n = st.columns([1, 4, 1])
-                with col_p:
-                    if st.button("⬅️ Önceki", disabled=inb_current_page <= 1, key="prev_inb", use_container_width=True):
-                        st.session_state['inbox_page'] = inb_current_page - 1
-                        st.rerun()
-                with col_n:
-                    if st.button("Sonraki ➡️", disabled=inb_current_page >= inbox_total_pages, key="next_inb", use_container_width=True):
-                        st.session_state['inbox_page'] = inb_current_page + 1
-                        st.rerun()
-            
-            # Slice the media for current page
-            s_idx = (inb_current_page - 1) * inbox_items_per_page
-            e_idx = s_idx + inbox_items_per_page
-            page_inbox_files = inbox_files[s_idx:e_idx]
+            # Slice the media incrementally
+            page_inbox_files = inbox_files[:inb_limit]
 
             # Initialize selected state
             if 'selected_inbox_files' not in st.session_state:
@@ -225,6 +204,12 @@ def show_gallery():
                         st.markdown(f"📦 [Drive'da Aç]({web_link})")
                         
                     st.markdown('</div>', unsafe_allow_html=True)
+                    
+            if inb_limit < inbox_total:
+                st.write("")
+                if st.button("⬇️ Daha Fazla Yükle", type="secondary", use_container_width=True, key="btn_load_more_inbox"):
+                    st.session_state['inbox_load_limit'] += 20
+                    st.rerun()
 
     with tab2:
         st.subheader("📚 Sistemdeki Tüm Medyalar")
