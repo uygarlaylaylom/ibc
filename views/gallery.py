@@ -69,36 +69,16 @@ def show_gallery():
         if not inbox_files:
             st.success("Tebrikler! İşlem bekleyen sahipsiz medya yok. 🎉")
         else:
-            # Add a global search bar to filter the company options in the dropdowns below
-            gal_search = st.text_input("🔍 Hızlı Firma Ara (Tüm listeyi daraltır)", placeholder="Örn: W6289 veya firma adı yazıp Enter'a basın", key="gal_comp_search")
+            # Add a global search bar exactly like in Firma Listesi
+            gal_search = st.text_input("🔍 Hızlı Firma Ara (Stand No, İsim vs.)", placeholder="Arama yaparsanız alttaki menülerde sadece eşleşenler çıkar", key="gal_comp_search")
             
-            # Cache the base fetch to avoid hitting Supabase 40 times a minute
-            @st.cache_data(ttl=300)
-            def fetch_cached_companies():
-                return get_companies()
-                
-            all_comps = fetch_cached_companies()
-            
-            # Powerful Python-side fuzzy search (handles W6289 vs W 6289)
-            if gal_search:
-                sq = gal_search.lower().strip()
-                sq_compact = sq.replace(" ", "")
-                companies = []
-                for c in all_comps:
-                    b = str(c.get('booth_number', '')).lower()
-                    n = str(c.get('company_name', '')).lower()
-                    
-                    if (sq in b or sq in n or 
-                        sq_compact in b.replace(" ", "") or 
-                        sq_compact in n.replace(" ", "")):
-                        companies.append(c)
-            else:
-                companies = all_comps
+            with st.spinner("Firmalar yükleniyor..."):
+                companies = get_companies(search_query=gal_search) if gal_search else get_companies()
                 
             comp_options = {c['id']: f"{c['booth_number']} - {c['company_name']}" for c in companies}
             
             if not comp_options:
-                st.warning("⚠️ Aramanızla eşleşen firma bulunamadı. Lütfen kelimeyi veya numarayı değiştirip tekrar Enter'a basın.")
+                st.warning("⚠️ Aramanızla eşleşen firma bulunamadı. Lütfen kelimeyi veya numarayı değiştirin.")
             
             # Pagination logic for Inbox
             if 'inbox_page' not in st.session_state:
