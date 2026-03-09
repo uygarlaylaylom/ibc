@@ -202,12 +202,43 @@ def show_gallery():
             if filter_tag != "Tümü":
                 filtered_media = [m for m in filtered_media if f"#tags=" in m.get('file_path', '') and filter_tag in m.get('file_path', '')]
 
-            st.success(f"{len(filtered_media)} medya dosyası listeleniyor.")
+            # Pagination logic
+            if 'gal_page' not in st.session_state:
+                st.session_state['gal_page'] = 1
+
+            items_per_page = 40
+            total_items = len(filtered_media)
+            total_pages = max(1, (total_items + items_per_page - 1) // items_per_page)
+
+            # Ensure current page is valid when changing filters
+            if st.session_state['gal_page'] > total_pages:
+                st.session_state['gal_page'] = 1
+                
+            current_page = st.session_state['gal_page']
+
+            st.success(f"Toplam {total_items} medya dosyası bulundu. (Sayfa {current_page} / {total_pages})")
+
+            # Pagination buttons
+            if total_pages > 1:
+                col_prev, col_mid, col_next = st.columns([1, 4, 1])
+                with col_prev:
+                    if st.button("⬅️ Önceki", disabled=current_page <= 1, key="prev_page_gal", use_container_width=True):
+                        st.session_state['gal_page'] = current_page - 1
+                        st.rerun()
+                with col_next:
+                    if st.button("Sonraki ➡️", disabled=current_page >= total_pages, key="next_page_gal", use_container_width=True):
+                        st.session_state['gal_page'] = current_page + 1
+                        st.rerun()
+
+            # Slice the media for current page
+            start_idx = (current_page - 1) * items_per_page
+            end_idx = start_idx + items_per_page
+            page_items = filtered_media[start_idx:end_idx]
 
             # --- Display Grid ---
             slider_lib = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Arşiv)", min_value=1, max_value=8, value=4, key="slider_lib")
             cols2 = st.columns(slider_lib)
-            for idx, m in enumerate(filtered_media):
+            for idx, m in enumerate(page_items):
                 with cols2[idx % slider_lib]:
                     with st.container(border=True):
                         company_info = m.get('companies')
