@@ -69,16 +69,23 @@ def show_gallery():
         if not inbox_files:
             st.success("Tebrikler! İşlem bekleyen sahipsiz medya yok. 🎉")
         else:
-            # Add a global search bar exactly like in Firma Listesi
-            gal_search = st.text_input("🔍 Hızlı Firma Ara (Stand No, İsim vs.)", placeholder="Arama yaparsanız alttaki menülerde sadece eşleşenler çıkar", key="gal_comp_search")
+            # Add the exact same search sidebar from Firma Listesi
+            st.sidebar.markdown("---")
+            st.sidebar.title("🔍 Filters & Search")
             
+            # URL Query param sync for persistent search
+            default_search = st.query_params.get("q", "")
+            search_query = st.sidebar.text_input("Search (Booth, Name...)", value=default_search, key="gal_sidebar_search")
+            if search_query != default_search:
+                st.query_params["q"] = search_query
+                
             with st.spinner("Firmalar yükleniyor..."):
-                companies = get_companies(search_query=gal_search) if gal_search else get_companies()
+                companies = get_companies(search_query=search_query) if search_query else get_companies()
                 
             comp_options = {c['id']: f"{c['booth_number']} - {c['company_name']}" for c in companies}
             
             if not comp_options:
-                st.warning("⚠️ Aramanızla eşleşen firma bulunamadı. Lütfen kelimeyi veya numarayı değiştirin.")
+                st.warning("⚠️ Aramanızla eşleşen firma bulunamadı.")
             
             # Pagination logic for Inbox
             if 'inbox_page' not in st.session_state:
