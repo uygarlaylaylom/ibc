@@ -173,45 +173,45 @@ def show_gallery():
                 cols = st.columns(slider_inbox)
                 for idx, f in enumerate(page_inbox_files[i:i + slider_inbox]):
                     with cols[idx]:
-                    file_id = f.get('id')
-                    is_selected = file_id in st.session_state['selected_inbox_files']
-                    
-                    # Highlight selected container with a colored border
-                    border_color = "#3B82F6" if is_selected else "#E5E7EB"
-                    
-                    st.markdown(f'<div style="border: 2px solid {border_color}; padding: 10px; border-radius: 8px;">', unsafe_allow_html=True)
-                    
-                    # Streamlit checkbox direct state management (more reliable than on_change in loops)
-                    chk_key = f"chk_{file_id}"
-                    
-                    # Ensure the current session state reflects our 'selected' set BEFORE rendering
-                    if chk_key not in st.session_state:
-                        st.session_state[chk_key] = is_selected
+                        file_id = f.get('id')
+                        is_selected = file_id in st.session_state['selected_inbox_files']
                         
-                    clicked = st.checkbox("✅ ÇOKLU İŞLEME EKLE (Seç)", key=chk_key)
-                    
-                    # Update the master set based on the checkbox's actual value
-                    if clicked and not is_selected:
-                        st.session_state['selected_inbox_files'].add(file_id)
-                        st.rerun() # Immediately reflect the colored border and top-bar count
-                    elif not clicked and is_selected:
-                        st.session_state['selected_inbox_files'].discard(file_id)
-                        st.rerun()
-
-                    st.markdown(f"**{f.get('name')}**")
-                    
-                    preview_url = f.get('thumbnailLink')
-                    web_link = f.get('webViewLink')
-
-                    if preview_url:
-                        # Drive thumbnails often end with =s220, replace to get higher resolution
-                        hq_preview = preview_url.replace("=s220", "=s1200") if "=s" in preview_url else preview_url
-                        st.image(hq_preview, use_container_width=True)
-                        st.caption(f"[Drive'da Orijinalini Aç]({web_link})")
-                    else:
-                        st.markdown(f"📦 [Drive'da Aç]({web_link})")
+                        # Highlight selected container with a colored border
+                        border_color = "#3B82F6" if is_selected else "#E5E7EB"
                         
-                    st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="border: 2px solid {border_color}; padding: 10px; border-radius: 8px;">', unsafe_allow_html=True)
+                        
+                        # Streamlit checkbox direct state management (more reliable than on_change in loops)
+                        chk_key = f"chk_{file_id}"
+                        
+                        # Ensure the current session state reflects our 'selected' set BEFORE rendering
+                        if chk_key not in st.session_state:
+                            st.session_state[chk_key] = is_selected
+                        
+                        clicked = st.checkbox("✅ ÇOKLU İŞLEME EKLE (Seç)", key=chk_key)
+                        
+                        # Update the master set based on the checkbox's actual value
+                        if clicked and not is_selected:
+                            st.session_state['selected_inbox_files'].add(file_id)
+                            st.rerun() # Immediately reflect the colored border and top-bar count
+                        elif not clicked and is_selected:
+                            st.session_state['selected_inbox_files'].discard(file_id)
+                            st.rerun()
+    
+                        st.markdown(f"**{f.get('name')}**")
+                        
+                        preview_url = f.get('thumbnailLink')
+                        web_link = f.get('webViewLink')
+    
+                        if preview_url:
+                            # Drive thumbnails often end with =s220, replace to get higher resolution
+                            hq_preview = preview_url.replace("=s220", "=s1200") if "=s" in preview_url else preview_url
+                            st.image(hq_preview, use_container_width=True)
+                            st.caption(f"[Drive'da Orijinalini Aç]({web_link})")
+                        else:
+                            st.markdown(f"📦 [Drive'da Aç]({web_link})")
+                        
+                        st.markdown('</div>', unsafe_allow_html=True)
                     
             if inb_limit < inbox_total:
                 st.write("")
@@ -303,89 +303,89 @@ def show_gallery():
                 cols2 = st.columns(slider_lib)
                 for idx, m in enumerate(page_items[i:i + slider_lib]):
                     with cols2[idx]:
-                    with st.container(border=True):
-                        company_info = m.get('companies')
-                        if company_info:
-                            st.markdown(f"**{company_info.get('company_name', 'Bilinmiyor')}**")
-                            st.caption(f"📍 Stand: {company_info.get('booth_number', 'Bilinmiyor')}")
-                    
-                        file_type = m.get('file_type', '')
-                        file_url = m.get('file_path', '')
-                        is_gdrive = "drive.google.com" in file_url
-                    
-                        display_tags = ""
-                        if '#tags=' in file_url:
-                            t_str = file_url.split('#tags=')[1]
-                            if t_str != "untagged":
-                                display_tags = "🏷️ " + t_str[:30] + ("..." if len(t_str)>30 else "")
-                    
-                        if display_tags:
-                            st.caption(display_tags)
+                        with st.container(border=True):
+                            company_info = m.get('companies')
+                            if company_info:
+                                st.markdown(f"**{company_info.get('company_name', 'Bilinmiyor')}**")
+                                st.caption(f"📍 Stand: {company_info.get('booth_number', 'Bilinmiyor')}")
                         
-                        if is_gdrive:
-                            clean_url = file_url.split('#')[0]
-                            file_id = None
-                            parts = file_url.split('#')
-                            for p in parts[1:]:
-                                if p.startswith('id='):
-                                    file_id = p[3:]
+                            file_type = m.get('file_type', '')
+                            file_url = m.get('file_path', '')
+                            is_gdrive = "drive.google.com" in file_url
+                        
+                            display_tags = ""
+                            if '#tags=' in file_url:
+                                t_str = file_url.split('#tags=')[1]
+                                if t_str != "untagged":
+                                    display_tags = "🏷️ " + t_str[:30] + ("..." if len(t_str)>30 else "")
+                        
+                            if display_tags:
+                                st.caption(display_tags)
+                        
+                            if is_gdrive:
+                                clean_url = file_url.split('#')[0]
+                                file_id = None
+                                parts = file_url.split('#')
+                                for p in parts[1:]:
+                                    if p.startswith('id='):
+                                        file_id = p[3:]
                             
-                            if file_id:
-                                preview_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
-                                if file_type == "image" or "application" not in file_type: # Fallback
-                                    rot_key = f"rot_gal_{m['id']}"
-                                    angle = st.session_state.get(rot_key, 0)
+                                if file_id:
+                                    preview_url = f"https://drive.google.com/thumbnail?id={file_id}&sz=w400"
+                                    if file_type == "image" or "application" not in file_type: # Fallback
+                                        rot_key = f"rot_gal_{m['id']}"
+                                        angle = st.session_state.get(rot_key, 0)
                                     
-                                    # Use st.image for native fullscreen expansion icon
-                                    hq_preview = preview_url.replace("sz=w400", "sz=w1200")
-                                    st.image(hq_preview, use_container_width=True)
-                                    st.caption(f"[Drive'da Aç]({clean_url})")
+                                        # Use st.image for native fullscreen expansion icon
+                                        hq_preview = preview_url.replace("sz=w400", "sz=w1200")
+                                        st.image(hq_preview, use_container_width=True)
+                                        st.caption(f"[Drive'da Aç]({clean_url})")
                                     
-                                    if st.button("🔄 Çevir", key=f"btn_{rot_key}", use_container_width=True):
-                                        st.session_state[rot_key] = (angle + 90) % 360
+                                        if st.button("🔄 Çevir", key=f"btn_{rot_key}", use_container_width=True):
+                                            st.session_state[rot_key] = (angle + 90) % 360
+                                            st.rerun()
+                                    else:
+                                        st.markdown(f"📦 [Drive'da Aç]({clean_url})")
+                            
+                                with st.expander("📝 Etiketi Düzenle"):
+                                    new_tags_raw = st.text_input("Etiketler", value=display_tags.replace('🏷️ ', ''), key=f"edit_gal_{m['id']}")
+                                    if st.button("💾 Kaydet", key=f"save_gal_{m['id']}", use_container_width=True):
+                                        new_tags_list = [t.strip().replace('#', '') for t in new_tags_raw.split(',') if t.strip()]
+                                        new_t_str = ",".join(new_tags_list) if new_tags_list else "untagged"
+                                        raw_path = file_url
+                                        parts = raw_path.split('#')
+                                        new_parts = [parts[0]]
+                                        for p in parts[1:]:
+                                            if p.startswith('id='): new_parts.append(p)
+                                        new_parts.append(f"tags={new_t_str}")
+                                        update_attachment_path(m['id'], "#".join(new_parts))
                                         st.rerun()
-                                else:
-                                    st.markdown(f"📦 [Drive'da Aç]({clean_url})")
-                            
-                            with st.expander("📝 Etiketi Düzenle"):
-                                new_tags_raw = st.text_input("Etiketler", value=display_tags.replace('🏷️ ', ''), key=f"edit_gal_{m['id']}")
-                                if st.button("💾 Kaydet", key=f"save_gal_{m['id']}", use_container_width=True):
-                                    new_tags_list = [t.strip().replace('#', '') for t in new_tags_raw.split(',') if t.strip()]
-                                    new_t_str = ",".join(new_tags_list) if new_tags_list else "untagged"
-                                    raw_path = file_url
-                                    parts = raw_path.split('#')
-                                    new_parts = [parts[0]]
-                                    for p in parts[1:]:
-                                        if p.startswith('id='): new_parts.append(p)
-                                    new_parts.append(f"tags={new_t_str}")
-                                    update_attachment_path(m['id'], "#".join(new_parts))
-                                    st.rerun()
                             
                             
-                            c1, c2 = st.columns(2)
-                            with c1:
+                                c1, c2 = st.columns(2)
+                                with c1:
+                                    if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
+                                        if file_id:
+                                            delete_drive_file(file_id)
+                                        delete_attachment(m['id'])
+                                        st.rerun()
+                                with c2:
+                                    if st.button("🔙 Geri Al", help="Inbox'a geri gönderir", key=f"undo_{m['id']}", use_container_width=True):
+                                        inb_id = find_or_create_folder("00_INBOX_SAHIPSIZ")
+                                        if file_id and inb_id:
+                                            move_drive_file(file_id, inb_id)
+                                        delete_attachment(m['id'])
+                                        st.toast("Medya Inbox'a geri gönderildi!", icon="↪️")
+                                        st.rerun()
+                            elif "image" in file_type and file_url.startswith("http"):
+                                st.image(file_url, use_column_width=True)
                                 if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
-                                    if file_id:
-                                        delete_drive_file(file_id)
                                     delete_attachment(m['id'])
                                     st.rerun()
-                            with c2:
-                                if st.button("🔙 Geri Al", help="Inbox'a geri gönderir", key=f"undo_{m['id']}", use_container_width=True):
-                                    inb_id = find_or_create_folder("00_INBOX_SAHIPSIZ")
-                                    if file_id and inb_id:
-                                        move_drive_file(file_id, inb_id)
+                            else:
+                                public_link = get_public_url(file_url)
+                                st.image(public_link, use_column_width=True)
+                                if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
                                     delete_attachment(m['id'])
-                                    st.toast("Medya Inbox'a geri gönderildi!", icon="↪️")
                                     st.rerun()
-                        elif "image" in file_type and file_url.startswith("http"):
-                            st.image(file_url, use_column_width=True)
-                            if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
-                                delete_attachment(m['id'])
-                                st.rerun()
-                        else:
-                            public_link = get_public_url(file_url)
-                            st.image(public_link, use_column_width=True)
-                            if st.button("🗑️ Sil", key=f"del_gal_{m['id']}", use_container_width=True):
-                                delete_attachment(m['id'])
-                                st.rerun()
 
