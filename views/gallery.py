@@ -194,19 +194,22 @@ def show_gallery():
                     
                     st.markdown(f'<div style="border: 2px solid {border_color}; padding: 10px; border-radius: 8px;">', unsafe_allow_html=True)
                     
-                    # Checkbox for selection state management natively through Streamlit callback
-                    def toggle_sel(fid=file_id):
-                        if st.session_state[f"chk_{fid}"]:
-                            st.session_state['selected_inbox_files'].add(fid)
-                        else:
-                            st.session_state['selected_inbox_files'].discard(fid)
-                            
-                    st.checkbox(
-                        "✅ ÇOKLU İŞLEME EKLE (Seç)", 
-                        value=is_selected, 
-                        key=f"chk_{file_id}", 
-                        on_change=toggle_sel
-                    )
+                    # Streamlit checkbox direct state management (more reliable than on_change in loops)
+                    chk_key = f"chk_{file_id}"
+                    
+                    # Ensure the current session state reflects our 'selected' set BEFORE rendering
+                    if chk_key not in st.session_state:
+                        st.session_state[chk_key] = is_selected
+                        
+                    clicked = st.checkbox("✅ ÇOKLU İŞLEME EKLE (Seç)", key=chk_key)
+                    
+                    # Update the master set based on the checkbox's actual value
+                    if clicked and not is_selected:
+                        st.session_state['selected_inbox_files'].add(file_id)
+                        st.rerun() # Immediately reflect the colored border and top-bar count
+                    elif not clicked and is_selected:
+                        st.session_state['selected_inbox_files'].discard(file_id)
+                        st.rerun()
 
                     st.markdown(f"**{f.get('name')}**")
                     
