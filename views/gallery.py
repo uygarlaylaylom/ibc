@@ -119,91 +119,109 @@ def show_gallery():
             e_idx = s_idx + inbox_items_per_page
             page_inbox_files = inbox_files[s_idx:e_idx]
 
+            # Initialize selected state
+            if 'selected_inbox_files' not in st.session_state:
+                st.session_state['selected_inbox_files'] = set()
+                
+            # MULTI-ASSIGNMENT HEADER PANEL
+            st.markdown("---")
+            st.markdown("### 🏷️ Toplu Atama Paneli (Multi-Assign)")
+            st.info("💡 Aşağıdaki resimlerden istediklerinizi **seçin**, ardından buradan tek seferde firmaya atayın.")
+            
+            selected_count = len(st.session_state['selected_inbox_files'])
+            
+            col_sel, col_tag, col_btn = st.columns([0.4, 0.4, 0.2])
+            with col_sel:
+                # Disable the dropdown if nothing is selected
+                bulk_comp_id = st.selectbox("Hangi Firmaya Seçiliyorsuz?", options=list(comp_options.keys()), format_func=lambda x: comp_options[x], key="bulk_comp", disabled=(selected_count==0))
+            with col_tag:
+                bulk_tags = st.text_input("Toplu Etiket", help="Tüm seçili resimlere bu etiket eklenecek. Örn: Stand Fotoğrafı", key="bulk_tags", disabled=(selected_count==0))
+            with col_btn:
+                st.write("") # spacing
+                st.write("") # spacing
+                if st.button(f"🚀 {selected_count} Dosyayı Ata", type="primary", use_container_width=True, disabled=(selected_count==0), key="btn_bulk_assign"):
+                    comp = next((c for c in companies if c['id'] == bulk_comp_id), None)
+                    if comp:
+                        clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
+                        subfolder_name = f"{comp['booth_number']}_{clean_cname}"
+                        
+                        with st.spinner(f"Toplu işlem yapılıyor ({selected_count} dosya)..."):
+                            comp_folder_id = find_or_create_folder(subfolder_name)
+                            if comp_folder_id:
+                                supabase = get_supabase()
+                                
+                                success_count = 0
+                                for file_id in list(st.session_state['selected_inbox_files']):
+                                    # Find the full file dict from inbox_files
+                                    f_dict = next((f for f in inbox_files if f.get('id') == file_id), None)
+                                    if not f_dict: continue
+                                    
+                                    success = move_drive_file(file_id, comp_folder_id)
+                                    if success:
+                                        clean_tags = [t.strip().replace('#', '') for t in bulk_tags.split(',')] if bulk_tags else []
+                                        tags_param = ",".join(clean_tags) if clean_tags else "untagged"
+                                        db_path = f"{f_dict.get('webViewLink')}#id={file_id}#tags={tags_param}"
+                                        
+                                        try:
+                                            supabase.table("attachments").insert({
+                                                "company_id": comp['id'],
+                                                # REMOVED: "file_name": f_dict.get('name'), -> CAUSING DB ERROR
+                                                "file_type": f_dict.get('mimeType'),
+                                                "file_path": db_path
+                                            }).execute()
+                                            success_count += 1
+                                            st.session_state['selected_inbox_files'].remove(file_id)
+                                        except Exception as e:
+                                            st.error(f"DB hatası (Dosya {file_id}): {e}")
+                                            
+                                st.success(f"🎉 {success_count} medya başarıyla taşındı ve atandı!")
+                                st.rerun()
+                            else:
+                                st.error("Firma klasörü yaratılamadı.")
+
+            st.markdown("---")
+            
             # Show grid of inbox files
             slider_inbox = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Inbox)", min_value=1, max_value=6, value=3, key="slider_inbox")
             cols = st.columns(slider_inbox)
             for idx, f in enumerate(page_inbox_files):
                 with cols[idx % slider_inbox]:
-                    with st.container(border=True):
-                        st.markdown(f"**{f.get('name')}**")
-                        
-                        preview_url = f.get('thumbnailLink')
-                        file_id = f.get('id')
-                        web_link = f.get('webViewLink')
-                        file_name_lower = f.get('name', '').lower()
-                        
-                        # --- Smart Suggestions based on filename ---
-                        suggested_comp_id = list(comp_options.keys())[0] # Default to first
-                        for comp_id, label in comp_options.items():
-                            comp_name_lower = label.split(" - ")[1].lower()
-                            # If company name length > 3 and is in filename
-                            if len(comp_name_lower) > 3 and comp_name_lower in file_name_lower:
-                                suggested_comp_id = comp_id
-                                break
-                                
-                        suggested_tags = []
-                        if "katalog" in file_name_lower or "catalog" in file_name_lower:
-                            suggested_tags.append("Katalog")
-                        if "kartvizit" in file_name_lower or "card" in file_name_lower:
-                            suggested_tags.append("Kartvizit")
-                        if "fiyat" in file_name_lower or "price" in file_name_lower or "teklif" in file_name_lower:
-                            suggested_tags.append("Fiyat Teklifi")
-                        if "ürün" in file_name_lower or "product" in file_name_lower:
-                            suggested_tags.append("Ürün Görseli")
-                            
-                        # Convert default tag list to comma string
-                        default_tags_str = ", ".join(suggested_tags)
-                        
-                        if preview_url:
-                            # Drive thumbnails often end with =s220, replace to get higher resolution
-                            hq_preview = preview_url.replace("=s220", "=s1200") if "=s" in preview_url else preview_url
-                            st.image(hq_preview, use_container_width=True)
-                            st.caption(f"[Drive'da Orijinalini Aç]({web_link})")
+                    file_id = f.get('id')
+                    is_selected = file_id in st.session_state['selected_inbox_files']
+                    
+                    # Highlight selected container with a colored border
+                    border_color = "#3B82F6" if is_selected else "#E5E7EB"
+                    
+                    st.markdown(f'<div style="border: 2px solid {border_color}; padding: 10px; border-radius: 8px;">', unsafe_allow_html=True)
+                    
+                    # Checkbox for selection state management natively through Streamlit callback
+                    def toggle_sel(fid=file_id):
+                        if st.session_state[f"chk_{fid}"]:
+                            st.session_state['selected_inbox_files'].add(fid)
                         else:
-                            st.markdown(f"📦 [Drive'da Aç]({web_link})")
+                            st.session_state['selected_inbox_files'].discard(fid)
                             
-                        # Assignment Form
-                        with st.form(key=f"assign_form_{file_id}"):
-                            # Pre-select index based on suggestion
-                            default_idx = list(comp_options.keys()).index(suggested_comp_id)
-                            
-                            selected_comp_id = st.selectbox("💡 Hangi Firmanın?", options=list(comp_options.keys()), format_func=lambda x: comp_options[x], index=default_idx, key=f"sel_{file_id}")
-                            tags_input = st.text_input("Etiket (Katalog, Kartvizit vs)", value=default_tags_str, placeholder="Örn: Katalog, Kartvizit", key=f"tgi_{file_id}")
-                            
-                            if st.form_submit_button("Ata ve Kaydet", type="primary", use_container_width=True):
-                                # Logic to move and save
-                                comp = next((c for c in companies if c['id'] == selected_comp_id), None)
-                                if comp:
-                                    clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
-                                    subfolder_name = f"{comp['booth_number']}_{clean_cname}"
-                                    
-                                    with st.spinner("Dosya Drive'da taşınıyor..."):
-                                        comp_folder_id = find_or_create_folder(subfolder_name)
-                                        if comp_folder_id:
-                                            success = move_drive_file(file_id, comp_folder_id)
-                                            if success:
-                                                # Insert to Supabase DB
-                                                supabase = get_supabase()
-                                                
-                                                clean_tags = [t.strip().replace('#', '') for t in tags_input.split(',')] if tags_input else []
-                                                tags_param = ",".join(clean_tags) if clean_tags else "untagged"
-                                                db_path = f"{web_link}#id={file_id}#tags={tags_param}"
-                                                
-                                                try:
-                                                    supabase.table("attachments").insert({
-                                                        "company_id": comp['id'],
-                                                        "file_name": f.get('name'),
-                                                        "file_type": f.get('mimeType'),
-                                                        "file_path": db_path
-                                                    }).execute()
-                                                    st.toast(f"Dosya başarıyla {comp['company_name']} firmasına atandı!", icon="✅")
-                                                    st.rerun()
-                                                except Exception as e:
-                                                    st.error(f"Veritabanına yazılırken hata: {e}")
-                                            else:
-                                                st.error("Google Drive taşıma işlemi başarısız oldu.")
-                                        else:
-                                            st.error("Firma klasörü yaratılamadı.")
+                    st.checkbox(
+                        "✅ ÇOKLU İŞLEME EKLE (Seç)", 
+                        value=is_selected, 
+                        key=f"chk_{file_id}", 
+                        on_change=toggle_sel
+                    )
+
+                    st.markdown(f"**{f.get('name')}**")
+                    
+                    preview_url = f.get('thumbnailLink')
+                    web_link = f.get('webViewLink')
+
+                    if preview_url:
+                        # Drive thumbnails often end with =s220, replace to get higher resolution
+                        hq_preview = preview_url.replace("=s220", "=s1200") if "=s" in preview_url else preview_url
+                        st.image(hq_preview, use_container_width=True)
+                        st.caption(f"[Drive'da Orijinalini Aç]({web_link})")
+                    else:
+                        st.markdown(f"📦 [Drive'da Aç]({web_link})")
+                        
+                    st.markdown('</div>', unsafe_allow_html=True)
 
     with tab2:
         st.subheader("📚 Sistemdeki Tüm Medyalar")
