@@ -69,9 +69,17 @@ def show_gallery():
         if not inbox_files:
             st.success("Tebrikler! İşlem bekleyen sahipsiz medya yok. 🎉")
         else:
+            # Add a global search bar to filter the company options in the dropdowns below
+            gal_search = st.text_input("🔍 Hızlı Firma Ara (Stand No, İsim vs.)", placeholder="Arama yaparsanız alttaki menülerde sadece eşleşenler çıkar", key="gal_comp_search")
+            
             # We need company list for the assignment dropdown
-            companies = get_companies()
+            with st.spinner("Firmalar yükleniyor..."):
+                companies = get_companies(search_query=gal_search) if gal_search else get_companies()
+            
             comp_options = {c['id']: f"{c['booth_number']} - {c['company_name']}" for c in companies}
+            
+            if not comp_options:
+                st.warning("Aramanızla eşleşen firma bulunamadı. Lütfen aramayı değiştirin.")
             
             # Pagination logic for Inbox
             if 'inbox_page' not in st.session_state:
