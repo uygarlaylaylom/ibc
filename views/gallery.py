@@ -87,8 +87,15 @@ def show_gallery():
             if not comp_options:
                 st.warning("⚠️ Aramanızla eşleşen firma bulunamadı.")
             # Additive Load More Logic for Inbox
+            # Recover limit from URL if the page was refreshed or shared
+            url_limit_str = st.query_params.get("inbox_limit", "20")
+            try:
+                url_limit = int(url_limit_str)
+            except ValueError:
+                url_limit = 20
+                
             if 'inbox_load_limit' not in st.session_state:
-                st.session_state['inbox_load_limit'] = 20
+                st.session_state['inbox_load_limit'] = url_limit
                 
             inbox_total = len(inbox_files)
             inb_limit = st.session_state['inbox_load_limit']
@@ -209,7 +216,9 @@ def show_gallery():
             if inb_limit < inbox_total:
                 st.write("")
                 if st.button("⬇️ Daha Fazla Yükle", type="secondary", use_container_width=True, key="btn_load_more_inbox"):
-                    st.session_state['inbox_load_limit'] += 20
+                    new_limit = st.session_state['inbox_load_limit'] + 20
+                    st.session_state['inbox_load_limit'] = new_limit
+                    st.query_params["inbox_limit"] = str(new_limit)
                     st.rerun()
 
     with tab2:
