@@ -86,8 +86,60 @@ def show_gallery():
             
             if not comp_options:
                 st.warning("⚠️ Aramanızla eşleşen firma bulunamadı.")
+
+            # --- SIDEBAR MULTI-ASSIGN PANEL ---
+            st.sidebar.markdown("---")
+            st.sidebar.markdown("### 🏷️ Toplu Atama Paneli")
+            st.sidebar.info("💡 Sağdaki resimlerden istediklerinizi **seçin**, ardından buradan tek seferde atayın.")
+            
+            # Compute selected files directly from session state (no custom Set needed)
+            selected_files = [k.replace("chk_", "") for k, v in st.session_state.items() if k.startswith("chk_") and v is True]
+            selected_count = len(selected_files)
+            
+            # Disable the dropdown if nothing is selected
+            bulk_comp_id = st.sidebar.selectbox("Hangi Firmaya?", options=list(comp_options.keys()), format_func=lambda x: comp_options[x], key="bulk_comp", disabled=(selected_count==0))
+            bulk_tags = st.sidebar.text_input("Toplu Etiket", help="Örn: Stand Fotoğrafı", key="bulk_tags", disabled=(selected_count==0))
+            
+            st.sidebar.write("") # spacing
+            if st.sidebar.button(f"🚀 {selected_count} Dosyayı Ata", type="primary", use_container_width=True, disabled=(selected_count==0), key="btn_bulk_assign"):
+                comp = next((c for c in companies if c['id'] == bulk_comp_id), None)
+                if comp:
+                    clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
+                    subfolder_name = f"{comp['booth_number']}_{clean_cname}"
+                    
+                    with st.spinner(f"Toplu işlem yapılıyor ({selected_count} dosya)..."):
+                        comp_folder_id = find_or_create_folder(subfolder_name)
+                        if comp_folder_id:
+                            supabase = get_supabase()
+                            success_count = 0
+                            for file_id in selected_files:
+                                # Find the full file dict from inbox_files
+                                f_dict = next((f for f in inbox_files if f.get('id') == file_id), None)
+                                if not f_dict: continue
+                                
+                                success = move_drive_file(file_id, comp_folder_id)
+                                if success:
+                                    clean_tags = [t.strip().replace('#', '') for t in bulk_tags.split(',')] if bulk_tags else []
+                                    tags_param = ",".join(clean_tags) if clean_tags else "untagged"
+                                    db_path = f"{f_dict.get('webViewLink')}#id={file_id}#tags={tags_param}"
+                                    
+                                    try:
+                                        supabase.table("attachments").insert({
+                                            "company_id": comp['id'],
+                                            "file_type": f_dict.get('mimeType'),
+                                            "file_path": db_path
+                                        }).execute()
+                                        success_count += 1
+                                        # Clear the checkbox state so it unchecks automatically
+                                        st.session_state[f"chk_{file_id}"] = False
+                                    except Exception as e:
+                                        st.error(f"DB hatası (Dosya {file_id}): {e}")
+                            st.sidebar.success(f"🎉 {success_count} medya başarıyla taşındı ve atandı!")
+                        else:
+                            st.sidebar.error("Firma klasörü yaratılamadı.")
+
+            # --- MAIN CONTENT GRID ---
             # Additive Load More Logic for Inbox
-            # Recover limit from URL if the page was refreshed or shared
             url_limit_str = st.query_params.get("inbox_limit", "20")
             try:
                 url_limit = int(url_limit_str)
@@ -105,66 +157,6 @@ def show_gallery():
             # Slice the media incrementally
             page_inbox_files = inbox_files[:inb_limit]
 
-            # Initialize selected state
-            if 'selected_inbox_files' not in st.session_state:
-                st.session_state['selected_inbox_files'] = set()
-                
-            # MULTI-ASSIGNMENT HEADER PANEL
-            st.markdown("---")
-            st.markdown("### 🏷️ Toplu Atama Paneli (Multi-Assign)")
-            st.info("💡 Aşağıdaki resimlerden istediklerinizi **seçin**, ardından buradan tek seferde firmaya atayın.")
-            
-            selected_count = len(st.session_state['selected_inbox_files'])
-            
-            col_sel, col_tag, col_btn = st.columns([0.4, 0.4, 0.2])
-            with col_sel:
-                # Disable the dropdown if nothing is selected
-                bulk_comp_id = st.selectbox("Hangi Firmaya Seçiliyorsuz?", options=list(comp_options.keys()), format_func=lambda x: comp_options[x], key="bulk_comp", disabled=(selected_count==0))
-            with col_tag:
-                bulk_tags = st.text_input("Toplu Etiket", help="Tüm seçili resimlere bu etiket eklenecek. Örn: Stand Fotoğrafı", key="bulk_tags", disabled=(selected_count==0))
-            with col_btn:
-                st.write("") # spacing
-                st.write("") # spacing
-                if st.button(f"🚀 {selected_count} Dosyayı Ata", type="primary", use_container_width=True, disabled=(selected_count==0), key="btn_bulk_assign"):
-                    comp = next((c for c in companies if c['id'] == bulk_comp_id), None)
-                    if comp:
-                        clean_cname = "".join(c for c in comp['company_name'] if c.isalnum() or c in " _-").strip()
-                        subfolder_name = f"{comp['booth_number']}_{clean_cname}"
-                        
-                        with st.spinner(f"Toplu işlem yapılıyor ({selected_count} dosya)..."):
-                            comp_folder_id = find_or_create_folder(subfolder_name)
-                            if comp_folder_id:
-                                supabase = get_supabase()
-                                
-                                success_count = 0
-                                for file_id in list(st.session_state['selected_inbox_files']):
-                                    # Find the full file dict from inbox_files
-                                    f_dict = next((f for f in inbox_files if f.get('id') == file_id), None)
-                                    if not f_dict: continue
-                                    
-                                    success = move_drive_file(file_id, comp_folder_id)
-                                    if success:
-                                        clean_tags = [t.strip().replace('#', '') for t in bulk_tags.split(',')] if bulk_tags else []
-                                        tags_param = ",".join(clean_tags) if clean_tags else "untagged"
-                                        db_path = f"{f_dict.get('webViewLink')}#id={file_id}#tags={tags_param}"
-                                        
-                                        try:
-                                            supabase.table("attachments").insert({
-                                                "company_id": comp['id'],
-                                                # REMOVED: "file_name": f_dict.get('name'), -> CAUSING DB ERROR
-                                                "file_type": f_dict.get('mimeType'),
-                                                "file_path": db_path
-                                            }).execute()
-                                            success_count += 1
-                                            st.session_state['selected_inbox_files'].remove(file_id)
-                                        except Exception as e:
-                                            st.error(f"DB hatası (Dosya {file_id}): {e}")
-                                            
-                                st.success(f"🎉 {success_count} medya başarıyla taşındı ve atandı!")
-                                st.rerun()
-                            else:
-                                st.error("Firma klasörü yaratılamadı.")
-
             st.markdown("---")
             
             # Show grid of inbox files
@@ -174,29 +166,15 @@ def show_gallery():
                 for idx, f in enumerate(page_inbox_files[i:i + slider_inbox]):
                     with cols[idx]:
                         file_id = f.get('id')
-                        is_selected = file_id in st.session_state['selected_inbox_files']
+                        chk_key = f"chk_{file_id}"
+                        is_selected = st.session_state.get(chk_key, False)
                         
                         # Highlight selected container with a colored border
                         border_color = "#3B82F6" if is_selected else "#E5E7EB"
                         
                         st.markdown(f'<div style="border: 2px solid {border_color}; padding: 10px; border-radius: 8px;">', unsafe_allow_html=True)
                         
-                        # Streamlit checkbox direct state management (more reliable than on_change in loops)
-                        chk_key = f"chk_{file_id}"
-                        
-                        # Ensure the current session state reflects our 'selected' set BEFORE rendering
-                        if chk_key not in st.session_state:
-                            st.session_state[chk_key] = is_selected
-                        
-                        clicked = st.checkbox("✅ ÇOKLU İŞLEME EKLE (Seç)", key=chk_key)
-                        
-                        # Update the master set based on the checkbox's actual value
-                        if clicked and not is_selected:
-                            st.session_state['selected_inbox_files'].add(file_id)
-                            st.rerun() # Immediately reflect the colored border and top-bar count
-                        elif not clicked and is_selected:
-                            st.session_state['selected_inbox_files'].discard(file_id)
-                            st.rerun()
+                        st.checkbox("✅ ÇOKLU İŞLEME EKLE (Seç)", key=chk_key)
     
                         st.markdown(f"**{f.get('name')}**")
                         

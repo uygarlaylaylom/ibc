@@ -34,8 +34,22 @@ def get_companies(search_query="", visited_only=False, min_priority=1, has_notes
         
     if search_query:
         # Supabase ilike doesn't support OR natively in python client easily without or_ syntax
-        # Using the restful 'or' filter:
-        query = query.or_(f"booth_number.ilike.%{search_query}%,company_name.ilike.%{search_query}%,primary_domain.ilike.%{search_query}%,segment.ilike.%{search_query}%")
+        q = search_query.strip()
+        q_spaced = q
+        
+        # Heuristic: If search is like "w2287", also check for "w 2287"
+        if len(q) > 1 and q[0].isalpha() and q[1:].isdigit():
+            q_spaced = f"{q[0]} {q[1:]}"
+            
+        # Add flexible % characters
+        or_filter = (
+            f"booth_number.ilike.%{q}%,"
+            f"booth_number.ilike.%{q_spaced}%,"
+            f"company_name.ilike.%{q}%,"
+            f"primary_domain.ilike.%{q}%,"
+            f"segment.ilike.%{q}%"
+        )
+        query = query.or_(or_filter)
 
     response = query.order("priority", desc=True).order("company_name").limit(5000).execute()
     companies = response.data
