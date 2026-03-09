@@ -37,7 +37,7 @@ def get_companies(search_query="", visited_only=False, min_priority=1, has_notes
         # Using the restful 'or' filter:
         query = query.or_(f"booth_number.ilike.%{search_query}%,company_name.ilike.%{search_query}%,primary_domain.ilike.%{search_query}%,segment.ilike.%{search_query}%")
 
-    response = query.order("priority", desc=True).order("company_name").execute()
+    response = query.order("priority", desc=True).order("company_name").limit(5000).execute()
     companies = response.data
     
     # Optional: If has_notes or has_email is checked, we would need to filter these IDs.
