@@ -162,9 +162,10 @@ def show_gallery():
             
             # Show grid of inbox files
             slider_inbox = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Inbox)", min_value=1, max_value=6, value=3, key="slider_inbox")
-            cols = st.columns(slider_inbox)
-            for idx, f in enumerate(page_inbox_files):
-                with cols[idx % slider_inbox]:
+            for i in range(0, len(page_inbox_files), slider_inbox):
+                cols = st.columns(slider_inbox)
+                for idx, f in enumerate(page_inbox_files[i:i + slider_inbox]):
+                    with cols[idx]:
                     file_id = f.get('id')
                     is_selected = file_id in st.session_state['selected_inbox_files']
                     
@@ -289,9 +290,10 @@ def show_gallery():
 
             # --- Display Grid ---
             slider_lib = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Arşiv)", min_value=1, max_value=8, value=4, key="slider_lib")
-            cols2 = st.columns(slider_lib)
-            for idx, m in enumerate(page_items):
-                with cols2[idx % slider_lib]:
+            for i in range(0, len(page_items), slider_lib):
+                cols2 = st.columns(slider_lib)
+                for idx, m in enumerate(page_items[i:i + slider_lib]):
+                    with cols2[idx]:
                     with st.container(border=True):
                         company_info = m.get('companies')
                         if company_info:
