@@ -73,10 +73,42 @@ def show_gallery():
             companies = get_companies()
             comp_options = {c['id']: f"{c['booth_number']} - {c['company_name']}" for c in companies}
             
+            # Pagination logic for Inbox
+            if 'inbox_page' not in st.session_state:
+                st.session_state['inbox_page'] = 1
+
+            inbox_items_per_page = 40
+            inbox_total = len(inbox_files)
+            inbox_total_pages = max(1, (inbox_total + inbox_items_per_page - 1) // inbox_items_per_page)
+
+            if st.session_state['inbox_page'] > inbox_total_pages:
+                st.session_state['inbox_page'] = 1
+                
+            inb_current_page = st.session_state['inbox_page']
+            
+            st.success(f"İşlem bekleyen {inbox_total} medya var. (Sayfa {inb_current_page} / {inbox_total_pages})")
+
+            # Pagination buttons for Inbox
+            if inbox_total_pages > 1:
+                col_p, col_m, col_n = st.columns([1, 4, 1])
+                with col_p:
+                    if st.button("⬅️ Önceki", disabled=inb_current_page <= 1, key="prev_inb", use_container_width=True):
+                        st.session_state['inbox_page'] = inb_current_page - 1
+                        st.rerun()
+                with col_n:
+                    if st.button("Sonraki ➡️", disabled=inb_current_page >= inbox_total_pages, key="next_inb", use_container_width=True):
+                        st.session_state['inbox_page'] = inb_current_page + 1
+                        st.rerun()
+            
+            # Slice the media for current page
+            s_idx = (inb_current_page - 1) * inbox_items_per_page
+            e_idx = s_idx + inbox_items_per_page
+            page_inbox_files = inbox_files[s_idx:e_idx]
+
             # Show grid of inbox files
             slider_inbox = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Inbox)", min_value=1, max_value=6, value=3, key="slider_inbox")
             cols = st.columns(slider_inbox)
-            for idx, f in enumerate(inbox_files):
+            for idx, f in enumerate(page_inbox_files):
                 with cols[idx % slider_inbox]:
                     with st.container(border=True):
                         st.markdown(f"**{f.get('name')}**")
