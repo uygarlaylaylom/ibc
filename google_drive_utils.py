@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
 # Scopes needed for Google Drive API
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 # The credentials file that the user will drop into the project root
 TOKEN_FILE = 'token.json'
@@ -158,12 +158,24 @@ def list_folder_files(folder_id):
     try:
         # Only list files (not folders), not trashed
         query = f"'{folder_id}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed=false"
-        response = service.files().list(
-            q=query, 
-            fields="files(id, name, mimeType, webViewLink, thumbnailLink)",
-            pageSize=100
-        ).execute()
-        return response.get('files', [])
+        all_files = []
+        page_token = None
+        
+        while True:
+            response = service.files().list(
+                q=query, 
+                fields="nextPageToken, files(id, name, mimeType, webViewLink, thumbnailLink)",
+                pageSize=1000,
+                pageToken=page_token
+            ).execute()
+            
+            all_files.extend(response.get('files', []))
+            page_token = response.get('nextPageToken', None)
+            
+            if not page_token:
+                break
+                
+        return all_files
     except Exception as e:
         print(f"Drive dosya listeleme hatası: {e}")
         return []

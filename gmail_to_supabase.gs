@@ -87,7 +87,7 @@ function syncEmailsToSupabase() {
       }
 
       // Email İçeriğini Formatla
-      var content = buildContent(subject, sender, senderDomain, dateObj, eventTag, urgency, body, aiResult);
+      var content = buildContent(msgId, subject, sender, senderDomain, dateObj, eventTag, urgency, body, aiResult);
 
       // 3. Email'i Activities Tablosuna Kaydet (Zero-Touch DB Insert)
       var emailPayload = {
@@ -242,11 +242,13 @@ function extractDomain(sender) {
   return match ? match[1] : "bilinmiyor";
 }
 
-function buildContent(subject, sender, domain, dateObj, eventTag, urgency, body, aiResult) {
+function buildContent(msgId, subject, sender, domain, dateObj, eventTag, urgency, body, aiResult) {
   var dateStr = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "dd.MM.yyyy HH:mm");
   var urgencyBadge = urgency >= 7 ? "🔴 YÜKSEK" : urgency >= 4 ? "🟡 ORTA" : "🟢 Düşük";
+  var gmailLink = "https://mail.google.com/mail/u/0/#all/" + msgId;
 
   var base = "📧 **" + subject + "**\n\n"
+       + "🔗 [Orijinal Mail'i Gmail'de Aç](" + gmailLink + ")\n\n"
        + "| Alan | Bilgi |\n"
        + "|------|-------|\n"
        + "| ✉️ Gönderen | " + sender + " |\n"

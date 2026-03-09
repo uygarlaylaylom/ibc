@@ -74,9 +74,10 @@ def show_gallery():
             comp_options = {c['id']: f"{c['booth_number']} - {c['company_name']}" for c in companies}
             
             # Show grid of inbox files
-            cols = st.columns(3)
+            slider_inbox = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Inbox)", min_value=1, max_value=6, value=3, key="slider_inbox")
+            cols = st.columns(slider_inbox)
             for idx, f in enumerate(inbox_files):
-                with cols[idx % 3]:
+                with cols[idx % slider_inbox]:
                     with st.container(border=True):
                         st.markdown(f"**{f.get('name')}**")
                         
@@ -108,7 +109,10 @@ def show_gallery():
                         default_tags_str = ", ".join(suggested_tags)
                         
                         if preview_url:
-                            st.markdown(f'<a href="{web_link}" target="_blank"><img src="{preview_url}" style="width:100%;border-radius:6px;margin-bottom:10px;" onerror="this.style.display=\'none\'"/></a>', unsafe_allow_html=True)
+                            # Drive thumbnails often end with =s220, replace to get higher resolution
+                            hq_preview = preview_url.replace("=s220", "=s1200") if "=s" in preview_url else preview_url
+                            st.image(hq_preview, use_container_width=True)
+                            st.caption(f"[Drive'da Orijinalini Aç]({web_link})")
                         else:
                             st.markdown(f"📦 [Drive'da Aç]({web_link})")
                             
@@ -201,9 +205,10 @@ def show_gallery():
             st.success(f"{len(filtered_media)} medya dosyası listeleniyor.")
 
             # --- Display Grid ---
-            cols2 = st.columns(4)
+            slider_lib = st.slider("🖼️ Yan Yana Kaç Resim Gösterilsin? (Arşiv)", min_value=1, max_value=8, value=4, key="slider_lib")
+            cols2 = st.columns(slider_lib)
             for idx, m in enumerate(filtered_media):
-                with cols2[idx % 4]:
+                with cols2[idx % slider_lib]:
                     with st.container(border=True):
                         company_info = m.get('companies')
                         if company_info:
@@ -237,13 +242,10 @@ def show_gallery():
                                     rot_key = f"rot_gal_{m['id']}"
                                     angle = st.session_state.get(rot_key, 0)
                                     
-                                    st.markdown(f'''
-                                    <div style="display:flex; justify-content:center; align-items:center; min-height: 180px; margin-bottom: 5px;">
-                                        <a href="{clean_url}" target="_blank" style="display:block;">
-                                            <img src="{preview_url}" style="max-width: 100%; max-height: 200px; border-radius:6px; transform: rotate({angle}deg); transition: transform 0.3s ease;" onerror="this.style.display='none'"/>
-                                        </a>
-                                    </div>
-                                    ''', unsafe_allow_html=True)
+                                    # Use st.image for native fullscreen expansion icon
+                                    hq_preview = preview_url.replace("sz=w400", "sz=w1200")
+                                    st.image(hq_preview, use_container_width=True)
+                                    st.caption(f"[Drive'da Aç]({clean_url})")
                                     
                                     if st.button("🔄 Çevir", key=f"btn_{rot_key}", use_container_width=True):
                                         st.session_state[rot_key] = (angle + 90) % 360

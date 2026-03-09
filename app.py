@@ -22,7 +22,7 @@ st.set_page_config(page_title="IBS 2026 İstihbarat", page_icon="🏢", layout="
 
 # --- Navigation (SPA) ---
 st.sidebar.title("📌 IBS 2026 Navigasyon")
-app_mode = st.sidebar.radio("Modül Seçin:", ["Firma Listesi", "Medya Kütüphanesi", "🧠 İstihbarat Merkezi"])
+app_mode = st.sidebar.radio("Modül Seçin:", ["Firma Listesi", "Medya Kütüphanesi", "🧠 İstihbarat Merkezi"], key="main_nav_radio")
 st.sidebar.markdown("---")
 
 if app_mode == "Firma Listesi":
